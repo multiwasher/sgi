@@ -900,10 +900,9 @@
           (currentSwotActiveFilter === 'ATIVOS' && ativo) ||
           (currentSwotActiveFilter === 'NAO_ATIVOS' && !ativo);
 
-        // ✅ Plano de Ação? (nível do registo): avalia TODAS as colunas "Em Plano de Ação i... (S/N)"
+        // ✅ Plano de Ação? (nível da ação): verifica se há ações que correspondem ao filtro
         const planoMap = buildPlanoMap(item);
-        let hasPlanS = false;
-        let hasAnyAction = false;
+        let hasActionMatchingFilter = false;
 
         for (let i = 1; i <= 6; i++) {
           const acaoTxt = getAny(item, [`AÇÃO ${i}`, `ACAO ${i}`, `Ação ${i}`, `Acao ${i}`]);
@@ -915,18 +914,19 @@
           const temAcao = (acaoTxt && String(acaoTxt).trim()) || (acaoCod && String(acaoCod).trim());
           if (!temAcao) continue;
 
-          hasAnyAction = true;
-
           const plano = planoMap[i] ?? '';
-          if (isYes(plano)) hasPlanS = true;
+          const isPlanoS = isYes(plano);
+
+          // Verificar se esta ação corresponde ao filtro
+          if (currentSwotPlanFilter === 'TODOS' ||
+              (currentSwotPlanFilter === 'S' && isPlanoS) ||
+              (currentSwotPlanFilter === 'N' && !isPlanoS)) {
+            hasActionMatchingFilter = true;
+            break;
+          }
         }
 
-        const matchesPlan =
-          currentSwotPlanFilter === 'TODOS' ||
-          (currentSwotPlanFilter === 'S' && hasPlanS) ||
-          (currentSwotPlanFilter === 'N' && !hasPlanS);
-
-        if (currentSwotPlanFilter !== 'TODOS' && !hasAnyAction) return false;
+        const matchesPlan = currentSwotPlanFilter === 'TODOS' || hasActionMatchingFilter;
 
         const matchesSearch =
           !searchTerm || blobNorm.includes(searchTerm) || normLoose(`${swotRaw} ${codigo} ${descricao}`).includes(searchTerm);
@@ -989,6 +989,14 @@
 
           const hasSomething = (acao && String(acao).trim()) || (cod && String(cod).trim());
           if (!hasSomething) continue;
+
+          // ✅ Aplicar o filtro "Plano de Ação?" ao nível de cada ação
+          const isPlanoS = isYes(emPlano);
+          const shouldShowAction = currentSwotPlanFilter === 'TODOS' ||
+                                   (currentSwotPlanFilter === 'S' && isPlanoS) ||
+                                   (currentSwotPlanFilter === 'N' && !isPlanoS);
+
+          if (!shouldShowAction) continue;
 
           actionsHtml += `
             <div class="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
