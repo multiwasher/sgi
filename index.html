@@ -583,15 +583,37 @@
             
             <!-- SVG para conectar todos os departamentos ao ADMINISTRAÇÃO -->
             <svg class="absolute w-full pointer-events-none" style="top: -100px; height: 200px; z-index: 0;" viewBox="0 0 1000 200" preserveAspectRatio="none">
-              <!-- Linhas de conexão direta de cada departamento ao ADMINISTRAÇÃO (centro em 50% = 500px) -->
-              <path d="M 60 200 L 500 0" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              <path d="M 145 200 L 500 0" stroke="#b45309" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              <path d="M 230 200 L 500 0" stroke="#ea580c" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              <path d="M 315 200 L 500 0" stroke="#9333ea" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              <!-- Linhas de conexão com ângulos de 90º -->
+              
+              <!-- CONTABILIDADE (staff level - esquerda) -->
+              <path d="M 380 100 L 500 100 L 500 0" stroke="#64748b" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- SGI (staff level - direita) -->
+              <path d="M 620 100 L 500 100 L 500 0" stroke="#64748b" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- Pós Venda -->
+              <path d="M 60 200 L 60 120 L 500 120 L 500 0" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- Financeiro -->
+              <path d="M 145 200 L 145 120 L 500 120 L 500 0" stroke="#b45309" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- Produção -->
+              <path d="M 230 200 L 230 120 L 500 120 L 500 0" stroke="#ea580c" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- R&D -->
+              <path d="M 315 200 L 315 120 L 500 120 L 500 0" stroke="#9333ea" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- Compras (centro) -->
               <path d="M 500 200 L 500 0" stroke="#2563eb" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              <path d="M 685 200 L 500 0" stroke="#4f46e5" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              <path d="M 770 200 L 500 0" stroke="#059669" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              <path d="M 855 200 L 500 0" stroke="#0891b2" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- Logística -->
+              <path d="M 685 200 L 685 120 L 500 120 L 500 0" stroke="#4f46e5" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- Comercial -->
+              <path d="M 770 200 L 770 120 L 500 120 L 500 0" stroke="#059669" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
+              
+              <!-- IoT -->
+              <path d="M 855 200 L 855 120 L 500 120 L 500 0" stroke="#0891b2" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
             </svg>
             
             <!-- Pós Venda -->
