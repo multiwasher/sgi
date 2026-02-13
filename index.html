@@ -141,6 +141,13 @@
       color: white;
       border-color: #065f46;
     }
+
+    .org-view-btn { transition: all 0.3s ease; }
+    .org-view-btn.active {
+      background: white;
+      color: #1e293b;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
   </style>
 </head>
 
@@ -169,7 +176,7 @@
             <option value="POLÍTICA">Política</option>
             <option value="MODELO">Modelo</option>
             <option value="PASTA">Pasta</option>
-            <option value="SGA">Outro (SGA)</option>
+            <option value="SGA">Outro (SGI)</option>
           </select>
         </div>
         <div>
@@ -283,8 +290,8 @@
           </svg>
         </div>
         <div>
-          <h1 class="text-xl font-extrabold tracking-tight leading-none">SGA <span class="text-emerald-400">Somengil</span></h1>
-          <p class="text-emerald-300/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Gestão Ambiental ISO 14001</p>
+          <h1 class="text-xl font-extrabold tracking-tight leading-none">SGI <span class="text-emerald-400">Somengil</span></h1>
+          <p class="text-emerald-300/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Gestão Integrada ISO9001 & ISO14001</p>
         </div>
       </div>
 
@@ -293,6 +300,7 @@
           <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition-all">DOCUMENTAÇÃO</button>
           <button onclick="switchTab('swot')" id="tab-swot" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ANÁLISE SWOT</button>
           <button onclick="switchTab('ro')" id="tab-ro" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">R&O</button>
+          <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
         </div>
 
         <button id="btn-new-doc" onclick="openModal()" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-xl text-xs font-black transition-all border border-white/20">
@@ -516,6 +524,350 @@
               <tr><td colspan="9" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTEÚDO: ORGANIGRAMA -->
+    <div id="view-org" class="hidden space-y-8">
+      <!-- Cabeçalho do Organigrama -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-8 rounded-2xl shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <h1 class="text-4xl font-black tracking-tight">ORGANIGRAMA</h1>
+            <p class="text-slate-300 text-sm mt-2">Estrutura Organizacional - SOMENGIL</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="toggleOrgView('full')" id="org-full-btn" class="org-view-btn active px-6 py-2 rounded-lg text-sm font-bold transition-all bg-white text-slate-900">Vista Geral</button>
+            <button onclick="toggleOrgView('details')" id="org-details-btn" class="org-view-btn px-6 py-2 rounded-lg text-sm font-bold transition-all bg-slate-700 hover:bg-slate-600 text-white">Detalhes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista Geral (Organigrama) -->
+      <div id="org-full-view" class="overflow-x-auto pb-12 bg-white rounded-xl p-8 shadow-sm border border-slate-200">
+        <div class="flex flex-col items-center min-w-[1200px]">
+          
+          <!-- Administração (Topo) -->
+          <div class="mb-16 relative">
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-xl shadow-lg min-w-[200px] text-center border-2 border-slate-700">
+              <h3 class="font-black text-lg uppercase tracking-tight mb-2">ADMINISTRAÇÃO</h3>
+              <p class="text-sm">Tony Ventura</p>
+            </div>
+            <div class="absolute h-16 w-0.5 bg-slate-400 left-1/2 -bottom-16"></div>
+          </div>
+
+          <!-- Nível de Staff (Contabilidade/SGQA) -->
+          <div class="flex justify-center gap-20 mb-16 relative">
+            <div class="absolute h-0.5 w-[80%] bg-slate-400 top-0 left-1/2 -translate-x-1/2 -mt-8"></div>
+            
+            <!-- Contabilidade -->
+            <div class="relative pt-8">
+              <div class="absolute h-8 w-0.5 bg-slate-400 left-1/2 top-0"></div>
+              <div class="bg-slate-700 text-white p-5 rounded-xl shadow-lg min-w-[180px] text-center border border-slate-600">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-slate-600 pb-2">CONTABILIDADE</h3>
+                <div class="text-xs space-y-1">
+                  <p>Lúcio Mota</p>
+                  <p>Ricardo Costa</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- SGQA -->
+            <div class="relative pt-8">
+              <div class="absolute h-8 w-0.5 bg-slate-400 left-1/2 top-0"></div>
+              <div class="bg-slate-700 text-white p-5 rounded-xl shadow-lg min-w-[180px] text-center border border-slate-600">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-slate-600 pb-2">SGQA</h3>
+                <div class="text-xs">
+                  <p>Mário Fragoso</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Departamentos (Nível Inferior) -->
+          <div class="relative pt-16 border-t-2 border-slate-400 w-full flex justify-center gap-6 flex-wrap">
+            <div class="absolute h-16 w-0.5 bg-slate-400 left-1/2 -top-16"></div>
+            
+            <!-- Pós Venda -->
+            <div class="flex flex-col items-center relative">
+              <div class="absolute h-12 w-0.5 bg-slate-400 -top-12 left-1/2"></div>
+              <div class="mb-3 p-2 bg-red-100 rounded-full text-red-600 shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+              </div>
+              <div class="bg-red-600 text-white p-4 rounded-xl shadow-lg min-w-[160px] text-center border border-red-700">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-red-500 pb-2">Pós Venda</h3>
+                <div class="text-[11px] space-y-0.5">
+                  <p>Carina Robaina</p>
+                  <p>Cândido Veloso</p>
+                  <p>Tiago Oliveira</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Financeiro -->
+            <div class="flex flex-col items-center relative">
+              <div class="absolute h-12 w-0.5 bg-slate-400 -top-12 left-1/2"></div>
+              <div class="mb-3 p-2 bg-amber-100 rounded-full text-amber-600 shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <div class="bg-amber-600 text-white p-4 rounded-xl shadow-lg min-w-[160px] text-center border border-amber-700">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-amber-500 pb-2">Financeiro</h3>
+                <div class="text-[11px]">
+                  <p>Lúcio Mota</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Produção -->
+            <div class="flex flex-col items-center relative">
+              <div class="absolute h-12 w-0.5 bg-slate-400 -top-12 left-1/2"></div>
+              <div class="mb-3 p-2 bg-orange-100 rounded-full text-orange-600 shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              </div>
+              <div class="bg-orange-600 text-white p-4 rounded-xl shadow-lg min-w-[160px] text-center border border-orange-700">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-orange-500 pb-2">Produção</h3>
+                <div class="text-[10px] space-y-0.5">
+                  <p>Joni Regalado</p>
+                  <p>Fábio Silva</p>
+                  <p>Carlos Almeida</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- R&D -->
+            <div class="flex flex-col items-center relative">
+              <div class="absolute h-12 w-0.5 bg-slate-400 -top-12 left-1/2"></div>
+              <div class="mb-3 p-2 bg-purple-100 rounded-full text-purple-600 shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5h.01M9 9h.01"></path></svg>
+              </div>
+              <div class="bg-purple-600 text-white p-4 rounded-xl shadow-lg min-w-[160px] text-center border border-purple-700">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-purple-500 pb-2">R&D</h3>
+                <div class="text-[10px] space-y-0.5">
+                  <p>Joni Regalado</p>
+                  <p>Jonathan Santos</p>
+                  <p>Ricardo Hipólito</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compras -->
+            <div class="flex flex-col items-center relative">
+              <div class="absolute h-12 w-0.5 bg-slate-400 -top-12 left-1/2"></div>
+              <div class="mb-3 p-2 bg-blue-100 rounded-full text-blue-600 shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              </div>
+              <div class="bg-blue-600 text-white p-4 rounded-xl shadow-lg min-w-[160px] text-center border border-blue-700">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-blue-500 pb-2">Compras</h3>
+                <div class="text-[10px] space-y-0.5">
+                  <p>Paulo Brioso</p>
+                  <p>Lúcio Mota</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logística -->
+            <div class="flex flex-col items-center relative">
+              <div class="absolute h-12 w-0.5 bg-slate-400 -top-12 left-1/2"></div>
+              <div class="mb-3 p-2 bg-indigo-100 rounded-full text-indigo-600 shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M8 20h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              </div>
+              <div class="bg-indigo-600 text-white p-4 rounded-xl shadow-lg min-w-[160px] text-center border border-indigo-700">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-indigo-500 pb-2">Logística</h3>
+                <div class="text-[10px] space-y-0.5">
+                  <p>Lúcio Mota</p>
+                  <p>Paulo Brioso</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comercial -->
+            <div class="flex flex-col items-center relative">
+              <div class="absolute h-12 w-0.5 bg-slate-400 -top-12 left-1/2"></div>
+              <div class="mb-3 p-2 bg-emerald-100 rounded-full text-emerald-600 shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L5.257 18.757M13 7L5.257 15.757"></path></svg>
+              </div>
+              <div class="bg-emerald-600 text-white p-4 rounded-xl shadow-lg min-w-[160px] text-center border border-emerald-700">
+                <h3 class="font-bold uppercase text-sm mb-2 border-b border-emerald-500 pb-2">Comercial</h3>
+                <div class="text-[10px] space-y-0.5">
+                  <p>Tony Ventura</p>
+                  <p>Maria Almeida</p>
+                  <p>David Borges</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista de Detalhes Operacionais -->
+      <div id="org-details-view" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Pós Venda -->
+        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div class="flex items-center gap-3 mb-4 pb-4 border-b-2 border-red-500/30">
+            <div class="p-2 bg-red-100 rounded-lg text-red-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            </div>
+            <h2 class="font-black text-red-700 uppercase text-sm">Fluxos Pós Venda</h2>
+          </div>
+          <div class="space-y-4">
+            <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <p class="font-bold text-red-900 text-sm mb-2">PÓS VENDA - Carina Robaina</p>
+              <ul class="text-xs text-red-800 space-y-1">
+                <li>• Planeamento: Instalação de Equipamentos</li>
+                <li>• Equipas de Instalação</li>
+                <li>• Logística: Envio de peças de substituição</li>
+              </ul>
+              <p class="text-[9px] font-semibold italic text-red-700 mt-2">⚠️ Em CC sempre service@somengil.com</p>
+            </div>
+            <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <p class="font-bold text-red-900 text-sm mb-2">PÓS VENDA - Cândido Veloso</p>
+              <ul class="text-xs text-red-800 space-y-1">
+                <li>• Suporte Técnico</li>
+                <li>• Instalação de Equipamentos</li>
+                <li>• Funcionamento não standard</li>
+                <li>• Prevenção</li>
+              </ul>
+              <p class="text-[9px] font-semibold italic text-red-700 mt-2">⚠️ Em CC sempre service@somengil.com</p>
+            </div>
+            <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+              <p class="font-bold text-red-900 text-sm mb-2">PÓS VENDA - Tiago Oliveira</p>
+              <ul class="text-xs text-red-800 space-y-1">
+                <li>• Planeamento Live Demos</li>
+                <li>• Teste e Demonstrações</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- R&D & Logística -->
+        <div class="space-y-6">
+          <!-- R&D -->
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-center gap-3 mb-4 pb-4 border-b-2 border-purple-500/30">
+              <div class="p-2 bg-purple-100 rounded-lg text-purple-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5h.01M9 9h.01"></path></svg>
+              </div>
+              <h2 class="font-black text-purple-700 uppercase text-sm">Planeamento R&D</h2>
+            </div>
+            <div class="space-y-3">
+              <div class="p-3 bg-purple-50 border-l-4 border-purple-500 rounded">
+                <p class="font-bold text-purple-900 text-sm mb-1">R&D - Joni Regalado</p>
+                <ul class="text-xs text-purple-800 space-y-1">
+                  <li>• Planeamento: Início Produção</li>
+                  <li>• Data de Entrega</li>
+                </ul>
+              </div>
+              <div class="p-3 bg-purple-50 border-l-4 border-purple-500 rounded">
+                <p class="font-bold text-purple-900 text-sm mb-1">R&D - Jonathan Santos</p>
+                <ul class="text-xs text-purple-800 space-y-1">
+                  <li>• Desenvolvimento: MULTIWASHER</li>
+                </ul>
+              </div>
+              <div class="p-3 bg-purple-50 border-l-4 border-purple-500 rounded">
+                <p class="font-bold text-purple-900 text-sm mb-1">R&D - Ricardo Hipólito</p>
+                <ul class="text-xs text-purple-800 space-y-1">
+                  <li>• Desenvolvimento: TROLLEYS</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logística -->
+          <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+            <div class="flex items-center gap-3 mb-4 pb-4 border-b-2 border-indigo-500/30">
+              <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M8 20h8a2 2 0 002-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              </div>
+              <h2 class="font-black text-indigo-700 uppercase text-sm">Logística & Envio</h2>
+            </div>
+            <div class="space-y-3">
+              <div class="p-3 bg-indigo-50 border-l-4 border-indigo-500 rounded">
+                <p class="font-bold text-indigo-900 text-sm mb-1">Logística - Lúcio Mota</p>
+                <ul class="text-xs text-indigo-800 space-y-1">
+                  <li>• Planeamento Envio Equipamentos: INTERNACIONAL</li>
+                </ul>
+              </div>
+              <div class="p-3 bg-indigo-50 border-l-4 border-indigo-500 rounded">
+                <p class="font-bold text-indigo-900 text-sm mb-1">Logística - Paulo Brioso</p>
+                <ul class="text-xs text-indigo-800 space-y-1">
+                  <li>• Planeamento Envio Equipamentos: NACIONAL</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estrutura Comercial -->
+        <div class="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-emerald-500/30">
+            <div class="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L5.257 18.757M13 7L5.257 15.757"></path></svg>
+            </div>
+            <h2 class="font-black text-emerald-700 uppercase text-sm">Estrutura Comercial</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-emerald-50 rounded-lg p-4 border-l-4 border-emerald-600">
+              <h3 class="font-bold text-emerald-900 text-sm mb-3 uppercase">Nacional</h3>
+              <div class="space-y-2 text-sm text-emerald-800">
+                <p>✓ Manuel Diniz</p>
+              </div>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-4 border-l-4 border-emerald-600">
+              <h3 class="font-bold text-emerald-900 text-sm mb-3 uppercase">Comercial Internacional</h3>
+              <div class="space-y-2 text-[12px] text-emerald-800">
+                <p>✓ Tony Ventura</p>
+                <p>✓ Maria Almeida</p>
+                <p>✓ David Borges</p>
+                <p>✓ André Quental</p>
+                <p>✓ Renato Gomes</p>
+              </div>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-4 border-l-4 border-emerald-600">
+              <h3 class="font-bold text-emerald-900 text-sm mb-3 uppercase">Marketing</h3>
+              <div class="space-y-2 text-sm text-emerald-800">
+                <p>✓ Tony Ventura</p>
+                <p>✓ António Jorge</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legenda -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 rounded-xl flex flex-wrap gap-6 justify-center">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-slate-700 rounded border border-slate-600"></div>
+          <span class="text-sm font-semibold">Direção</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-red-600 rounded"></div>
+          <span class="text-sm font-semibold">Pós Venda</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-amber-600 rounded"></div>
+          <span class="text-sm font-semibold">Financeiro</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-orange-600 rounded"></div>
+          <span class="text-sm font-semibold">Produção</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-purple-600 rounded"></div>
+          <span class="text-sm font-semibold">R&D</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-blue-600 rounded"></div>
+          <span class="text-sm font-semibold">Compras</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-indigo-600 rounded"></div>
+          <span class="text-sm font-semibold">Logística</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-emerald-600 rounded"></div>
+          <span class="text-sm font-semibold">Comercial</span>
         </div>
       </div>
     </div>
@@ -782,9 +1134,11 @@
       document.getElementById('view-docs').classList.add('hidden');
       document.getElementById('view-swot').classList.add('hidden');
       document.getElementById('view-ro').classList.add('hidden');
+      document.getElementById('view-org').classList.add('hidden');
       document.getElementById('tab-docs').classList.remove('active');
       document.getElementById('tab-swot').classList.remove('active');
       document.getElementById('tab-ro').classList.remove('active');
+      document.getElementById('tab-org').classList.remove('active');
 
       toggleNewDocButton(tab);
 
@@ -799,6 +1153,9 @@
         document.getElementById('view-ro').classList.remove('hidden');
         document.getElementById('tab-ro').classList.add('active');
         if(roData.length === 0) fetchRo();
+      } else if(tab === 'org') {
+        document.getElementById('view-org').classList.remove('hidden');
+        document.getElementById('tab-org').classList.add('active');
       }
     }
 
@@ -1552,6 +1909,36 @@
       const modal = document.getElementById('roSwotModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+    }
+
+    // =========
+    // Organigrama
+    // =========
+    function toggleOrgView(view) {
+      const fullView = document.getElementById('org-full-view');
+      const detailsView = document.getElementById('org-details-view');
+      const fullBtn = document.getElementById('org-full-btn');
+      const detailsBtn = document.getElementById('org-details-btn');
+
+      if (view === 'full') {
+        fullView.classList.remove('hidden');
+        detailsView.classList.add('hidden');
+        fullBtn.classList.add('active');
+        fullBtn.classList.remove('bg-slate-700', 'hover:bg-slate-600');
+        fullBtn.classList.add('bg-white', 'text-slate-900');
+        detailsBtn.classList.remove('active');
+        detailsBtn.classList.remove('bg-white', 'text-slate-900');
+        detailsBtn.classList.add('bg-slate-700', 'hover:bg-slate-600', 'text-white');
+      } else {
+        fullView.classList.add('hidden');
+        detailsView.classList.remove('hidden');
+        detailsBtn.classList.add('active');
+        detailsBtn.classList.remove('bg-slate-700', 'hover:bg-slate-600');
+        detailsBtn.classList.add('bg-white', 'text-slate-900');
+        fullBtn.classList.remove('active');
+        fullBtn.classList.remove('bg-white', 'text-slate-900');
+        fullBtn.classList.add('bg-slate-700', 'hover:bg-slate-600', 'text-white');
+      }
     }
 
     // ⚠️ NOTA: addDocumentToSheet não estava no snippet original (mantém a tua função anterior)
