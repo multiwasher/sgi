@@ -307,6 +307,10 @@
           + NOVO DOC
         </button>
 
+        <button onclick="openCertificationsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-xs font-black transition-all border border-emerald-700" title="Certificações e Estrutura de Processos">
+          ✓ CERTIFICAÇÕES
+        </button>
+
         <div class="bg-black/20 px-3 py-1.5 rounded-full flex items-center border border-white/5">
           <span id="status-dot" class="status-pulse pulse-emerald"></span>
           <span id="sync-status" class="text-[10px] font-bold uppercase text-emerald-200">Ligação Ativa</span>
@@ -673,6 +677,49 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Modal Certificações -->
+      <div id="certifications-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-6 pb-4 border-b-2">
+            <h2 class="font-bold text-2xl uppercase text-slate-900">✓ Certificações e Estrutura</h2>
+            <button onclick="closeCertificationsModal()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold">×</button>
+          </div>
+          
+          <div class="space-y-6 text-slate-700">
+            <!-- Auditoria e Certificações -->
+            <div class="bg-emerald-50 border-l-4 border-emerald-600 p-6 rounded-lg">
+              <h3 class="font-bold text-lg text-emerald-900 mb-3 uppercase">Auditoria e Certificações</h3>
+              <p class="text-sm leading-relaxed">
+                O Sistema de organização da Somengil, s.a. foi auditado e cumpre com os requisitos da norma <strong>NP EN ISO 9001</strong> e <strong>NP EN ISO 14001</strong>, encontrando-se implementado para:
+              </p>
+              <ul class="mt-4 space-y-2 text-sm list-disc list-inside ml-2">
+                <li>Design, desenvolvimento, produção, comercialização e assistência técnica de equipamento de lavagem</li>
+                <li>Comercialização e assistência técnica de equipamentos de frio industrial</li>
+              </ul>
+            </div>
+
+            <!-- Requisitos Não Aplicáveis -->
+            <div class="bg-amber-50 border-l-4 border-amber-600 p-6 rounded-lg">
+              <h3 class="font-bold text-lg text-amber-900 mb-3 uppercase">Requisitos Não Aplicáveis</h3>
+              <p class="text-sm text-amber-800">n.a.</p>
+            </div>
+
+            <!-- Estrutura dos Processos -->
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
+              <h3 class="font-bold text-lg text-blue-900 mb-3 uppercase">Estrutura dos Processos</h3>
+              <p class="text-sm leading-relaxed text-blue-900 mb-4">
+                A Somengil adoptou uma abordagem baseada na identificação dos seus processos para o desenvolvimento, implementação e melhoria da eficácia do SGQ para aumentar a satisfação do cliente e de todas as outras partes interessadas mediante o cumprimento dos seus requisitos.
+              </p>
+              <p class="text-sm font-semibold text-blue-900">
+                VER MAPA PROCESSOS - PS_DGN_02_02 - SWIMLANE Mapeamento de Processos
+              </p>
+            </div>
+          </div>
+
+          <button onclick="closeCertificationsModal()" class="w-full mt-8 bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-lg transition-colors">Fechar</button>
         </div>
       </div>
 
@@ -1987,6 +2034,16 @@
       modal.classList.add('hidden');
     }
 
+    function openCertificationsModal() {
+      const modal = document.getElementById('certifications-modal');
+      modal.classList.remove('hidden');
+    }
+
+    function closeCertificationsModal() {
+      const modal = document.getElementById('certifications-modal');
+      modal.classList.add('hidden');
+    }
+
     // ⚠️ NOTA: addDocumentToSheet não estava no snippet original (mantém a tua função anterior)
 
     window.onload = () => {
@@ -2004,10 +2061,16 @@
         });
       });
 
-      // Fechar modal ao clicar fora dele
+      // Fechar modais ao clicar fora deles
       document.getElementById('org-staff-modal').addEventListener('click', (e) => {
         if (e.target.id === 'org-staff-modal') {
           closeOrgStaffModal();
+        }
+      });
+
+      document.getElementById('certifications-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'certifications-modal') {
+          closeCertificationsModal();
         }
       });
 
