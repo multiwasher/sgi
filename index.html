@@ -546,7 +546,7 @@
 
       <!-- Vista Geral (Organigrama) -->
       <div id="org-full-view" class="overflow-x-auto pb-12 bg-white rounded-xl p-8 shadow-sm border border-slate-200">
-        <div class="flex flex-col items-center min-w-[1600px]">
+        <div class="flex flex-col items-center min-w-[1600px] relative">
           
           <!-- Administração (Topo) -->
           <div class="mb-16 relative">
@@ -588,6 +588,27 @@
           <!-- Departamentos (Nível Inferior) -->
           <div class="relative pt-16 border-t-2 border-gradient-to-r from-transparent via-slate-400 to-transparent w-full flex justify-center gap-4 flex-nowrap overflow-x-auto pb-4">
             <div class="absolute h-16 w-1 bg-gradient-to-b from-slate-500 via-slate-400 to-transparent left-1/2 -top-16 -translate-x-1/2 rounded-full shadow-lg"></div>
+            
+            <!-- SVG para conectar todos os departamentos ao ADMINISTRAÇÃO -->
+            <svg class="absolute inset-0 w-full pointer-events-none" style="top: -180px; height: 350px; z-index: 0;" viewBox="0 0 1600 350" preserveAspectRatio="none">
+              <!-- Linhas de conexão curva de cada departamento ao ADMINISTRAÇÃO (centro em 50% = 800px) -->
+              <!-- Pós Venda (12.5% = 200px) -->
+              <path d="M 200 330 Q 400 200, 800 20" stroke="#ef4444" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+              <!-- Financeiro (23% = 368px) -->
+              <path d="M 368 330 Q 500 200, 800 20" stroke="#b45309" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+              <!-- Produção (33.5% = 536px) -->
+              <path d="M 536 330 Q 650 200, 800 20" stroke="#ea580c" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+              <!-- R&D (44% = 704px) -->
+              <path d="M 704 330 Q 750 200, 800 20" stroke="#9333ea" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+              <!-- Compras (54.5% = 872px) -->
+              <path d="M 872 330 Q 850 200, 800 20" stroke="#2563eb" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+              <!-- Logística (65% = 1040px) -->
+              <path d="M 1040 330 Q 950 200, 800 20" stroke="#4f46e5" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+              <!-- Comercial (75.5% = 1208px) -->
+              <path d="M 1208 330 Q 1100 200, 800 20" stroke="#059669" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+              <!-- IoT (86% = 1376px) -->
+              <path d="M 1376 330 Q 1200 200, 800 20" stroke="#0891b2" stroke-width="2.5" fill="none" opacity="0.35" stroke-dasharray="6,4"/>
+            </svg>
             
             <!-- Pós Venda -->
             <div class="flex flex-col items-center relative">
