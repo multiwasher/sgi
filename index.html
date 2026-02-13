@@ -1429,18 +1429,48 @@
       openRoSwotModal(codigo);
     }
 
-    function openRoSwotModal(codigo) {
-      const codigoNorm = normLoose(codigo);
-      const matchedSwot = swotData.find(item => {
-        const itemCodigo = getAny(item, ['código','Código','ID','id','codigo']);
-        return normLoose(itemCodigo) === codigoNorm;
-      });
+    function openRoSwotModal(codigos) {
+      // Extrai múltiplos códigos (separados por ; , ou espaço)
+      const codigosArray = String(codigos || '')
+        .split(/[;,]/)
+        .map(c => c.trim())
+        .filter(c => c.length > 0);
 
       const content = document.getElementById('roSwotModalContent');
       
-      if (!matchedSwot) {
-        content.innerHTML = `<p class="text-slate-600 text-sm">Nenhum registo SWOT encontrado com o código: <strong>${escapeHtml(codigo)}</strong></p>`;
-      } else {
+      if (codigosArray.length === 0) {
+        content.innerHTML = `<p class="text-slate-600 text-sm">Nenhum código fornecido.</p>`;
+        const modal = document.getElementById('roSwotModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        return;
+      }
+
+      // Procura todos os códigos em swotData
+      const matchedSwots = codigosArray.map(codigo => {
+        const codigoNorm = normLoose(codigo);
+        return {
+          codigo: codigo,
+          data: swotData.find(item => {
+            const itemCodigo = getAny(item, ['código','Código','ID','id','codigo']);
+            return normLoose(itemCodigo) === codigoNorm;
+          })
+        };
+      });
+
+      // Cria o HTML para todos os códigos encontrados
+      let htmlContent = '';
+      let foundCount = 0;
+      let notFoundCodigos = [];
+
+      matchedSwots.forEach(match => {
+        if (!match.data) {
+          notFoundCodigos.push(match.codigo);
+          return;
+        }
+
+        foundCount++;
+        const matchedSwot = match.data;
         const swotRaw = getAny(matchedSwot, ['SWOT','Swot']);
         const descricao = getAny(matchedSwot, ['Descrição','Descricao','DESC','desc']);
         const itemCodigo = getAny(matchedSwot, ['código','Código','ID','id','codigo']);
@@ -1471,30 +1501,46 @@
           `;
         }
 
-        content.innerHTML = `
-          <div class="border-l-4 border-emerald-500 pl-4 mb-4">
+        htmlContent += `
+          <div class="border-l-4 border-emerald-500 pl-4 mb-6 pb-6 ${foundCount > 1 ? 'border-b border-slate-200' : ''}">
             <p class="text-[10px] font-black uppercase text-slate-400 mb-1">SWOT - ${escapeHtml(swotRaw)}</p>
             <p class="text-sm font-bold text-slate-700">Código: ${escapeHtml(itemCodigo)}</p>
-          </div>
-          
-          <div class="mb-4">
-            <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Descrição</p>
-            <p class="text-sm text-slate-700">${escapeHtml(descricao)}</p>
-          </div>
+            
+            <div class="mt-4 mb-4">
+              <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Descrição</p>
+              <p class="text-sm text-slate-700">${escapeHtml(descricao)}</p>
+            </div>
 
-          <div class="mb-4">
-            <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Tomada de Ação</p>
-            <p class="text-sm text-slate-700">${escapeHtml(tomada)}</p>
-          </div>
+            <div class="mb-4">
+              <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Tomada de Ação</p>
+              <p class="text-sm text-slate-700">${escapeHtml(tomada)}</p>
+            </div>
 
-          ${acoesList ? `
-          <div>
-            <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Ações Estratégicas</p>
-            <div class="space-y-1">${acoesList}</div>
+            ${acoesList ? `
+            <div>
+              <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Ações Estratégicas</p>
+              <div class="space-y-1">${acoesList}</div>
+            </div>
+            ` : ''}
           </div>
-          ` : ''}
+        `;
+      });
+
+      // Adiciona aviso para códigos não encontrados
+      if (notFoundCodigos.length > 0) {
+        htmlContent += `
+          <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-[10px] font-black text-red-700 uppercase">Códigos não encontrados:</p>
+            <p class="text-sm text-red-600">${escapeHtml(notFoundCodigos.join(', '))}</p>
+          </div>
         `;
       }
+
+      if (htmlContent === '') {
+        htmlContent = `<p class="text-slate-600 text-sm">Nenhum registo SWOT encontrado para os códigos fornecidos.</p>`;
+      }
+
+      content.innerHTML = htmlContent;
 
       const modal = document.getElementById('roSwotModal');
       modal.classList.remove('hidden');
