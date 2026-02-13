@@ -554,16 +554,13 @@
               <h3 class="font-black text-base uppercase tracking-tight mb-1">ADMINISTRAÇÃO</h3>
               <p class="text-xs">Tony Ventura</p>
             </div>
-            <div class="absolute h-10 w-0.5 bg-gradient-to-b from-slate-500 via-slate-400 to-transparent left-1/2 -bottom-10 -translate-x-1/2 rounded-full shadow-lg"></div>
           </div>
 
           <!-- Nível de Staff (Contabilidade/SGQA) -->
           <div class="flex justify-center gap-8 mb-10 relative">
-            <div class="absolute h-0.5 w-[50%] bg-gradient-to-r from-transparent via-slate-500 to-transparent top-0 left-1/2 -translate-x-1/2 -mt-5 rounded-full shadow-md"></div>
             
             <!-- Contabilidade -->
             <div class="relative pt-5">
-              <div class="absolute h-5 w-0.5 bg-gradient-to-b from-slate-500 to-slate-300 left-1/2 top-0 -translate-x-1/2 rounded-full"></div>
               <button class="org-dept-btn bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-lg shadow-md text-center border border-slate-600 cursor-pointer transition-colors" data-dept="CONTABILIDADE" data-staff="Lúcio Mota|Ricardo Costa">
                 <h3 class="font-bold uppercase text-xs">CONTABILIDADE</h3>
               </button>
@@ -571,7 +568,6 @@
 
             <!-- SGQA -->
             <div class="relative pt-5">
-              <div class="absolute h-5 w-0.5 bg-gradient-to-b from-slate-500 to-slate-300 left-1/2 top-0 -translate-x-1/2 rounded-full"></div>
               <button class="org-dept-btn bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-lg shadow-md text-center border border-slate-600 cursor-pointer transition-colors" data-dept="SGI" data-staff="Mário Fragoso">
                 <h3 class="font-bold uppercase text-xs">SGI</h3>
               </button>
@@ -580,41 +576,6 @@
 
           <!-- Departamentos (Nível Inferior) -->
           <div class="relative pt-10 w-full flex justify-center gap-2 flex-wrap pb-4">
-            
-            <!-- SVG para conectar todos os departamentos ao ADMINISTRAÇÃO -->
-            <svg class="absolute w-full pointer-events-none" style="top: -100px; height: 200px; z-index: 0;" viewBox="0 0 1000 200" preserveAspectRatio="none">
-              <!-- Linhas de conexão com ângulos de 90º -->
-              
-              <!-- CONTABILIDADE (staff level - esquerda) -->
-              <path d="M 380 100 L 500 100 L 500 0" stroke="#64748b" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- SGI (staff level - direita) -->
-              <path d="M 620 100 L 500 100 L 500 0" stroke="#64748b" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- Pós Venda -->
-              <path d="M 60 200 L 60 120 L 500 120 L 500 0" stroke="#ef4444" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- Financeiro -->
-              <path d="M 145 200 L 145 120 L 500 120 L 500 0" stroke="#b45309" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- Produção -->
-              <path d="M 230 200 L 230 120 L 500 120 L 500 0" stroke="#ea580c" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- R&D -->
-              <path d="M 315 200 L 315 120 L 500 120 L 500 0" stroke="#9333ea" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- Compras (centro) -->
-              <path d="M 500 200 L 500 0" stroke="#2563eb" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- Logística -->
-              <path d="M 685 200 L 685 120 L 500 120 L 500 0" stroke="#4f46e5" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- Comercial -->
-              <path d="M 770 200 L 770 120 L 500 120 L 500 0" stroke="#059669" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-              
-              <!-- IoT -->
-              <path d="M 855 200 L 855 120 L 500 120 L 500 0" stroke="#0891b2" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="4,3"/>
-            </svg>
             
             <!-- Pós Venda -->
             <div class="flex flex-col items-center relative z-10 min-w-[120px]">
