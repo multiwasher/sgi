@@ -1271,6 +1271,85 @@
     // =========
     // R&O - Riscos e Oportunidades
     // =========
+    
+    // Mapa de sinónimos e termos associados para busca semântica
+    const RO_SEARCH_SYNONYMS = {
+      // Ambiental
+      'ambi': ['ambi', 'ambiente', 'ambiental', 'ambientes', 'esg', 'verde', 'sustentabilidade', 'sustentavel', 'ecologia', 'ecologico'],
+      'ambiente': ['ambi', 'ambiente', 'ambiental', 'ambientes', 'esg', 'verde', 'sustentabilidade', 'sustentavel', 'ecologia', 'ecologico'],
+      'esg': ['esg', 'ambiental', 'ambiente', 'sustentabilidade', 'verde', 'responsabilidade', 'governa'],
+      
+      // Energia
+      'energia': ['energia', 'eletric', 'consumo', 'recurso', 'eficiencia', 'gas', 'combustivel'],
+      'eletric': ['energia', 'eletric', 'consumo', 'recurso'],
+      'consumo': ['consumo', 'energia', 'recurso', 'eficiencia'],
+      
+      // Água
+      'agua': ['agua', 'hidric', 'recurso', 'consumo', 'desperdicio', 'contaminacao'],
+      'hidric': ['agua', 'hidric', 'recurso', 'contaminacao'],
+      
+      // Resíduos
+      'residuo': ['residuo', 'lixo', 'reciclagem', 'ecoponto', 'oleo', 'lixivado', 'aterro'],
+      'lixo': ['residuo', 'lixo', 'reciclagem', 'ecoponto', 'desperdicio'],
+      'reciclagem': ['reciclagem', 'residuo', 'reutilizacao', 'valorizacao'],
+      'quimico': ['quimico', 'substancia', 'perigoso', 'toxico', 'contaminacao'],
+      
+      // Emissões
+      'emissao': ['emissao', 'carbono', 'co2', 'gases', 'poluicao', 'atmosfera'],
+      'carbono': ['carbono', 'co2', 'emissao', 'clima', 'aquecimento'],
+      'poluicao': ['poluicao', 'emissao', 'contaminacao', 'atmosfera'],
+      
+      // Legal/Conformidade
+      'lei': ['lei', 'legislacao', 'conformidade', 'requisito', 'legal', 'norma', 'iso', 'regulamento', 'decreto'],
+      'legal': ['legal', 'lei', 'legislacao', 'conformidade', 'regulamento'],
+      'conformidade': ['conformidade', 'lei', 'legal', 'requisito', 'norma'],
+      'iso': ['iso', 'norma', 'certificacao', 'requisito', 'conformidade'],
+      'regulamento': ['regulamento', 'lei', 'legal', 'decreto', 'legislacao'],
+      
+      // Saúde e Segurança
+      'seguranca': ['seguranca', 'saude', 'protecao', 'incendio', 'evacuacao', 'socorro'],
+      'saude': ['saude', 'seguranca', 'protecao', 'bem-estar'],
+      'incendio': ['incendio', 'seguranca', 'protecao', 'evacuacao', 'emergencia'],
+      'emergencia': ['emergencia', 'incendio', 'seguranca', 'evacuacao'],
+      
+      // Transporte
+      'transporte': ['transporte', 'emissao', 'combustivel', 'veiculo', 'logistica', 'carbono'],
+      'veiculo': ['veiculo', 'transporte', 'combustivel', 'emissao'],
+      
+      // Equipa/Pessoal
+      'equipa': ['equipa', 'pessoal', 'colaborador', 'trabalhador', 'formacao', 'treino', 'competencia'],
+      'formacao': ['formacao', 'treino', 'sensibilizacao', 'competencia', 'capacitacao', 'equipa'],
+      'treino': ['treino', 'formacao', 'sensibilizacao', 'capacitacao'],
+      
+      // Auditoria/Controlo
+      'auditoria': ['auditoria', 'verificacao', 'inspecao', 'controlo', 'monitorizacao', 'avaliacao'],
+      'inspecao': ['inspecao', 'auditoria', 'verificacao', 'controlo'],
+      'controlo': ['controlo', 'auditoria', 'monitorizacao', 'verificacao'],
+      'monitorizacao': ['monitorizacao', 'controlo', 'auditoria', 'seguimiento'],
+      
+      // Gerais
+      'risco': ['risco', 'ameaca', 'perigo', 'problema', 'critico'],
+      'oportunidade': ['oportunidade', 'melhoria', 'beneficio', 'vantagem', 'potencial'],
+      'melhoria': ['melhoria', 'oportunidade', 'aprimoramento', 'otimizacao'],
+      'impacto': ['impacto', 'efeito', 'consequencia', 'resultado', 'influencia'],
+      'contaminacao': ['contaminacao', 'poluicao', 'quimico', 'toxico', 'desperdicio'],
+    };
+
+    // Expande termo de pesquisa com sinónimos
+    function expandSearchTerm(term) {
+      const normalized = normLoose(term);
+      
+      // Busca no mapa de sinónimos
+      for (const [key, synonyms] of Object.entries(RO_SEARCH_SYNONYMS)) {
+        if (normalized.includes(key) || key.includes(normalized) || normalized === key) {
+          return synonyms;
+        }
+      }
+      
+      // Se não encontrar em sinónimos, retorna o termo normalizado
+      return [normalized];
+    }
+
     function applyRoFilters() {
       const searchInput = document.getElementById('searchRo').value.toLowerCase().trim();
       const normalized = (str) => normLoose(str);
@@ -1285,9 +1364,12 @@
         const keyword = getAny(item, ['KeyWord', 'Keyword']);
         
         const content = normalized(`${descricao} ${origem} ${processos} ${codigo} ${keyword}`);
-        const searchTerm = normalized(searchInput);
         
-        return content.includes(searchTerm);
+        // Expande o termo com sinónimos
+        const expandedTerms = expandSearchTerm(searchInput);
+        
+        // Verifica se algum dos termos expandidos está no conteúdo
+        return expandedTerms.some(term => content.includes(term));
       });
 
       renderRo(filtered);
