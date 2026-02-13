@@ -307,10 +307,6 @@
           <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
         </div>
 
-        <button id="btn-new-doc" onclick="openModal()" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-xl text-xs font-black transition-all border border-white/20">
-          + NOVO DOC
-        </button>
-
         <div class="bg-black/20 px-3 py-1.5 rounded-full flex items-center border border-white/5">
           <span id="status-dot" class="status-pulse pulse-emerald"></span>
           <span id="sync-status" class="text-[10px] font-bold uppercase text-emerald-200">Ligação Ativa</span>
@@ -328,11 +324,14 @@
           <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Documentos Totais</p>
           <h3 id="stat-docs" class="text-3xl font-black text-slate-800 tracking-tighter">--</h3>
         </div>
-        <div class="glass-card p-6 md:col-span-2 flex items-center justify-between">
-          <div class="relative w-full group">
+        <div class="glass-card p-6 md:col-span-2 flex items-center justify-between gap-4">
+          <div class="relative flex-1 group">
             <input type="text" id="searchDocs" onkeyup="filterDocs()" placeholder="Pesquisar (ex: 'emergência' encontra 'segurança', 'autoprot.')" class="w-full bg-slate-50 border border-slate-200 pl-11 pr-4 py-3 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
             <svg class="absolute left-4 top-3.5 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           </div>
+          <button id="btn-new-doc" onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl text-xs font-black transition-all border border-emerald-700 whitespace-nowrap">
+            + NOVO DOC
+          </button>
         </div>
       </div>
 
