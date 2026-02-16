@@ -1258,18 +1258,24 @@
 
       <div class="glass-card overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left">
+          <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-slate-50 border-b border-slate-100">
-                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Fase</th>
-                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Descrição</th>
-                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
-                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Data</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Item</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data de Registo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ano</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Origem</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ação a Realizar</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prazo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Conclusão</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Eficácia</th>
               </tr>
             </thead>
             <tbody id="pdcaTableBody" class="divide-y divide-slate-50">
-              <tr><td colspan="5" class="px-8 py-20 text-center animate-pulse text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</td></tr>
+              <tr><td colspan="11" class="px-8 py-20 text-center animate-pulse text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</td></tr>
             </tbody>
           </table>
         </div>
@@ -2027,38 +2033,49 @@
     function renderPdca(data) {
       const body = document.getElementById('pdcaTableBody');
       if (!data || data.length === 0) {
-        body.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados para a pesquisa</td></tr>';
+        body.innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados para a pesquisa</td></tr>';
         return;
       }
 
       body.innerHTML = data.map(item => {
-        const fase = escapeHtml(getAny(item, ['Fase', 'fase', 'FASE']) || '-');
-        const descricao = escapeHtml(getAny(item, ['Descrição', 'Descricao', 'descricao', 'DESC', 'desc']) || '-');
-        const responsavel = escapeHtml(getAny(item, ['Responsável', 'Responsavel', 'responsavel', 'RESP']) || '-');
-        const status = escapeHtml(getAny(item, ['Status', 'status', 'Estado', 'estado', 'ESTADO']) || '-');
-        const data_cell = escapeHtml(formatDate(getAny(item, ['Data', 'data', 'DATA', 'Date'])) || '-');
+        const itemNum = escapeHtml(getAny(item, ['Item', 'item', 'ITEM']) || '-');
+        const dataRegisto = escapeHtml(formatDate(getAny(item, ['Data de Registo', 'data de registo', 'DATA DE REGISTO'])) || '-');
+        const ano = escapeHtml(getAny(item, ['Ano', 'ano', 'ANO']) || '-');
+        const origem = escapeHtml(getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '-');
+        const processo = escapeHtml(getAny(item, ['Processo', 'processo', 'PROCESSO']) || '-');
+        const acao = escapeHtml(getAny(item, ['Ação a ser Realizada', 'acao a ser realizada', 'AÇÃO A SER REALIZADA']) || '-');
+        const responsavel = escapeHtml(getAny(item, ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel']) || '-');
+        const prazo = escapeHtml(formatDate(getAny(item, ['Prazo', 'prazo', 'PRAZO'])) || '-');
+        const dataConclusao = escapeHtml(formatDate(getAny(item, ['Data de Conclusão', 'data de conclusao', 'DATA DE CONCLUSÃO'])) || '-');
+        const status = escapeHtml(getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '-');
+        const eficacia = escapeHtml(getAny(item, ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']) || '-');
         
-        const statusColor = status.toLowerCase() === 'concluído' || status.toLowerCase() === 'concluido' ? '#dcfce7' : 
-                           status.toLowerCase() === 'em andamento' ? '#fef9c3' : '#fee2e2';
-        const statusTextColor = status.toLowerCase() === 'concluído' || status.toLowerCase() === 'concluido' ? '#166534' : 
-                               status.toLowerCase() === 'em andamento' ? '#854d0e' : '#991b1b';
+        const statusColor = status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido') ? '#dcfce7' : 
+                           status.toLowerCase().includes('em andamento') ? '#fef9c3' : '#fee2e2';
+        const statusTextColor = status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido') ? '#166534' : 
+                               status.toLowerCase().includes('em andamento') ? '#854d0e' : '#991b1b';
+        
+        const eficaciaColor = eficacia.toLowerCase().includes('eficaz') ? '#dcfce7' : 
+                             eficacia.toLowerCase().includes('não eficaz') ? '#fee2e2' : '#f1f5f9';
+        const eficaciaTextColor = eficacia.toLowerCase().includes('eficaz') ? '#166534' : 
+                                 eficacia.toLowerCase().includes('não eficaz') ? '#991b1b' : '#475569';
         
         return `
         <tr class="hover:bg-slate-50/50 transition-colors group">
-          <td class="px-8 py-5">
-            <span class="type-badge bg-emerald-50 text-emerald-700 border-emerald-200">${fase}</span>
+          <td class="px-4 py-3 text-xs font-semibold text-slate-700">${itemNum}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${dataRegisto}</td>
+          <td class="px-4 py-3 text-xs font-semibold text-slate-700">${ano}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${origem}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${processo}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${acao}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${responsavel}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${prazo}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${dataConclusao}</td>
+          <td class="px-4 py-3">
+            <span class="inline-block text-xs font-semibold px-2 py-1 rounded" style="background:${statusColor}; color:${statusTextColor}">${status}</span>
           </td>
-          <td class="px-8 py-5">
-            <p class="text-sm font-semibold text-slate-700">${descricao}</p>
-          </td>
-          <td class="px-8 py-5">
-            <p class="text-sm text-slate-600">${responsavel}</p>
-          </td>
-          <td class="px-8 py-5">
-            <span class="text-xs font-semibold text-slate-600 px-3 py-1 rounded-lg" style="background:${statusColor}; color:${statusTextColor}">${status}</span>
-          </td>
-          <td class="px-8 py-5">
-            <p class="text-sm text-slate-600">${data_cell}</p>
+          <td class="px-4 py-3">
+            <span class="inline-block text-xs font-semibold px-2 py-1 rounded" style="background:${eficaciaColor}; color:${eficaciaTextColor}">${eficacia}</span>
           </td>
         </tr>
       `;
