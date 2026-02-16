@@ -304,6 +304,7 @@
           <button onclick="switchTab('ro')" id="tab-ro" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">R&O</button>
           <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
           <button onclick="switchTab('planning')" id="tab-planning" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PLANEAMENTO</button>
+          <button onclick="switchTab('pdca')" id="tab-pdca" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PDCA</button>
         </div>
 
         <div class="bg-black/20 px-3 py-1.5 rounded-full flex items-center border border-white/5">
@@ -1231,6 +1232,49 @@
         </div>
       </div>
     </div>
+
+    <!-- CONTEÚDO: PDCA -->
+    <div id="view-pdca" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h2 class="text-2xl font-black text-slate-800 tracking-tight">Ciclo PDCA</h2>
+          <p class="text-slate-500 text-sm">Planeamento, Execução, Verificação e Ação Corretiva</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a
+            href="https://docs.google.com/spreadsheets/d/1kep8pBEA2ZS0e-dKZKhrvJeOd-BghpZiXRJ2_WSFmzM/edit?usp=sharing"
+            target="_blank"
+            rel="noopener"
+            class="text-[10px] font-black text-slate-600 hover:text-slate-800 uppercase tracking-widest bg-white px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all"
+            title="Abrir Google Sheets (origem dos dados PDCA)"
+          >
+            DOCUMENTO DE ORIGEM
+          </a>
+
+          <button onclick="fetchPdca()" class="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-widest bg-emerald-50 px-3 py-2 rounded-lg transition-all">Atualizar Dados</button>
+        </div>
+      </div>
+
+      <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-100">
+                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Fase</th>
+                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Descrição</th>
+                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
+                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th class="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Data</th>
+              </tr>
+            </thead>
+            <tbody id="pdcaTableBody" class="divide-y divide-slate-50">
+              <tr><td colspan="5" class="px-8 py-20 text-center animate-pulse text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Modal: Detalhe SWOT do R&O -->
@@ -1255,10 +1299,12 @@
     const SWOT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
     const SWOT_WRITE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQNDfWCVPYPz84y7CU2BUYWbN-Orh0hq7CLzmjuCu1vrDnKRe7WgskN6ZXjsSQDSHJ/exec';
     const RO_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
+    const PDCA_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmXPWaBR74rQS_VXI2Q8SuF5jGYy-IsaTm0SGA8q8vv3zGH1Xwo-D1HuBirj0CndLW/exec';
 
     let allDocuments = [];
     let swotData = [];
     let roData = [];
+    let pdcaData = [];
 
     let currentDocTypeFilters = new Set(); // Multi-select para tipos de documentos
     let currentSwotFilterCategory = 'TODOS';
@@ -1538,11 +1584,13 @@
       document.getElementById('view-planning').classList.add('hidden');
       document.getElementById('view-planning-meetings').classList.add('hidden');
       document.getElementById('view-planning-audits').classList.add('hidden');
+      document.getElementById('view-pdca').classList.add('hidden');
       document.getElementById('tab-docs').classList.remove('active');
       document.getElementById('tab-swot').classList.remove('active');
       document.getElementById('tab-ro').classList.remove('active');
       document.getElementById('tab-org').classList.remove('active');
       document.getElementById('tab-planning').classList.remove('active');
+      document.getElementById('tab-pdca').classList.remove('active');
 
       toggleNewDocButton(tab);
 
@@ -1563,6 +1611,10 @@
       } else if(tab === 'planning') {
         document.getElementById('view-planning').classList.remove('hidden');
         document.getElementById('tab-planning').classList.add('active');
+      } else if(tab === 'pdca') {
+        document.getElementById('view-pdca').classList.remove('hidden');
+        document.getElementById('tab-pdca').classList.add('active');
+        if(pdcaData.length === 0) fetchPdca();
       }
     }
 
@@ -1785,6 +1837,35 @@
       document.body.appendChild(script);
     }
 
+    function fetchPdca() {
+      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px] animate-pulse">A carregar dados PDCA...</td></tr>';
+
+      const callbackName = `cb_pdca_${Date.now()}`;
+      window[callbackName] = (data) => {
+        if (data && data.ok === false) {
+          const msg = `<tr><td colspan="5" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro PDCA: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          document.getElementById('pdcaTableBody').innerHTML = msg;
+          delete window[callbackName];
+          return;
+        }
+
+        pdcaData = Array.isArray(data) ? data : (data?.data || []);
+        renderPdca(pdcaData);
+        delete window[callbackName];
+      };
+
+      const script = document.createElement('script');
+      script.src = `${PDCA_APPS_SCRIPT_URL}?sheet=PDCA&callback=${callbackName}&t=${Date.now()}`;
+      script.onload = () => script.remove();
+      script.onerror = () => {
+        const msg = `<tr><td colspan="5" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script PDCA.</td></tr>`;
+        document.getElementById('pdcaTableBody').innerHTML = msg;
+        script.remove();
+        delete window[callbackName];
+      };
+      document.body.appendChild(script);
+    }
+
     // =========
     // Docs
     // =========
@@ -1941,6 +2022,47 @@
       if (t.includes('modelo')) return 'badge-modelo';
       if (t.includes('pasta')) return 'badge-pasta';
       return 'badge-default';
+    }
+
+    function renderPdca(data) {
+      const body = document.getElementById('pdcaTableBody');
+      if (!data || data.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados para a pesquisa</td></tr>';
+        return;
+      }
+
+      body.innerHTML = data.map(item => {
+        const fase = escapeHtml(getAny(item, ['Fase', 'fase', 'FASE']) || '-');
+        const descricao = escapeHtml(getAny(item, ['Descrição', 'Descricao', 'descricao', 'DESC', 'desc']) || '-');
+        const responsavel = escapeHtml(getAny(item, ['Responsável', 'Responsavel', 'responsavel', 'RESP']) || '-');
+        const status = escapeHtml(getAny(item, ['Status', 'status', 'Estado', 'estado', 'ESTADO']) || '-');
+        const data_cell = escapeHtml(formatDate(getAny(item, ['Data', 'data', 'DATA', 'Date'])) || '-');
+        
+        const statusColor = status.toLowerCase() === 'concluído' || status.toLowerCase() === 'concluido' ? '#dcfce7' : 
+                           status.toLowerCase() === 'em andamento' ? '#fef9c3' : '#fee2e2';
+        const statusTextColor = status.toLowerCase() === 'concluído' || status.toLowerCase() === 'concluido' ? '#166534' : 
+                               status.toLowerCase() === 'em andamento' ? '#854d0e' : '#991b1b';
+        
+        return `
+        <tr class="hover:bg-slate-50/50 transition-colors group">
+          <td class="px-8 py-5">
+            <span class="type-badge bg-emerald-50 text-emerald-700 border-emerald-200">${fase}</span>
+          </td>
+          <td class="px-8 py-5">
+            <p class="text-sm font-semibold text-slate-700">${descricao}</p>
+          </td>
+          <td class="px-8 py-5">
+            <p class="text-sm text-slate-600">${responsavel}</p>
+          </td>
+          <td class="px-8 py-5">
+            <span class="text-xs font-semibold text-slate-600 px-3 py-1 rounded-lg" style="background:${statusColor}; color:${statusTextColor}">${status}</span>
+          </td>
+          <td class="px-8 py-5">
+            <p class="text-sm text-slate-600">${data_cell}</p>
+          </td>
+        </tr>
+      `;
+      }).join('');
     }
 
     // =========
