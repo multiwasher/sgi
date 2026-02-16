@@ -2101,26 +2101,26 @@
       }
 
       body.innerHTML = data.map(item => {
-        const itemNum = escapeHtml(getAny(item, ['Item', 'item', 'ITEM']) || '-');
-        const dataRegisto = escapeHtml(formatDate(getAny(item, ['Data de Registo', 'data de registo', 'DATA DE REGISTO'])) || '-');
-        const ano = escapeHtml(getAny(item, ['Ano', 'ano', 'ANO']) || '-');
-        const origem = escapeHtml(getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '-');
-        const processo = escapeHtml(getAny(item, ['Processo', 'processo', 'PROCESSO']) || '-');
-        const acao = escapeHtml(getAny(item, ['Ação a ser Realizada', 'acao a ser realizada', 'AÇÃO A SER REALIZADA']) || '-');
-        const responsavel = escapeHtml(getAny(item, ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel']) || '-');
-        const prazo = escapeHtml(formatDate(getAny(item, ['Prazo', 'prazo', 'PRAZO'])) || '-');
-        const dataConclusao = escapeHtml(formatDate(getAny(item, ['Data de Conclusão', 'data de conclusao', 'DATA DE CONCLUSÃO'])) || '-');
-        const status = escapeHtml(getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '-');
-        const eficacia = escapeHtml(getAny(item, ['Análise da Eficácia']) || '-');
+        const itemNum = escapeHtml((item[0] || '') + '');
+        const dataRegisto = escapeHtml(formatDate(item[1]) || '-');
+        const ano = escapeHtml((item[2] || '') + '');
+        const origem = escapeHtml((item[3] || '') + '');
+        const processo = escapeHtml((item[4] || '') + '');
+        const acao = escapeHtml((item[5] || '') + '');
+        const responsavel = escapeHtml((item[8] || '') + '');
+        const prazo = escapeHtml(formatDate(item[9]) || '-');
+        const dataConclusao = escapeHtml(formatDate(item[10]) || '-');
+        const status = escapeHtml((item[15] || '') + '');
+        const eficacia = escapeHtml((item[16] || '') + '');
         
         const statusColor = status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido') ? '#dcfce7' : 
                            status.toLowerCase().includes('em andamento') ? '#fef9c3' : '#fee2e2';
         const statusTextColor = status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido') ? '#166534' : 
                                status.toLowerCase().includes('em andamento') ? '#854d0e' : '#991b1b';
         
-        const eficaciaColor = eficacia.toLowerCase().includes('eficaz') ? '#dcfce7' : 
+        const eficaciaColor = eficacia.toLowerCase().includes('eficaz') && !eficacia.toLowerCase().includes('não') ? '#dcfce7' : 
                              eficacia.toLowerCase().includes('não eficaz') ? '#fee2e2' : '#f1f5f9';
-        const eficaciaTextColor = eficacia.toLowerCase().includes('eficaz') ? '#166534' : 
+        const eficaciaTextColor = eficacia.toLowerCase().includes('eficaz') && !eficacia.toLowerCase().includes('não') ? '#166534' : 
                                  eficacia.toLowerCase().includes('não eficaz') ? '#991b1b' : '#475569';
         
         return `
@@ -2146,7 +2146,14 @@
     }
 
     function buildPdcaFilters() {
-      // Recolher valores únicos para cada filtro
+      // Mapeamento de colunas:
+      // C (índice 2) = Ano
+      // D (índice 3) = Origem
+      // E (índice 4) = Processo
+      // I (índice 8) = Responsável
+      // P (índice 15) = Status
+      // Q (índice 16) = Eficácia
+
       const valores = {
         ano: new Set(),
         processo: new Set(),
@@ -2155,16 +2162,15 @@
       };
 
       pdcaData.forEach(item => {
-        const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
-        const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
-        const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
-        const eficacia = getAny(item, ['Análise da Eficácia']) || '';
+        const ano = (item[2] || '').toString().trim();
+        const processo = (item[4] || '').toString().trim();
+        const status = (item[15] || '').toString().trim();
+        const eficacia = (item[16] || '').toString().trim();
 
-        if (ano) valores.ano.add(String(ano).trim());
-        if (processo) valores.processo.add(String(processo).trim());
-        if (status) valores.status.add(String(status).trim());
-        if (eficacia) valores.eficacia.add(String(eficacia).trim());
-      });
+        if (ano) valores.ano.add(ano);
+        if (processo) valores.processo.add(processo);
+        if (status) valores.status.add(status);
+        if (eficacia) valores.eficacia.add(eficacia);
 
       // Criar botões para ANO
       const anoContainer = document.getElementById('pdca-ano-filters');
@@ -2250,59 +2256,67 @@
     function applyPdcaFilters() {
       let filtered = [...pdcaData];
 
-      // Filtro por ANO
+      // Mapeamento de colunas:
+      // C (índice 2) = Ano
+      // D (índice 3) = Origem
+      // E (índice 4) = Processo
+      // I (índice 8) = Responsável
+      // P (índice 15) = Status
+      // Q (índice 16) = Eficácia
+
+      // Filtro por ANO (coluna C, índice 2)
       const anoFilter = currentPdcaFilters['ano'];
       if (anoFilter !== 'TODOS') {
         filtered = filtered.filter(item => {
-          const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
-          return String(ano).trim() === anoFilter;
+          const ano = String(item[2] || '').trim();
+          return ano === anoFilter;
         });
       }
 
-      // Filtro por ORIGEM (busca sensível a variações)
+      // Filtro por ORIGEM (coluna D, índice 3) - busca sensível
       const origemSearch = document.getElementById('searchOrigemPdca').value.trim();
       if (origemSearch) {
         const origemNorm = normalizeText(origemSearch);
         filtered = filtered.filter(item => {
-          const origem = getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '';
+          const origem = String(item[3] || '');
           return normalizeText(origem).includes(origemNorm);
         });
       }
 
-      // Filtro por PROCESSO
+      // Filtro por PROCESSO (coluna E, índice 4)
       const processoFilter = currentPdcaFilters['processo'];
       if (processoFilter !== 'TODOS') {
         filtered = filtered.filter(item => {
-          const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
-          return String(processo).trim() === processoFilter;
+          const processo = String(item[4] || '').trim();
+          return processo === processoFilter;
         });
       }
 
-      // Filtro por RESPONSÁVEL (busca sensível a variações)
+      // Filtro por RESPONSÁVEL (coluna I, índice 8) - busca sensível
       const responsavelSearch = document.getElementById('searchResponsavelPdca').value.trim();
       if (responsavelSearch) {
         const responsavelNorm = normalizeText(responsavelSearch);
         filtered = filtered.filter(item => {
-          const responsavel = getAny(item, ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel']) || '';
+          const responsavel = String(item[8] || '');
           return normalizeText(responsavel).includes(responsavelNorm);
         });
       }
 
-      // Filtro por STATUS
+      // Filtro por STATUS (coluna P, índice 15)
       const statusFilter = currentPdcaFilters['status'];
       if (statusFilter !== 'TODOS') {
         filtered = filtered.filter(item => {
-          const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
-          return String(status).trim() === statusFilter;
+          const status = String(item[15] || '').trim();
+          return status === statusFilter;
         });
       }
 
-      // Filtro por EFICÁCIA
+      // Filtro por EFICÁCIA (coluna Q, índice 16)
       const eficaciaFilter = currentPdcaFilters['eficacia'];
       if (eficaciaFilter !== 'TODOS') {
         filtered = filtered.filter(item => {
-          const eficacia = getAny(item, ['Análise da Eficácia']) || '';
-          return String(eficacia).trim() === eficaciaFilter;
+          const eficacia = String(item[16] || '').trim();
+          return eficacia === eficaciaFilter;
         });
       }
 
