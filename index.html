@@ -1023,6 +1023,70 @@
       </div>
     </div>
 
+    <!-- CONTEÚDO: PLANEAMENTO REUNIÕES -->
+    <div id="view-planning-meetings" class="hidden space-y-6">
+      <!-- Cabeçalho -->
+      <div class="bg-gradient-to-r from-blue-900 to-blue-800 text-white p-8 rounded-2xl shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <button onclick="switchPlanningView('main')" class="text-blue-200 hover:text-white transition-colors text-sm font-semibold mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+              Voltar
+            </button>
+            <h1 class="text-3xl font-black tracking-tight">CALENDÁRIO DE REUNIÕES</h1>
+            <p class="text-blue-200 text-sm mt-2">Plano Anual 2026 - Clique nos círculos para editar</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Reuniões -->
+      <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr class="bg-slate-900 text-white">
+                <th class="p-4 font-bold sticky left-0 bg-slate-900 z-10 w-80">Tipo de Reunião</th>
+                <th class="p-3 font-bold text-center w-16">Responsável</th>
+                <th class="p-3 font-bold text-center w-12">Jan</th>
+                <th class="p-3 font-bold text-center w-12">Fev</th>
+                <th class="p-3 font-bold text-center w-12">Mar</th>
+                <th class="p-3 font-bold text-center w-12">Abr</th>
+                <th class="p-3 font-bold text-center w-12">Mai</th>
+                <th class="p-3 font-bold text-center w-12">Jun</th>
+                <th class="p-3 font-bold text-center w-12">Jul</th>
+                <th class="p-3 font-bold text-center w-12">Ago</th>
+                <th class="p-3 font-bold text-center w-12">Set</th>
+                <th class="p-3 font-bold text-center w-12">Out</th>
+                <th class="p-3 font-bold text-center w-12">Nov</th>
+                <th class="p-3 font-bold text-center w-12">Dez</th>
+              </tr>
+            </thead>
+            <tbody id="meetingsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Legenda -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-wrap justify-center gap-8">
+        <div class="flex items-center gap-2">
+          <div class="text-2xl">🟢</div>
+          <span class="font-semibold text-slate-700">Realizado</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="text-2xl">🔵</div>
+          <span class="font-semibold text-slate-700">Planeado</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="text-2xl">🔴</div>
+          <span class="font-semibold text-slate-700">Não Realizado</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="text-2xl">⭕</div>
+          <span class="font-semibold text-slate-700">Vazio</span>
+        </div>
+      </div>
+    </div>
+
     <!-- CONTEÚDO: PLANEAMENTO -->
     <div id="view-planning" class="hidden space-y-8">
       <!-- Cabeçalho do Planeamento -->
@@ -1038,7 +1102,7 @@
       <!-- Cards de Navegação -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
         <!-- Card Reuniões -->
-        <button onclick="switchTab('docs')" class="group bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-8 hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer">
+        <button onclick="switchPlanningView('meetings')" class="group bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-8 hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer">
           <div class="flex flex-col items-center text-center gap-4">
             <div class="bg-blue-600 p-4 rounded-full group-hover:bg-blue-700 transition-colors shadow-lg">
               <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1055,7 +1119,7 @@
               </p>
             </div>
             <div class="flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-3 transition-all mt-4">
-              Ver Documentação
+              Ver Calendário
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
               </svg>
@@ -1151,6 +1215,29 @@
     let currentSwotFilterQuadrant = 'TODOS';
     let currentSwotActiveFilter = 'TODOS'; // TODOS | ATIVOS | NAO_ATIVOS
     let currentSwotPlanFilter = 'TODOS';   // TODOS | S | N
+
+    // Dados das reuniões 2026
+    const meetingsData = [
+      { id: 1, title: "1) Steering Commitee", responsible: "TV", schedule: { 2: 'done', 10: 'done', 12: 'planned' } },
+      { id: 2, title: "A) Reunião Revisão de Gestão - A situação de ações provenientes de análises críticas anteriores pela direção;", responsible: "MF", schedule: { 2: 'done', 10: 'done' } },
+      { id: 3, title: "a1) PAC's - resultados de monitoramento e medição (eficácia);", responsible: "MF", schedule: {} },
+      { id: 4, title: "a2) A eficácia de ações tomadas para abordar riscos e oportunidades;", responsible: "MF", schedule: {} },
+      { id: 5, title: "B) Reunião Revisão de Gestão - Mudanças em questões externas e internas que sejam pertinentes para o sistema de gestão da qualidade;", responsible: "MF", schedule: { 2: 'done', 10: 'done', 12: 'planned' } },
+      { id: 6, title: "b1) Oportunidades para melhoria;", responsible: "MF", schedule: {} },
+      { id: 7, title: "b2) A suficiência de recursos;", responsible: "MF", schedule: {} },
+      { id: 8, title: "2) Satisfação do cliente e retroalimentação de partes interessadas pertinentes;", responsible: "MF", schedule: { 2: 'done', 10: 'done' } },
+      { id: 9, title: "3) Extensão na qual os objetivos da qualidade foram alcançados - KPI's;", responsible: "MF", schedule: { 2: 'done', 10: 'done' } },
+      { id: 10, title: "4) Auditoria de Acompanhamento - desempenho de processo e conformidade de produtos e serviços;", responsible: "MF", schedule: { 10: 'done' } },
+      { id: 11, title: "5) RNC's - não conformidades e ações corretivas;", responsible: "MF", schedule: { 1: 'done', 12: 'planned' } },
+      { id: 12, title: "6) Auditoria interna SGQA - resultados de auditoria;", responsible: "MF", schedule: { 9: 'done', 10: 'done' } },
+      { id: 13, title: "7) Avaliação desempenho de fornecedores externos - FastFer;", responsible: "MF", schedule: {} },
+      { id: 14, title: "8) KOM Abertura - Histórico RNC's últimos 2 anos;", responsible: "MF", schedule: { 12: 'planned' } },
+      { id: 15, title: "9) Auditoria de Produto", responsible: "MF", schedule: {} },
+      { id: 16, title: "7) Auditoria externa SGQA - 1ª Fase", responsible: "MF", schedule: { 10: 'done' } },
+      { id: 17, title: "9) Auditoria externa SGQA - 2ª Fase", responsible: "MF", schedule: { 10: 'done' } },
+    ];
+
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
     // =========
     // Normalização
@@ -1383,6 +1470,7 @@
       document.getElementById('view-ro').classList.add('hidden');
       document.getElementById('view-org').classList.add('hidden');
       document.getElementById('view-planning').classList.add('hidden');
+      document.getElementById('view-planning-meetings').classList.add('hidden');
       document.getElementById('tab-docs').classList.remove('active');
       document.getElementById('tab-swot').classList.remove('active');
       document.getElementById('tab-ro').classList.remove('active');
@@ -1408,6 +1496,84 @@
       } else if(tab === 'planning') {
         document.getElementById('view-planning').classList.remove('hidden');
         document.getElementById('tab-planning').classList.add('active');
+      }
+    }
+
+    function switchPlanningView(view) {
+      document.getElementById('view-planning').classList.add('hidden');
+      document.getElementById('view-planning-meetings').classList.add('hidden');
+
+      if(view === 'main') {
+        document.getElementById('view-planning').classList.remove('hidden');
+      } else if(view === 'meetings') {
+        document.getElementById('view-planning-meetings').classList.remove('hidden');
+        renderMeetingsTable();
+      }
+    }
+
+    function renderMeetingsTable() {
+      const tbody = document.getElementById('meetingsTableBody');
+      let html = '';
+
+      meetingsData.forEach(meeting => {
+        html += '<tr class="border-b border-slate-200 hover:bg-blue-50/50 transition-colors">';
+        html += `<td class="p-4 font-semibold text-slate-700 sticky left-0 bg-inherit">${meeting.title}</td>`;
+        html += `<td class="p-3 text-center font-bold text-slate-600">${meeting.responsible}</td>`;
+
+        for (let m = 1; m <= 12; m++) {
+          const status = meeting.schedule[m] || null;
+          const emoji = getStatusEmoji(status);
+          html += `<td class="p-2 text-center cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleMeetingStatus(${meeting.id}, ${m})">${emoji}</td>`;
+        }
+
+        html += '</tr>';
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function getStatusEmoji(status) {
+      if (status === 'done') return '🟢';
+      if (status === 'planned') return '🔵';
+      if (status === 'failed') return '🔴';
+      return '⭕';
+    }
+
+    function toggleMeetingStatus(meetingId, monthNum) {
+      const meeting = meetingsData.find(m => m.id === meetingId);
+      if (!meeting) return;
+
+      const current = meeting.schedule[monthNum];
+      let next;
+
+      if (!current) next = 'planned';
+      else if (current === 'planned') next = 'done';
+      else if (current === 'done') next = 'failed';
+      else next = null;
+
+      if (next) {
+        meeting.schedule[monthNum] = next;
+      } else {
+        delete meeting.schedule[monthNum];
+      }
+
+      saveMeetingsData();
+      renderMeetingsTable();
+    }
+
+    function saveMeetingsData() {
+      localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
+    }
+
+    function loadMeetingsData() {
+      const saved = localStorage.getItem('meetingsData');
+      if (saved) {
+        const savedData = JSON.parse(saved);
+        meetingsData.forEach((meeting, idx) => {
+          if (savedData[idx]) {
+            meeting.schedule = savedData[idx].schedule;
+          }
+        });
       }
     }
 
@@ -2378,6 +2544,7 @@
 
     window.onload = () => {
       toggleNewDocButton('docs');
+      loadMeetingsData();
       fetchFromSheet();
       fetchSwot();
       fetchRo();
