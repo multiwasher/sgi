@@ -142,6 +142,13 @@
       border-color: #065f46;
     }
 
+    .pdca-filter-btn { transition: all 0.2s; }
+    .pdca-filter-btn.active {
+      background-color: #065f46;
+      color: white;
+      border-color: #065f46;
+    }
+
     .org-view-btn { transition: all 0.3s ease; }
     .org-view-btn.active {
       background: white;
@@ -1252,7 +1259,47 @@
             DOCUMENTO DE ORIGEM
           </a>
 
-          <button onclick="fetchPdca()" class="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-widest bg-emerald-50 px-3 py-2 rounded-lg transition-all">Atualizar Dados</button>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros PDCA -->
+      <div class="glass-card p-4 space-y-4">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Ano:</span>
+            <button onclick="setPdcaFilter('ano', 'TODOS')" id="filter-pdca-ano-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-ano-filters" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Origem:</span>
+            <button onclick="setPdcaFilter('origem', 'TODOS')" id="filter-pdca-origem-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-origem-filters" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Processo:</span>
+            <button onclick="setPdcaFilter('processo', 'TODOS')" id="filter-pdca-processo-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-processo-filters" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Responsável:</span>
+            <button onclick="setPdcaFilter('responsavel', 'TODOS')" id="filter-pdca-responsavel-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-responsavel-filters" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Status:</span>
+            <button onclick="setPdcaFilter('status', 'TODOS')" id="filter-pdca-status-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-status-filters" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Eficácia:</span>
+            <button onclick="setPdcaFilter('eficacia', 'TODOS')" id="filter-pdca-eficacia-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-eficacia-filters" class="flex flex-wrap gap-2"></div>
+          </div>
         </div>
       </div>
 
@@ -1317,6 +1364,16 @@
     let currentSwotFilterQuadrant = 'TODOS';
     let currentSwotActiveFilter = 'TODOS'; // TODOS | ATIVOS | NAO_ATIVOS
     let currentSwotPlanFilter = 'TODOS';   // TODOS | S | N
+    
+    // PDCA Filters
+    let currentPdcaFilters = {
+      ano: 'TODOS',
+      origem: 'TODOS',
+      processo: 'TODOS',
+      responsavel: 'TODOS',
+      status: 'TODOS',
+      eficacia: 'TODOS'
+    };
 
     // Dados das reuniões 2026
     const meetingsData = [
@@ -1844,18 +1901,19 @@
     }
 
     function fetchPdca() {
-      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="5" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px] animate-pulse">A carregar dados PDCA...</td></tr>';
+      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px] animate-pulse">A carregar dados PDCA...</td></tr>';
 
       const callbackName = `cb_pdca_${Date.now()}`;
       window[callbackName] = (data) => {
         if (data && data.ok === false) {
-          const msg = `<tr><td colspan="5" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro PDCA: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro PDCA: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
           document.getElementById('pdcaTableBody').innerHTML = msg;
           delete window[callbackName];
           return;
         }
 
         pdcaData = Array.isArray(data) ? data : (data?.data || []);
+        buildPdcaFilters();
         renderPdca(pdcaData);
         delete window[callbackName];
       };
@@ -1864,7 +1922,7 @@
       script.src = `${PDCA_APPS_SCRIPT_URL}?sheet=PDCA&callback=${callbackName}&t=${Date.now()}`;
       script.onload = () => script.remove();
       script.onerror = () => {
-        const msg = `<tr><td colspan="5" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script PDCA.</td></tr>`;
+        const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script PDCA.</td></tr>`;
         document.getElementById('pdcaTableBody').innerHTML = msg;
         script.remove();
         delete window[callbackName];
@@ -2080,6 +2138,96 @@
         </tr>
       `;
       }).join('');
+    }
+
+    function buildPdcaFilters() {
+      // Recolher valores únicos para cada filtro
+      const valores = {
+        ano: new Set(),
+        origem: new Set(),
+        processo: new Set(),
+        responsavel: new Set(),
+        status: new Set(),
+        eficacia: new Set()
+      };
+
+      pdcaData.forEach(item => {
+        const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
+        const origem = getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '';
+        const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
+        const responsavel = getAny(item, ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel']) || '';
+        const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
+        const eficacia = getAny(item, ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']) || '';
+
+        if (ano) valores.ano.add(String(ano).trim());
+        if (origem) valores.origem.add(String(origem).trim());
+        if (processo) valores.processo.add(String(processo).trim());
+        if (responsavel) valores.responsavel.add(String(responsavel).trim());
+        if (status) valores.status.add(String(status).trim());
+        if (eficacia) valores.eficacia.add(String(eficacia).trim());
+      });
+
+      // Criar botões de filtro para cada categoria
+      const categories = ['ano', 'origem', 'processo', 'responsavel', 'status', 'eficacia'];
+      categories.forEach(category => {
+        const container = document.getElementById(`pdca-${category}-filters`);
+        if (!container) return;
+        
+        const sorted = Array.from(valores[category]).sort();
+        container.innerHTML = sorted.map(val => `
+          <button onclick="setPdcaFilter('${category}', '${escapeHtml(val)}')" 
+                  id="filter-pdca-${category}-${escapeHtml(val).replace(/\s+/g, '_')}" 
+                  class="pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
+        `).join('');
+      });
+    }
+
+    function setPdcaFilter(category, value) {
+      currentPdcaFilters[category] = value;
+
+      // Atualizar botões ativos
+      const btnCategories = ['ano', 'origem', 'processo', 'responsavel', 'status', 'eficacia'];
+      btnCategories.forEach(cat => {
+        document.querySelectorAll(`[id^="filter-pdca-${cat}-"]`).forEach(b => b.classList.remove('active'));
+      });
+
+      if (value === 'TODOS') {
+        const todosBtn = document.getElementById(`filter-pdca-${category}-TODOS`);
+        if (todosBtn) todosBtn.classList.add('active');
+      } else {
+        const btnId = `filter-pdca-${category}-${value.replace(/\s+/g, '_')}`;
+        const btn = document.getElementById(btnId);
+        if (btn) btn.classList.add('active');
+      }
+
+      applyPdcaFilters();
+    }
+
+    function applyPdcaFilters() {
+      let filtered = [...pdcaData];
+
+      // Aplicar filtros
+      const categories = ['ano', 'origem', 'processo', 'responsavel', 'status', 'eficacia'];
+      categories.forEach(category => {
+        const filterValue = currentPdcaFilters[category];
+        if (filterValue === 'TODOS') return;
+
+        const fieldMap = {
+          ano: ['Ano', 'ano', 'ANO'],
+          origem: ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO'],
+          processo: ['Processo', 'processo', 'PROCESSO'],
+          responsavel: ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel'],
+          status: ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO'],
+          eficacia: ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']
+        };
+
+        filtered = filtered.filter(item => {
+          const fieldValue = getAny(item, fieldMap[category]) || '';
+          return String(fieldValue).trim() === filterValue;
+        });
+      });
+
+      renderPdca(filtered);
     }
 
     // =========
