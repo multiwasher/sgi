@@ -297,7 +297,7 @@
 
       <div class="mt-4 md:mt-0 flex items-center gap-3">
         <button onclick="openCertificationsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-black transition-all border border-emerald-700" title="Certificações e Estrutura de Processos">
-          ✓ CERTIFICAÇÕES
+          ✓ ÂMBITO
         </button>
 
         <div class="flex bg-black/20 p-1 rounded-xl mr-4">
@@ -314,6 +314,49 @@
       </div>
     </div>
   </nav>
+
+  <!-- Modal: Certificações e Âmbito -->
+  <div id="certifications-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6 pb-4 border-b-2">
+        <h2 class="font-bold text-2xl uppercase text-slate-900">✓ Certificações e Estrutura</h2>
+        <button onclick="closeCertificationsModal()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold">×</button>
+      </div>
+      
+      <div class="space-y-6 text-slate-700">
+        <!-- Auditoria e Certificações -->
+        <div class="bg-emerald-50 border-l-4 border-emerald-600 p-6 rounded-lg">
+          <h3 class="font-bold text-lg text-emerald-900 mb-3 uppercase">Auditoria e Certificações</h3>
+          <p class="text-sm leading-relaxed">
+            O Sistema de organização da Somengil, s.a. foi auditado e cumpre com os requisitos da norma <strong>NP EN ISO 9001</strong> e <strong>NP EN ISO 14001</strong>, encontrando-se implementado para as atividades de:
+          </p>
+          <ul class="mt-4 space-y-2 text-sm list-disc list-inside ml-2">
+            <li>Design, desenvolvimento, produção, comercialização e assistência técnica de equipamento de lavagem</li>
+            <li>Comercialização e assistência técnica de equipamentos de frio industrial</li>
+          </ul>
+        </div>
+
+        <!-- Requisitos Não Aplicáveis -->
+        <div class="bg-amber-50 border-l-4 border-amber-600 p-6 rounded-lg">
+          <h3 class="font-bold text-lg text-amber-900 mb-3 uppercase">Requisitos Não Aplicáveis</h3>
+          <p class="text-sm text-amber-800">n.a.</p>
+        </div>
+
+        <!-- Estrutura dos Processos -->
+        <div class="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
+          <h3 class="font-bold text-lg text-blue-900 mb-3 uppercase">Estrutura dos Processos</h3>
+          <p class="text-sm leading-relaxed text-blue-900 mb-4">
+            A Somengil adoptou uma abordagem baseada na identificação dos seus processos para o desenvolvimento, implementação e melhoria da eficácia do SGI para aumentar a satisfação do cliente e de todas as outras partes interessadas mediante o cumprimento dos seus requisitos.
+          </p>
+          <p class="text-sm font-semibold text-blue-900">
+            VER MAPA PROCESSOS - PS_DGN_02_02 - SWIMLANE Mapeamento de Processos
+          </p>
+        </div>
+      </div>
+
+      <button onclick="closeCertificationsModal()" class="w-full mt-8 bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-lg transition-colors">Fechar</button>
+    </div>
+  </div>
 
   <main class="max-w-7xl mx-auto px-6 pt-8">
 
@@ -676,49 +719,6 @@
               </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Modal Certificações -->
-      <div id="certifications-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-          <div class="flex justify-between items-center mb-6 pb-4 border-b-2">
-            <h2 class="font-bold text-2xl uppercase text-slate-900">✓ Certificações e Estrutura</h2>
-            <button onclick="closeCertificationsModal()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold">×</button>
-          </div>
-          
-          <div class="space-y-6 text-slate-700">
-            <!-- Auditoria e Certificações -->
-            <div class="bg-emerald-50 border-l-4 border-emerald-600 p-6 rounded-lg">
-              <h3 class="font-bold text-lg text-emerald-900 mb-3 uppercase">Auditoria e Certificações</h3>
-              <p class="text-sm leading-relaxed">
-                O Sistema de organização da Somengil, s.a. foi auditado e cumpre com os requisitos da norma <strong>NP EN ISO 9001</strong> e <strong>NP EN ISO 14001</strong>, encontrando-se implementado para:
-              </p>
-              <ul class="mt-4 space-y-2 text-sm list-disc list-inside ml-2">
-                <li>Design, desenvolvimento, produção, comercialização e assistência técnica de equipamento de lavagem</li>
-                <li>Comercialização e assistência técnica de equipamentos de frio industrial</li>
-              </ul>
-            </div>
-
-            <!-- Requisitos Não Aplicáveis -->
-            <div class="bg-amber-50 border-l-4 border-amber-600 p-6 rounded-lg">
-              <h3 class="font-bold text-lg text-amber-900 mb-3 uppercase">Requisitos Não Aplicáveis</h3>
-              <p class="text-sm text-amber-800">n.a.</p>
-            </div>
-
-            <!-- Estrutura dos Processos -->
-            <div class="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
-              <h3 class="font-bold text-lg text-blue-900 mb-3 uppercase">Estrutura dos Processos</h3>
-              <p class="text-sm leading-relaxed text-blue-900 mb-4">
-                A Somengil adoptou uma abordagem baseada na identificação dos seus processos para o desenvolvimento, implementação e melhoria da eficácia do SGQ para aumentar a satisfação do cliente e de todas as outras partes interessadas mediante o cumprimento dos seus requisitos.
-              </p>
-              <p class="text-sm font-semibold text-blue-900">
-                VER MAPA PROCESSOS - PS_DGN_02_02 - SWIMLANE Mapeamento de Processos
-              </p>
-            </div>
-          </div>
-
-          <button onclick="closeCertificationsModal()" class="w-full mt-8 bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-lg transition-colors">Fechar</button>
         </div>
       </div>
 
@@ -1577,6 +1577,26 @@
       renderSwot(filtered);
     }
 
+    function toggleSwotPlan(cardId) {
+      const card = document.getElementById(cardId);
+      const planSection = card.querySelector('.swot-plan-section');
+      const button = card.querySelector('.swot-plan-toggle-btn');
+      
+      const isHidden = planSection.style.maxHeight === '0px' || !planSection.style.maxHeight;
+      
+      if (isHidden) {
+        planSection.style.maxHeight = planSection.scrollHeight + 'px';
+        planSection.style.opacity = '1';
+        button.classList.add('expanded');
+        button.innerHTML = '▼ Plano Estratégico';
+      } else {
+        planSection.style.maxHeight = '0px';
+        planSection.style.opacity = '0';
+        button.classList.remove('expanded');
+        button.innerHTML = '▶ Plano Estratégico';
+      }
+    }
+
     function renderSwot(data) {
       const categories = {
         forcas: document.getElementById('swot-forcas'),
@@ -1591,6 +1611,8 @@
         Object.values(categories).forEach(el => el.innerHTML = '<p class="text-[10px] text-slate-400 font-medium italic py-4">Nenhum registo identificado.</p>');
         return;
       }
+
+      let cardCounter = 0;
 
       data.forEach(item => {
         const swotRaw = getAny(item, ['SWOT','Swot']);
@@ -1613,6 +1635,8 @@
         const planoMap = buildPlanoMap(item);
 
         let actionsHtml = '';
+        let hasAnyActions = false;
+        
         for (let i = 1; i <= 6; i++) {
           let cod = getAny(item, [
             `CÓDIGO_AÇÃO ${i}`, `CODIGO_ACAO ${i}`, `CÓDIGO AÇÃO ${i}`, `CODIGO ACAO ${i}`,
@@ -1638,15 +1662,17 @@
 
           if (!shouldShowAction) continue;
 
+          hasAnyActions = true;
+
           actionsHtml += `
-            <div class="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
-              <div class="flex items-center justify-between gap-2">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Ação ${i} (${escapeHtml(cod || '')})</p>
+            <div class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <p class="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Ação ${i} (${escapeHtml(cod || '')})</p>
                 ${badgePlano}
               </div>
               ${acao && String(acao).trim() !== ''
-                ? `<p class="text-xs text-slate-600 font-medium leading-relaxed mt-1">${escapeHtml(acao)}</p>`
-                : `<p class="text-[10px] text-slate-400 italic mt-1">Sem descrição da ação.</p>`
+                ? `<p class="text-xs text-slate-600 font-medium leading-relaxed">${escapeHtml(acao)}</p>`
+                : `<p class="text-[10px] text-slate-400 italic">Sem descrição da ação.</p>`
               }
             </div>
           `;
@@ -1654,9 +1680,10 @@
 
         const catInfo = getSwotCategory(buildSwotBlob(item));
         const tagClass = getSwotTagClass(catInfo.key);
+        const cardId = `swot-card-${quadrant}-${cardCounter++}`;
 
         const card = `
-          <div class="glass-card p-5 ${borderClass}">
+          <div id="${cardId}" class="glass-card p-5 ${borderClass}">
             <div class="flex justify-between items-center mb-3">
               <div class="swot-cat-badge ${tagClass}">
                 ${catInfo.icon}
@@ -1670,10 +1697,12 @@
               </div>
             </div>
             <h4 class="text-[13px] font-bold text-slate-800 leading-snug mb-3">${escapeHtml(description)}</h4>
-            ${actionsHtml ? `
-              <div class="border-t border-slate-50 pt-3 mt-3">
-                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Plano Estratégico</p>
-                ${actionsHtml}
+            ${hasAnyActions ? `
+              <button onclick="toggleSwotPlan('${cardId}')" class="swot-plan-toggle-btn w-full mt-3 pt-3 border-t border-slate-100 text-left text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-widest transition-colors">▶ Plano Estratégico</button>
+              <div class="swot-plan-section" style="max-height: 0px; overflow: hidden; opacity: 0; transition: max-height 0.3s ease, opacity 0.3s ease;">
+                <div class="mt-3 space-y-3">
+                  ${actionsHtml}
+                </div>
               </div>
             ` : ''}
           </div>
