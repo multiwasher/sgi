@@ -1265,36 +1265,43 @@
       <!-- Barra de Filtros PDCA -->
       <div class="glass-card p-4 space-y-4">
         <div class="flex flex-col gap-4">
+          <!-- Filtros Fixos: ANO -->
           <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
             <span class="mr-2 whitespace-nowrap">Ano:</span>
             <button onclick="setPdcaFilter('ano', 'TODOS')" id="filter-pdca-ano-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
             <div id="pdca-ano-filters" class="flex flex-wrap gap-2"></div>
           </div>
 
-          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
-            <span class="mr-2 whitespace-nowrap">Origem:</span>
-            <button onclick="setPdcaFilter('origem', 'TODOS')" id="filter-pdca-origem-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
-            <div id="pdca-origem-filters" class="flex flex-wrap gap-2"></div>
+          <!-- Busca por Origem -->
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] font-bold uppercase text-slate-400 whitespace-nowrap">Origem:</span>
+            <input type="text" id="searchOrigemPdca" onkeyup="filterPdcaBySearch('origem')" placeholder="Pesquisar origem..." class="flex-1 bg-slate-50 border border-slate-200 pl-3 pr-4 py-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
+            <button onclick="clearPdcaSearch('origem')" class="text-[10px] font-black text-slate-500 hover:text-slate-700 px-2 py-1">✕</button>
           </div>
 
-          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
-            <span class="mr-2 whitespace-nowrap">Processo:</span>
-            <button onclick="setPdcaFilter('processo', 'TODOS')" id="filter-pdca-processo-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
-            <div id="pdca-processo-filters" class="flex flex-wrap gap-2"></div>
+          <!-- Filtro Expandível: PROCESSO -->
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] font-bold uppercase text-slate-400 whitespace-nowrap">Processo:</span>
+            <select id="filterProcessoPdca" onchange="setPdcaFilter('processo', this.value)" class="flex-1 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
+              <option value="TODOS">TODOS</option>
+            </select>
           </div>
 
-          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
-            <span class="mr-2 whitespace-nowrap">Responsável:</span>
-            <button onclick="setPdcaFilter('responsavel', 'TODOS')" id="filter-pdca-responsavel-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
-            <div id="pdca-responsavel-filters" class="flex flex-wrap gap-2"></div>
+          <!-- Busca por Responsável -->
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] font-bold uppercase text-slate-400 whitespace-nowrap">Responsável:</span>
+            <input type="text" id="searchResponsavelPdca" onkeyup="filterPdcaBySearch('responsavel')" placeholder="Pesquisar responsável..." class="flex-1 bg-slate-50 border border-slate-200 pl-3 pr-4 py-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
+            <button onclick="clearPdcaSearch('responsavel')" class="text-[10px] font-black text-slate-500 hover:text-slate-700 px-2 py-1">✕</button>
           </div>
 
+          <!-- Filtros Fixos: STATUS -->
           <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
             <span class="mr-2 whitespace-nowrap">Status:</span>
             <button onclick="setPdcaFilter('status', 'TODOS')" id="filter-pdca-status-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
             <div id="pdca-status-filters" class="flex flex-wrap gap-2"></div>
           </div>
 
+          <!-- Filtros Fixos: EFICÁCIA -->
           <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
             <span class="mr-2 whitespace-nowrap">Eficácia:</span>
             <button onclick="setPdcaFilter('eficacia', 'TODOS')" id="filter-pdca-eficacia-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
@@ -1368,9 +1375,7 @@
     // PDCA Filters
     let currentPdcaFilters = {
       ano: 'TODOS',
-      origem: 'TODOS',
       processo: 'TODOS',
-      responsavel: 'TODOS',
       status: 'TODOS',
       eficacia: 'TODOS'
     };
@@ -2144,49 +2149,71 @@
       // Recolher valores únicos para cada filtro
       const valores = {
         ano: new Set(),
-        origem: new Set(),
         processo: new Set(),
-        responsavel: new Set(),
         status: new Set(),
         eficacia: new Set()
       };
 
       pdcaData.forEach(item => {
         const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
-        const origem = getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '';
         const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
-        const responsavel = getAny(item, ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel']) || '';
         const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
         const eficacia = getAny(item, ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']) || '';
 
         if (ano) valores.ano.add(String(ano).trim());
-        if (origem) valores.origem.add(String(origem).trim());
         if (processo) valores.processo.add(String(processo).trim());
-        if (responsavel) valores.responsavel.add(String(responsavel).trim());
         if (status) valores.status.add(String(status).trim());
         if (eficacia) valores.eficacia.add(String(eficacia).trim());
       });
 
-      // Criar botões de filtro para cada categoria
-      const categories = ['ano', 'origem', 'processo', 'responsavel', 'status', 'eficacia'];
-      categories.forEach(category => {
-        const container = document.getElementById(`pdca-${category}-filters`);
-        if (!container) return;
-        
-        const sorted = Array.from(valores[category]).sort();
-        container.innerHTML = sorted.map(val => `
-          <button onclick="setPdcaFilter('${category}', '${escapeHtml(val)}')" 
-                  id="filter-pdca-${category}-${escapeHtml(val).replace(/\s+/g, '_')}" 
+      // Criar botões para ANO
+      const anoContainer = document.getElementById('pdca-ano-filters');
+      if (anoContainer) {
+        const anoSorted = Array.from(valores.ano).sort();
+        anoContainer.innerHTML = anoSorted.map(val => `
+          <button onclick="setPdcaFilter('ano', '${escapeHtml(val)}')" 
+                  id="filter-pdca-ano-${escapeHtml(val).replace(/\s+/g, '_')}" 
                   class="pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
         `).join('');
-      });
+      }
+
+      // Criar dropdown para PROCESSO
+      const processoSelect = document.getElementById('filterProcessoPdca');
+      if (processoSelect) {
+        const processoSorted = Array.from(valores.processo).sort();
+        processoSelect.innerHTML = '<option value="TODOS">TODOS</option>' + processoSorted.map(val => `
+          <option value="${escapeHtml(val)}">${escapeHtml(val)}</option>
+        `).join('');
+      }
+
+      // Criar botões para STATUS
+      const statusContainer = document.getElementById('pdca-status-filters');
+      if (statusContainer) {
+        const statusSorted = Array.from(valores.status).sort();
+        statusContainer.innerHTML = statusSorted.map(val => `
+          <button onclick="setPdcaFilter('status', '${escapeHtml(val)}')" 
+                  id="filter-pdca-status-${escapeHtml(val).replace(/\s+/g, '_')}" 
+                  class="pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
+        `).join('');
+      }
+
+      // Criar botões para EFICÁCIA
+      const eficaciaContainer = document.getElementById('pdca-eficacia-filters');
+      if (eficaciaContainer) {
+        const eficaciaSorted = Array.from(valores.eficacia).sort();
+        eficaciaContainer.innerHTML = eficaciaSorted.map(val => `
+          <button onclick="setPdcaFilter('eficacia', '${escapeHtml(val)}')" 
+                  id="filter-pdca-eficacia-${escapeHtml(val).replace(/\s+/g, '_')}" 
+                  class="pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
+        `).join('');
+      }
     }
 
     function setPdcaFilter(category, value) {
       currentPdcaFilters[category] = value;
 
-      // Atualizar botões ativos
-      const btnCategories = ['ano', 'origem', 'processo', 'responsavel', 'status', 'eficacia'];
+      // Atualizar botões ativos para categorias com botões
+      const btnCategories = ['ano', 'status', 'eficacia'];
       btnCategories.forEach(cat => {
         document.querySelectorAll(`[id^="filter-pdca-${cat}-"]`).forEach(b => b.classList.remove('active'));
       });
@@ -2203,29 +2230,81 @@
       applyPdcaFilters();
     }
 
+    function filterPdcaBySearch(field) {
+      applyPdcaFilters();
+    }
+
+    function clearPdcaSearch(field) {
+      if (field === 'origem') {
+        document.getElementById('searchOrigemPdca').value = '';
+      } else if (field === 'responsavel') {
+        document.getElementById('searchResponsavelPdca').value = '';
+      }
+      applyPdcaFilters();
+    }
+
+    function normalizeText(text) {
+      return String(text || '').toLowerCase().trim().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u').replace(/ç/g, 'c');
+    }
+
     function applyPdcaFilters() {
       let filtered = [...pdcaData];
 
-      // Aplicar filtros
-      const categories = ['ano', 'origem', 'processo', 'responsavel', 'status', 'eficacia'];
-      categories.forEach(category => {
-        const filterValue = currentPdcaFilters[category];
-        if (filterValue === 'TODOS') return;
-
-        const fieldMap = {
-          ano: ['Ano', 'ano', 'ANO'],
-          origem: ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO'],
-          processo: ['Processo', 'processo', 'PROCESSO'],
-          responsavel: ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel'],
-          status: ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO'],
-          eficacia: ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']
-        };
-
+      // Filtro por ANO
+      const anoFilter = currentPdcaFilters['ano'];
+      if (anoFilter !== 'TODOS') {
         filtered = filtered.filter(item => {
-          const fieldValue = getAny(item, fieldMap[category]) || '';
-          return String(fieldValue).trim() === filterValue;
+          const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
+          return String(ano).trim() === anoFilter;
         });
-      });
+      }
+
+      // Filtro por ORIGEM (busca sensível a variações)
+      const origemSearch = document.getElementById('searchOrigemPdca').value.trim();
+      if (origemSearch) {
+        const origemNorm = normalizeText(origemSearch);
+        filtered = filtered.filter(item => {
+          const origem = getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '';
+          return normalizeText(origem).includes(origemNorm);
+        });
+      }
+
+      // Filtro por PROCESSO
+      const processoFilter = currentPdcaFilters['processo'];
+      if (processoFilter !== 'TODOS') {
+        filtered = filtered.filter(item => {
+          const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
+          return String(processo).trim() === processoFilter;
+        });
+      }
+
+      // Filtro por RESPONSÁVEL (busca sensível a variações)
+      const responsavelSearch = document.getElementById('searchResponsavelPdca').value.trim();
+      if (responsavelSearch) {
+        const responsavelNorm = normalizeText(responsavelSearch);
+        filtered = filtered.filter(item => {
+          const responsavel = getAny(item, ['Responsável', 'responsavel', 'RESPONSÁVEL', 'Responsavel']) || '';
+          return normalizeText(responsavel).includes(responsavelNorm);
+        });
+      }
+
+      // Filtro por STATUS
+      const statusFilter = currentPdcaFilters['status'];
+      if (statusFilter !== 'TODOS') {
+        filtered = filtered.filter(item => {
+          const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
+          return String(status).trim() === statusFilter;
+        });
+      }
+
+      // Filtro por EFICÁCIA
+      const eficaciaFilter = currentPdcaFilters['eficacia'];
+      if (eficaciaFilter !== 'TODOS') {
+        filtered = filtered.filter(item => {
+          const eficacia = getAny(item, ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']) || '';
+          return String(eficacia).trim() === eficaciaFilter;
+        });
+      }
 
       renderPdca(filtered);
     }
