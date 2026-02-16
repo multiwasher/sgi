@@ -303,6 +303,7 @@
           <button onclick="switchTab('swot')" id="tab-swot" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ANÁLISE SWOT</button>
           <button onclick="switchTab('ro')" id="tab-ro" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">R&O</button>
           <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
+          <button onclick="switchTab('planning')" id="tab-planning" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PLANEAMENTO</button>
         </div>
 
         <div class="bg-black/20 px-3 py-1.5 rounded-full flex items-center border border-white/5">
@@ -1021,6 +1022,101 @@
         </div>
       </div>
     </div>
+
+    <!-- CONTEÚDO: PLANEAMENTO -->
+    <div id="view-planning" class="hidden space-y-8">
+      <!-- Cabeçalho do Planeamento -->
+      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-8 rounded-2xl shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <h1 class="text-4xl font-black tracking-tight">PLANEAMENTO</h1>
+            <p class="text-slate-300 text-sm mt-2">Plano Anual de Reuniões e Auditorias - SOMENGIL</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards de Navegação -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <!-- Card Reuniões -->
+        <button onclick="switchTab('docs')" class="group bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-8 hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer">
+          <div class="flex flex-col items-center text-center gap-4">
+            <div class="bg-blue-600 p-4 rounded-full group-hover:bg-blue-700 transition-colors shadow-lg">
+              <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-blue-900 mb-2">REUNIÕES</h2>
+              <p class="text-blue-700 text-sm mb-4">
+                Gestão e planeamento de reuniões estratégicas, operacionais e de revisão
+              </p>
+              <p class="text-xs text-blue-600 font-semibold">
+                17 reuniões planeadas
+              </p>
+            </div>
+            <div class="flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-3 transition-all mt-4">
+              Ver Documentação
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        </button>
+
+        <!-- Card Auditorias -->
+        <button onclick="switchTab('ro')" class="group bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200 rounded-2xl p-8 hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer">
+          <div class="flex flex-col items-center text-center gap-4">
+            <div class="bg-amber-600 p-4 rounded-full group-hover:bg-amber-700 transition-colors shadow-lg">
+              <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m7-0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-amber-900 mb-2">AUDITORIAS</h2>
+              <p class="text-amber-700 text-sm mb-4">
+                Plano de auditorias internas e externas conforme calendário anual
+              </p>
+              <p class="text-xs text-amber-600 font-semibold">
+                13 auditorias agendadas
+              </p>
+            </div>
+            <div class="flex items-center gap-2 text-amber-600 font-semibold group-hover:gap-3 transition-all mt-4">
+              Ver Riscos & Oportunidades
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Resumo de Atividades -->
+      <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+        <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Atividades Agendadas para 2026
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+            <p class="text-sm text-blue-600 font-bold uppercase mb-2">Reuniões Planeadas</p>
+            <p class="text-4xl font-black text-blue-900">17</p>
+            <p class="text-xs text-blue-700 mt-2">Distribuídas ao longo do ano</p>
+          </div>
+          <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+            <p class="text-sm text-amber-600 font-bold uppercase mb-2">Auditorias Agendadas</p>
+            <p class="text-4xl font-black text-amber-900">13</p>
+            <p class="text-xs text-amber-700 mt-2">Internas e Externas (APCER)</p>
+          </div>
+          <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+            <p class="text-sm text-emerald-600 font-bold uppercase mb-2">Months</p>
+            <p class="text-4xl font-black text-emerald-900">12</p>
+            <p class="text-xs text-emerald-700 mt-2">Cobertura anual completa</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Modal: Detalhe SWOT do R&O -->
@@ -1286,10 +1382,12 @@
       document.getElementById('view-swot').classList.add('hidden');
       document.getElementById('view-ro').classList.add('hidden');
       document.getElementById('view-org').classList.add('hidden');
+      document.getElementById('view-planning').classList.add('hidden');
       document.getElementById('tab-docs').classList.remove('active');
       document.getElementById('tab-swot').classList.remove('active');
       document.getElementById('tab-ro').classList.remove('active');
       document.getElementById('tab-org').classList.remove('active');
+      document.getElementById('tab-planning').classList.remove('active');
 
       toggleNewDocButton(tab);
 
@@ -1307,6 +1405,9 @@
       } else if(tab === 'org') {
         document.getElementById('view-org').classList.remove('hidden');
         document.getElementById('tab-org').classList.add('active');
+      } else if(tab === 'planning') {
+        document.getElementById('view-planning').classList.remove('hidden');
+        document.getElementById('tab-planning').classList.add('active');
       }
     }
 
