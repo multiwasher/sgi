@@ -2111,7 +2111,7 @@
         const prazo = escapeHtml(formatDate(getAny(item, ['Prazo', 'prazo', 'PRAZO'])) || '-');
         const dataConclusao = escapeHtml(formatDate(getAny(item, ['Data de Conclusão', 'data de conclusao', 'DATA DE CONCLUSÃO'])) || '-');
         const status = escapeHtml(getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '-');
-        const eficacia = escapeHtml(getAny(item, ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']) || '-');
+        const eficacia = escapeHtml(getAny(item, ['Análise da Eficácia']) || '-');
         
         const statusColor = status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido') ? '#dcfce7' : 
                            status.toLowerCase().includes('em andamento') ? '#fef9c3' : '#fee2e2';
@@ -2158,7 +2158,7 @@
         const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
         const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
         const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
-        const eficacia = getAny(item, ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']) || '';
+        const eficacia = getAny(item, ['Análise da Eficácia']) || '';
 
         if (ano) valores.ano.add(String(ano).trim());
         if (processo) valores.processo.add(String(processo).trim());
@@ -2301,7 +2301,7 @@
       const eficaciaFilter = currentPdcaFilters['eficacia'];
       if (eficaciaFilter !== 'TODOS') {
         filtered = filtered.filter(item => {
-          const eficacia = getAny(item, ['Status EFICAZ', 'status eficaz', 'STATUS EFICAZ', 'Análise da Eficácia']) || '';
+          const eficacia = getAny(item, ['Análise da Eficácia']) || '';
           return String(eficacia).trim() === eficaciaFilter;
         });
       }
