@@ -2212,11 +2212,8 @@
     function setPdcaFilter(category, value) {
       currentPdcaFilters[category] = value;
 
-      // Atualizar botões ativos para categorias com botões
-      const btnCategories = ['ano', 'status', 'eficacia'];
-      btnCategories.forEach(cat => {
-        document.querySelectorAll(`[id^="filter-pdca-${cat}-"]`).forEach(b => b.classList.remove('active'));
-      });
+      // Remover classe 'active' apenas da categoria sendo alterada
+      document.querySelectorAll(`[id^="filter-pdca-${category}-"]`).forEach(b => b.classList.remove('active'));
 
       if (value === 'TODOS') {
         const todosBtn = document.getElementById(`filter-pdca-${category}-TODOS`);
