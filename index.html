@@ -103,6 +103,33 @@
       margin-right: 4px;
     }
 
+    /* ✅ STATUS TAGS */
+    .status-em-curso {
+      background: #fef9c3 !important;
+      color: #854d0e !important;
+    }
+
+    .status-cancelado {
+      background: #f3f4f6 !important;
+      color: #6b7280 !important;
+    }
+
+    .status-aberto {
+      background: #fed7aa !important;
+      color: #92400e !important;
+    }
+
+    /* ✅ EFICÁCIA TAGS */
+    .eficacia-eficaz {
+      background: #dcfce7 !important;
+      color: #166534 !important;
+    }
+
+    .eficacia-nao-eficaz {
+      background: #fee2e2 !important;
+      color: #991b1b !important;
+    }
+
     .status-pulse{
       width:8px;height:8px;
       border-radius:50%;
@@ -115,6 +142,59 @@
       0%{ transform:scale(0.95); box-shadow:0 0 0 0 rgba(16,185,129,0.7); }
       70%{ transform:scale(1); box-shadow:0 0 0 10px rgba(16,185,129,0); }
       100%{ transform:scale(0.95); box-shadow:0 0 0 0 rgba(16,185,129,0); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      background-image: url('https://static.wixstatic.com/media/a6967f_95db0dbb18554c0299efd61c7e081848~mv2.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      animation: spin 2s linear infinite;
+    }
+
+    #globalLoadingOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(2px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #globalLoadingOverlay.show {
+      display: flex;
+    }
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .loading-container .loading-spinner {
+      width: 100px;
+      height: 100px;
+    }
+
+    .loading-container p {
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     #adminModal{
@@ -159,6 +239,14 @@
 </head>
 
 <body class="min-h-screen pb-12">
+
+  <!-- Global Loading Overlay -->
+  <div id="globalLoadingOverlay">
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p id="loadingText">A carregar documentos...</p>
+    </div>
+  </div>
 
   <!-- Modal: Adicionar Documento -->
   <div id="adminModal" onclick="closeModal(event)">
@@ -296,7 +384,7 @@
         </div>
         <div>
           <h1 class="text-xl font-extrabold tracking-tight leading-none">SGI <span class="text-emerald-400">Somengil</span></h1>
-          <p class="text-emerald-300/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Gestão Integrada ISO9001 & ISO14001</p>
+          <p class="text-emerald-300/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Gestão Integrada<p></p>ISO9001 & ISO14001</p>
         </div>
       </div>
 
@@ -411,7 +499,7 @@
               </tr>
             </thead>
             <tbody id="docsTableBody" class="divide-y divide-slate-50">
-              <tr><td colspan="3" class="px-8 py-20 text-center animate-pulse text-slate-400 font-bold uppercase text-[10px]">A carregar documentos...</td></tr>
+              <tr><td colspan="3" class="px-8 py-20 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar documentos...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -589,7 +677,7 @@
               </tr>
             </thead>
             <tbody id="roTableBody" class="divide-y divide-slate-200">
-              <tr><td colspan="9" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</td></tr>
+              <tr><td colspan="9" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1280,11 +1368,10 @@
           </div>
 
           <!-- Filtro Expandível: PROCESSO -->
-          <div class="flex items-center gap-3">
-            <span class="text-[10px] font-bold uppercase text-slate-400 whitespace-nowrap">Processo:</span>
-            <select id="filterProcessoPdca" onchange="setPdcaFilter('processo', this.value)" class="flex-1 bg-slate-50 border border-slate-200 px-3 py-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
-              <option value="TODOS">TODOS</option>
-            </select>
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Processo:</span>
+            <button onclick="setPdcaFilter('processo', 'TODOS')" id="filter-pdca-processo-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-processo-filters" class="flex flex-wrap gap-2"></div>
           </div>
 
           <!-- Busca por Responsável -->
@@ -1329,7 +1416,7 @@
               </tr>
             </thead>
             <tbody id="pdcaTableBody" class="divide-y divide-slate-50">
-              <tr><td colspan="11" class="px-8 py-20 text-center animate-pulse text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</td></tr>
+              <tr><td colspan="11" class="px-8 py-20 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1354,6 +1441,23 @@
     </div>
   </div>
 
+  <!-- Modal: Detalhe Eficácia PDCA -->
+  <div id="pdcaEficaciaModal" class="fixed inset-0 hidden z-[120] items-center justify-center bg-slate-900/60 backdrop-blur-sm" onclick="closePdcaEficaciaModal(event)">
+    <div class="glass-card w-full max-w-2xl p-8 m-4 shadow-2xl overflow-y-auto max-h-[90vh]" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Detalhe Eficácia</h2>
+        <button onclick="closePdcaEficaciaModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="pdcaEficaciaModalContent" class="space-y-4">
+        <!-- Conteúdo preenchido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
   <script>
     const MAIN_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdEqBsG1Fbt_KJNnyXtbZQPRvTLKwdzn1SFZcJm6Lw3HSctLGQmp2h9sBgxR6fiUPgBw/exec';
     const SWOT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
@@ -1372,14 +1476,6 @@
     let currentSwotActiveFilter = 'TODOS'; // TODOS | ATIVOS | NAO_ATIVOS
     let currentSwotPlanFilter = 'TODOS';   // TODOS | S | N
     
-    // PDCA Filters
-    let currentPdcaFilters = {
-      ano: 'TODOS',
-      processo: 'TODOS',
-      status: 'TODOS',
-      eficacia: 'TODOS'
-    };
-
     // Dados das reuniões 2026
     const meetingsData = [
       { id: 1, title: "1) Steering Commitee", responsible: "TV", schedule: { 2: 'done', 10: 'done', 12: 'planned' } },
@@ -1839,10 +1935,11 @@
     }
 
     function fetchSwot() {
-      document.getElementById('swot-forcas').innerHTML = '<p class="text-[10px] animate-pulse">A carregar...</p>';
-      document.getElementById('swot-oportunidades').innerHTML = '<p class="text-[10px] animate-pulse">A carregar...</p>';
-      document.getElementById('swot-fraquezas').innerHTML = '<p class="text-[10px] animate-pulse">A carregar...</p>';
-      document.getElementById('swot-ameacas').innerHTML = '<p class="text-[10px] animate-pulse">A carregar...</p>';
+      showLoading('A carregar análise SWOT...');
+      document.getElementById('swot-forcas').innerHTML = '<div class="flex justify-center items-center gap-2 py-4"><div class="loading-spinner" style="width: 40px; height: 40px;"></div><span class="text-[10px] text-slate-400">A carregar...</span></div>';
+      document.getElementById('swot-oportunidades').innerHTML = '<div class="flex justify-center items-center gap-2 py-4"><div class="loading-spinner" style="width: 40px; height: 40px;"></div><span class="text-[10px] text-slate-400">A carregar...</span></div>';
+      document.getElementById('swot-fraquezas').innerHTML = '<div class="flex justify-center items-center gap-2 py-4"><div class="loading-spinner" style="width: 40px; height: 40px;"></div><span class="text-[10px] text-slate-400">A carregar...</span></div>';
+      document.getElementById('swot-ameacas').innerHTML = '<div class="flex justify-center items-center gap-2 py-4"><div class="loading-spinner" style="width: 40px; height: 40px;"></div><span class="text-[10px] text-slate-400">A carregar...</span></div>';
 
       const callbackName = `cb_swot_${Date.now()}`;
       window[callbackName] = (data) => {
@@ -1852,12 +1949,14 @@
           document.getElementById('swot-oportunidades').innerHTML = msg;
           document.getElementById('swot-fraquezas').innerHTML = msg;
           document.getElementById('swot-ameacas').innerHTML = msg;
+          hideLoading();
           delete window[callbackName];
           return;
         }
 
         swotData = Array.isArray(data) ? data : (data?.data || []);
         applySwotFilters();
+        hideLoading();
         delete window[callbackName];
       };
 
@@ -1870,6 +1969,7 @@
         document.getElementById('swot-oportunidades').innerHTML = msg;
         document.getElementById('swot-fraquezas').innerHTML = msg;
         document.getElementById('swot-ameacas').innerHTML = msg;
+        hideLoading();
         script.remove();
         delete window[callbackName];
       };
@@ -1877,19 +1977,22 @@
     }
 
     function fetchRo() {
-      document.getElementById('roTableBody').innerHTML = '<tr><td colspan="9" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px] animate-pulse">A carregar dados R&O...</td></tr>';
+      showLoading('A carregar Riscos & Oportunidades...');
+      document.getElementById('roTableBody').innerHTML = '<tr><td colspan="9" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados R&O...</span></div></td></tr>';
 
       const callbackName = `cb_ro_${Date.now()}`;
       window[callbackName] = (data) => {
         if (data && data.ok === false) {
           const msg = `<tr><td colspan="9" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro R&O: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
           document.getElementById('roTableBody').innerHTML = msg;
+          hideLoading();
           delete window[callbackName];
           return;
         }
 
         roData = Array.isArray(data) ? data : (data?.data || []);
         applyRoFilters();
+        hideLoading();
         delete window[callbackName];
       };
 
@@ -1899,6 +2002,7 @@
       script.onerror = () => {
         const msg = `<tr><td colspan="9" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script R&O.</td></tr>`;
         document.getElementById('roTableBody').innerHTML = msg;
+        hideLoading();
         script.remove();
         delete window[callbackName];
       };
@@ -1906,13 +2010,15 @@
     }
 
     function fetchPdca() {
-      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px] animate-pulse">A carregar dados PDCA...</td></tr>';
+      showLoading('A carregar dados PDCA...');
+      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</span></div></td></tr>';
 
       const callbackName = `cb_pdca_${Date.now()}`;
       window[callbackName] = (data) => {
         if (data && data.ok === false) {
           const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro PDCA: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
           document.getElementById('pdcaTableBody').innerHTML = msg;
+          hideLoading();
           delete window[callbackName];
           return;
         }
@@ -1920,6 +2026,7 @@
         pdcaData = Array.isArray(data) ? data : (data?.data || []);
         buildPdcaFilters();
         renderPdca(pdcaData);
+        hideLoading();
         delete window[callbackName];
       };
 
@@ -1929,6 +2036,7 @@
       script.onerror = () => {
         const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script PDCA.</td></tr>`;
         document.getElementById('pdcaTableBody').innerHTML = msg;
+        hideLoading();
         script.remove();
         delete window[callbackName];
       };
@@ -2093,6 +2201,22 @@
       return 'badge-default';
     }
 
+    function getStatusClass(status) {
+      const st = (status || '').toLowerCase();
+      if (st.includes('cancelado')) return 'status-cancelado';
+      if (st.includes('em curso')) return 'status-em-curso';
+      if (st.includes('aberto')) return 'status-aberto';
+      if (st.includes('concluído') || st.includes('concluido')) return 'bg-green-100 text-green-700';
+      return '';
+    }
+
+    function getEficaciaClass(eficacia) {
+      const ef = (eficacia || '').toLowerCase();
+      if (ef.includes('não eficaz') || ef.includes('nao eficaz')) return 'eficacia-nao-eficaz';
+      if (ef.includes('eficaz')) return 'eficacia-eficaz';
+      return '';
+    }
+
     function renderPdca(data) {
       const body = document.getElementById('pdcaTableBody');
       if (!data || data.length === 0) {
@@ -2112,16 +2236,18 @@
         const dataConclusao = escapeHtml(formatDate(getAny(item, ['Data de Conclusão', 'data de conclusao', 'DATA DE CONCLUSÃO'])) || '-');
         const status = escapeHtml(getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '-');
         const eficacia = escapeHtml(getAny(item, ['Análise da Eficácia']) || '-');
+        const discussaoEficacia = escapeHtml(getAny(item, ['Discussão Eficácia', 'discussao eficacia', 'DISCUSSÃO EFICÁCIA', 'Discussão da Eficácia']) || '-');
         
-        const statusColor = status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido') ? '#dcfce7' : 
-                           status.toLowerCase().includes('em andamento') ? '#fef9c3' : '#fee2e2';
-        const statusTextColor = status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido') ? '#166534' : 
-                               status.toLowerCase().includes('em andamento') ? '#854d0e' : '#991b1b';
+        const statusClass = getStatusClass(status);
+        const eficaciaClass = getEficaciaClass(eficacia);
         
-        const eficaciaColor = eficacia.toLowerCase().includes('eficaz') ? '#dcfce7' : 
-                             eficacia.toLowerCase().includes('não eficaz') ? '#fee2e2' : '#f1f5f9';
-        const eficaciaTextColor = eficacia.toLowerCase().includes('eficaz') ? '#166534' : 
-                                 eficacia.toLowerCase().includes('não eficaz') ? '#991b1b' : '#475569';
+        // Se "Não Eficaz", fazer a tag clicável
+        let eficaciaHtml = '';
+        if (eficacia.toLowerCase().includes('não eficaz') || eficacia.toLowerCase().includes('nao eficaz')) {
+          eficaciaHtml = `<span class="inline-block text-xs font-semibold px-2 py-1 rounded ${eficaciaClass} cursor-pointer hover:opacity-80 transition-opacity" onclick="openPdcaEficaciaModal('${discussaoEficacia}', '${eficacia}')">${eficacia}</span>`;
+        } else {
+          eficaciaHtml = `<span class="inline-block text-xs font-semibold px-2 py-1 rounded ${eficaciaClass}">${eficacia}</span>`;
+        }
         
         return `
         <tr class="hover:bg-slate-50/50 transition-colors group">
@@ -2135,10 +2261,10 @@
           <td class="px-4 py-3 text-xs text-slate-600">${prazo}</td>
           <td class="px-4 py-3 text-xs text-slate-600">${dataConclusao}</td>
           <td class="px-4 py-3">
-            <span class="inline-block text-xs font-semibold px-2 py-1 rounded" style="background:${statusColor}; color:${statusTextColor}">${status}</span>
+            <span class="inline-block text-xs font-semibold px-2 py-1 rounded ${statusClass}">${status}</span>
           </td>
           <td class="px-4 py-3">
-            <span class="inline-block text-xs font-semibold px-2 py-1 rounded" style="background:${eficaciaColor}; color:${eficaciaTextColor}">${eficacia}</span>
+            ${eficaciaHtml}
           </td>
         </tr>
       `;
@@ -2177,12 +2303,14 @@
         `).join('');
       }
 
-      // Criar dropdown para PROCESSO
-      const processoSelect = document.getElementById('filterProcessoPdca');
-      if (processoSelect) {
+      // Criar botões para PROCESSO
+      const processoContainer = document.getElementById('pdca-processo-filters');
+      if (processoContainer) {
         const processoSorted = Array.from(valores.processo).sort();
-        processoSelect.innerHTML = '<option value="TODOS">TODOS</option>' + processoSorted.map(val => `
-          <option value="${escapeHtml(val)}">${escapeHtml(val)}</option>
+        processoContainer.innerHTML = processoSorted.map(val => `
+          <button onclick="setPdcaFilter('processo', '${escapeHtml(val)}')"
+                  id="filter-pdca-processo-${escapeHtml(val).replace(/\s+/g, '_')}"
+                  class="pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
         `).join('');
       }
 
@@ -2210,18 +2338,35 @@
     }
 
     function setPdcaFilter(category, value) {
-      currentPdcaFilters[category] = value;
-
-      // Remover classe 'active' apenas da categoria sendo alterada
-      document.querySelectorAll(`[id^="filter-pdca-${category}-"]`).forEach(b => b.classList.remove('active'));
-
+      // Multi-select com toggle para todos os filtros
       if (value === 'TODOS') {
-        const todosBtn = document.getElementById(`filter-pdca-${category}-TODOS`);
-        if (todosBtn) todosBtn.classList.add('active');
+        // Reset do filtro - limpar array
+        currentPdcaFilters[category] = [];
+        // Remover 'active' de todos exceto TODOS
+        document.querySelectorAll(`[id^="filter-pdca-${category}-"]`).forEach(b => b.classList.remove('active'));
+        document.getElementById(`filter-pdca-${category}-TODOS`).classList.add('active');
       } else {
+        // Toggle do item específico
+        const index = currentPdcaFilters[category].indexOf(value);
+        
+        if (index > -1) {
+          // Já está selecionado, remover
+          currentPdcaFilters[category].splice(index, 1);
+        } else {
+          // Não está selecionado, adicionar
+          currentPdcaFilters[category].push(value);
+        }
+        
+        // Remover 'active' do botão TODOS quando há filtros específicos
+        const todosBtn = document.getElementById(`filter-pdca-${category}-TODOS`);
+        if (currentPdcaFilters[category].length > 0) {
+          if (todosBtn) todosBtn.classList.remove('active');
+        }
+        
+        // Atualizar visual do botão específico
         const btnId = `filter-pdca-${category}-${value.replace(/\s+/g, '_')}`;
         const btn = document.getElementById(btnId);
-        if (btn) btn.classList.add('active');
+        if (btn) btn.classList.toggle('active');
       }
 
       applyPdcaFilters();
@@ -2240,6 +2385,35 @@
       applyPdcaFilters();
     }
 
+    function updatePdcaFilterButtonStates() {
+      const categories = ['ano', 'processo', 'status', 'eficacia'];
+      
+      categories.forEach(category => {
+        // Atualizar estado do botão TODOS
+        const todosBtn = document.getElementById(`filter-pdca-${category}-TODOS`);
+        if (currentPdcaFilters[category].length === 0) {
+          if (todosBtn) todosBtn.classList.add('active');
+        } else {
+          if (todosBtn) todosBtn.classList.remove('active');
+        }
+        
+        // Atualizar estado dos botões de opções
+        document.querySelectorAll(`[id^="filter-pdca-${category}-"]`).forEach(btn => {
+          if (btn.id === `filter-pdca-${category}-TODOS`) return; // Pular TODOS
+          
+          const valueMatch = btn.id.match(new RegExp(`filter-pdca-${category}-(.+)`));
+          if (valueMatch) {
+            const value = valueMatch[1].replace(/_/g, ' ');
+            if (currentPdcaFilters[category].includes(value)) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          }
+        });
+      });
+    }
+
     function normalizeText(text) {
       return String(text || '').toLowerCase().trim().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u').replace(/ç/g, 'c');
     }
@@ -2247,12 +2421,12 @@
     function applyPdcaFilters() {
       let filtered = [...pdcaData];
 
-      // Filtro por ANO
+      // Filtro por ANO (cumulativo)
       const anoFilter = currentPdcaFilters['ano'];
-      if (anoFilter !== 'TODOS') {
+      if (anoFilter && anoFilter.length > 0) {
         filtered = filtered.filter(item => {
           const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
-          return String(ano).trim() === anoFilter;
+          return anoFilter.includes(String(ano).trim());
         });
       }
 
@@ -2266,12 +2440,14 @@
         });
       }
 
-      // Filtro por PROCESSO
+      // Filtro por PROCESSO (cumulativo, case-insensitive)
       const processoFilter = currentPdcaFilters['processo'];
-      if (processoFilter !== 'TODOS') {
+      if (processoFilter && processoFilter.length > 0) {
         filtered = filtered.filter(item => {
           const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
-          return String(processo).trim() === processoFilter;
+          const processoNorm = normalizeText(processo);
+          const filterNorm = processoFilter.map(f => normalizeText(f));
+          return filterNorm.some(fn => fn === processoNorm);
         });
       }
 
@@ -2285,24 +2461,25 @@
         });
       }
 
-      // Filtro por STATUS
+      // Filtro por STATUS (cumulativo)
       const statusFilter = currentPdcaFilters['status'];
-      if (statusFilter !== 'TODOS') {
+      if (statusFilter && statusFilter.length > 0) {
         filtered = filtered.filter(item => {
           const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
-          return String(status).trim() === statusFilter;
+          return statusFilter.includes(String(status).trim());
         });
       }
 
-      // Filtro por EFICÁCIA
+      // Filtro por EFICÁCIA (cumulativo)
       const eficaciaFilter = currentPdcaFilters['eficacia'];
-      if (eficaciaFilter !== 'TODOS') {
+      if (eficaciaFilter && eficaciaFilter.length > 0) {
         filtered = filtered.filter(item => {
           const eficacia = getAny(item, ['Análise da Eficácia']) || '';
-          return String(eficacia).trim() === eficaciaFilter;
+          return eficaciaFilter.includes(String(eficacia).trim());
         });
       }
 
+      updatePdcaFilterButtonStates();
       renderPdca(filtered);
     }
 
@@ -2637,6 +2814,18 @@
       }
     }
 
+    function showLoading(message = 'A carregar...') {
+      const overlay = document.getElementById('globalLoadingOverlay');
+      const text = document.getElementById('loadingText');
+      text.innerText = message;
+      overlay.classList.add('show');
+    }
+
+    function hideLoading() {
+      const overlay = document.getElementById('globalLoadingOverlay');
+      overlay.classList.remove('show');
+    }
+
     function escapeHtml(str) {
       if(!str) return "";
       return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m]));
@@ -2958,6 +3147,32 @@
     function closeRoSwotModal(event) {
       if (event && event.target && event.target.id !== 'roSwotModal') return;
       const modal = document.getElementById('roSwotModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openPdcaEficaciaModal(discussao, analise) {
+      const content = document.getElementById('pdcaEficaciaModalContent');
+      content.innerHTML = `
+        <div class="space-y-4">
+          <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <h3 class="text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">Discussão Eficácia</h3>
+            <p class="text-sm text-slate-600 whitespace-pre-wrap">${discussao || 'Sem informação'}</p>
+          </div>
+          <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+            <h3 class="text-sm font-bold text-slate-700 mb-2 uppercase tracking-widest">Análise da Eficácia</h3>
+            <p class="text-sm text-slate-600 whitespace-pre-wrap">${analise || 'Sem informação'}</p>
+          </div>
+        </div>
+      `;
+      const modal = document.getElementById('pdcaEficaciaModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePdcaEficaciaModal(event) {
+      if (event && event.target && event.target.id !== 'pdcaEficaciaModal') return;
+      const modal = document.getElementById('pdcaEficaciaModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
     }
