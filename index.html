@@ -266,6 +266,35 @@
       transition: all 0.3s ease;
     }
 
+    /* R&O Collapsible Filters */
+    .ro-filter-container {
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .ro-filter-container.hidden {
+      animation: slideUp 0.3s ease-out;
+      display: none !important;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+    }
+
+    .ro-filter-chevron {
+      transform-origin: center;
+    }
+
+    .ro-filter-chevron.expanded {
+      transform: rotate(180deg);
+    }
+
     .swot-filter-btn { transition: all 0.2s; }
     .swot-filter-btn.active {
       background-color: #065f46;
@@ -738,17 +767,31 @@
         </div>
         
         <!-- Filtros de Processo -->
-        <div class="space-y-2">
-          <div class="text-[10px] font-black text-slate-600 uppercase">Processos</div>
-          <button onclick="setRoFilter('processo', 'TODOS')" id="filter-ro-processo-TODOS" class="ro-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">TODOS</button>
-          <div id="ro-processo-filters" class="flex flex-wrap gap-2"></div>
+        <div class="space-y-2 border-t border-slate-200 pt-2">
+          <button onclick="toggleRoFilterSection('processo')" class="w-full flex items-center justify-between hover:bg-slate-50 px-2 py-1.5 rounded-lg transition-colors">
+            <div class="text-[10px] font-black text-slate-600 uppercase">Processos</div>
+            <svg class="ro-filter-chevron chevron-processo w-4 h-4 text-slate-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+          </button>
+          <div id="ro-processo-container" class="ro-filter-container hidden space-y-2">
+            <button onclick="setRoFilter('processo', 'TODOS')" id="filter-ro-processo-TODOS" class="ro-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">TODOS</button>
+            <div id="ro-processo-filters" class="flex flex-wrap gap-2"></div>
+          </div>
         </div>
         
         <!-- Filtros de Origem -->
-        <div class="space-y-2">
-          <div class="text-[10px] font-black text-slate-600 uppercase">Origem</div>
-          <button onclick="setRoFilter('origem', 'TODOS')" id="filter-ro-origem-TODOS" class="ro-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">TODOS</button>
-          <div id="ro-origem-filters" class="flex flex-wrap gap-2"></div>
+        <div class="space-y-2 border-t border-slate-200 pt-2">
+          <button onclick="toggleRoFilterSection('origem')" class="w-full flex items-center justify-between hover:bg-slate-50 px-2 py-1.5 rounded-lg transition-colors">
+            <div class="text-[10px] font-black text-slate-600 uppercase">Origem</div>
+            <svg class="ro-filter-chevron chevron-origem w-4 h-4 text-slate-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+            </svg>
+          </button>
+          <div id="ro-origem-container" class="ro-filter-container hidden space-y-2">
+            <button onclick="setRoFilter('origem', 'TODOS')" id="filter-ro-origem-TODOS" class="ro-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">TODOS</button>
+            <div id="ro-origem-filters" class="flex flex-wrap gap-2"></div>
+          </div>
         </div>
       </div>
 
@@ -3253,6 +3296,21 @@
       
       // Aplica filtros
       applyRoFilters();
+    }
+
+    function toggleRoFilterSection(section) {
+      const container = document.getElementById(`ro-${section}-container`);
+      const chevron = document.querySelector(`.chevron-${section}`);
+      
+      if (container.classList.contains('hidden')) {
+        // Abrir
+        container.classList.remove('hidden');
+        chevron.classList.add('expanded');
+      } else {
+        // Fechar
+        container.classList.add('hidden');
+        chevron.classList.remove('expanded');
+      }
     }
 
     function setRoFilter(category, value) {
