@@ -750,18 +750,19 @@
           <table class="w-full">
             <thead class="bg-slate-50 border-b-2 border-slate-200">
               <tr>
+                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Código</th>
                 <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Parte Interessada</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Tipo</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Nível Interesse</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Nível Influência</th>
+                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Fonte</th>
+                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Requisitos</th>
                 <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Expectativas</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Comunicação</th>
+                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Frequência</th>
                 <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Responsável</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Observações</th>
+                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Ações</th>
+                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Objetivos</th>
               </tr>
             </thead>
             <tbody id="partesTableBody" class="divide-y divide-slate-200">
-              <tr><td colspan="8" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
+              <tr><td colspan="9" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1547,7 +1548,7 @@
     const SWOT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
     const SWOT_WRITE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQNDfWCVPYPz84y7CU2BUYWbN-Orh0hq7CLzmjuCu1vrDnKRe7WgskN6ZXjsSQDSHJ/exec';
     const RO_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
-    const PARTES_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQlpCtlBBiPjO_rwCBSGgXFv-Pyex1WVaySHZh5NuaH6poppkyKqcCGhruSmTR6iALLQ/exec';
+    const PARTES_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySf0L0PneuiBKavciBvnj-9mHGfKMImtYhhrRIVsLG27_q47l3LNCG74pPa2wKOhKC1A/exec';
     const PDCA_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmXPWaBR74rQS_VXI2Q8SuF5jGYy-IsaTm0SGA8q8vv3zGH1Xwo-D1HuBirj0CndLW/exec';
 
     let allDocuments = [];
@@ -2104,12 +2105,12 @@
 
     function fetchPartes() {
       showLoading('A carregar Partes Interessadas...');
-      document.getElementById('partesTableBody').innerHTML = '<tr><td colspan="8" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>';
+      document.getElementById('partesTableBody').innerHTML = '<tr><td colspan="9" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>';
 
       const callbackName = `cb_partes_${Date.now()}`;
       window[callbackName] = (data) => {
         if (data && data.ok === false) {
-          const msg = `<tr><td colspan="8" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro Partes Interessadas: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          const msg = `<tr><td colspan="9" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro Partes Interessadas: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
           document.getElementById('partesTableBody').innerHTML = msg;
           hideLoading();
           delete window[callbackName];
@@ -2123,10 +2124,10 @@
       };
 
       const script = document.createElement('script');
-      script.src = `${PARTES_APPS_SCRIPT_URL}?callback=${callbackName}&t=${Date.now()}`;
+      script.src = `${PARTES_APPS_SCRIPT_URL}?sheet=Partes%20Interessadas&callback=${callbackName}&t=${Date.now()}`;
       script.onload = () => script.remove();
       script.onerror = () => {
-        const msg = `<tr><td colspan="8" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script Partes Interessadas.</td></tr>`;
+        const msg = `<tr><td colspan="9" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script Partes Interessadas.</td></tr>`;
         document.getElementById('partesTableBody').innerHTML = msg;
         hideLoading();
         script.remove();
@@ -3136,15 +3137,14 @@
       const filtered = partesData.filter(item => {
         if (!searchInput) return true;
         
-        const parteInteressada = getAny(item, ['Parte Interessada', 'Stakeholder', 'Nome']);
-        const tipo = getAny(item, ['Tipo']);
-        const nivelInteresse = getAny(item, ['Nível Interesse', 'Nivel Interesse']);
-        const nivelInfluencia = getAny(item, ['Nível Influência', 'Nivel Influencia']);
-        const expectativas = getAny(item, ['Expectativas', 'Expectativa']);
-        const comunicacao = getAny(item, ['Comunicação', 'Comunicacao']);
-        const responsavel = getAny(item, ['Responsável', 'Responsavel']);
+        const codigo = getAny(item, ['Código', 'Codigo']);
+        const parteInteressada = getAny(item, ['Parte interessada (PI)', 'Parte Interessada', 'Stakeholder']);
+        const fonte = getAny(item, ['Fonte']);
+        const requisitos = getAny(item, ['Requisitos Relevantes\n (Necessidades e expectativas)', 'Requisitos']);
+        const expectativas = getAny(item, ['O que a Organização espera das Partes Interessadas', 'Expectativas']);
+        const responsavel = getAny(item, ['Responsável pela Revisão', 'Responsavel']);
         
-        const content = normalized(`${parteInteressada} ${tipo} ${nivelInteresse} ${nivelInfluencia} ${expectativas} ${comunicacao} ${responsavel}`);
+        const content = normalized(`${codigo} ${parteInteressada} ${fonte} ${requisitos} ${expectativas} ${responsavel}`);
         
         // Verificação simples de palavra-chave
         return content.includes(normalized(searchInput));
@@ -3157,43 +3157,37 @@
       const tbody = document.getElementById('partesTableBody');
       
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">Nenhum registo identificado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">Nenhum registo identificado</td></tr>';
         return;
       }
 
       tbody.innerHTML = data.map((item, idx) => {
-        const parteInteressada = getAny(item, ['Parte Interessada', 'Stakeholder', 'Nome']);
-        const tipo = getAny(item, ['Tipo']);
-        const nivelInteresse = getAny(item, ['Nível Interesse', 'Nivel Interesse']);
-        const nivelInfluencia = getAny(item, ['Nível Influência', 'Nivel Influencia']);
-        const expectativas = getAny(item, ['Expectativas', 'Expectativa']);
-        const comunicacao = getAny(item, ['Comunicação', 'Comunicacao']);
-        const responsavel = getAny(item, ['Responsável', 'Responsavel']);
-        const observacoes = getAny(item, ['Observações', 'Observacoes', 'Observação', 'Observacao']);
+        const codigo = getAny(item, ['Código', 'Codigo']);
+        const parteInteressada = getAny(item, ['Parte interessada (PI)', 'Parte Interessada', 'Stakeholder']);
+        const fonte = getAny(item, ['Fonte']);
+        const requisitos = getAny(item, ['Requisitos Relevantes\n (Necessidades e expectativas)', 'Requisitos']);
+        const expectativas = getAny(item, ['O que a Organização espera das Partes Interessadas', 'Expectativas']);
+        const frequencia = getAny(item, ['Frequência de Revisão', 'Frequencia']);
+        const responsavel = getAny(item, ['Responsável pela Revisão', 'Responsavel']);
+        const nacoes = getAny(item, ['N º de Ação\n(Plano de Ações)', 'Nº de Ação', 'Acoes']);
+        const objetivos = getAny(item, ['Objetivo SGQA Nº.', 'Objetivo SGQA']);
 
-        // Determina cores por nível de interesse/influência
-        const getInterestColor = (level) => {
-          const norm = normLoose(level);
-          if (norm.includes('alto')) return 'bg-red-100 text-red-700 border-red-300';
-          if (norm.includes('medio') || norm.includes('médio')) return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-          if (norm.includes('baixo')) return 'bg-green-100 text-green-700 border-green-300';
-          return 'bg-slate-100 text-slate-700 border-slate-300';
-        };
+        // Badge para fonte
+        const fonteColor = fonte.toLowerCase() === 'interna' ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-orange-100 text-orange-700 border-orange-300';
 
         return `
           <tr class="transition-colors group hover:bg-slate-50">
+            <td class="px-6 py-4 text-sm font-black text-emerald-700">${escapeHtml(codigo)}</td>
             <td class="px-6 py-4 text-sm font-semibold text-slate-800">${escapeHtml(parteInteressada)}</td>
-            <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(tipo)}</td>
             <td class="px-6 py-4 text-sm">
-              <span class="inline-block px-2 py-1 rounded-full text-[9px] font-black border ${getInterestColor(nivelInteresse)} uppercase">${escapeHtml(nivelInteresse)}</span>
+              <span class="inline-block px-2 py-1 rounded-full text-[9px] font-black border ${fonteColor} uppercase">${escapeHtml(fonte)}</span>
             </td>
-            <td class="px-6 py-4 text-sm">
-              <span class="inline-block px-2 py-1 rounded-full text-[9px] font-black border ${getInterestColor(nivelInfluencia)} uppercase">${escapeHtml(nivelInfluencia)}</span>
-            </td>
-            <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(expectativas)}</td>
-            <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(comunicacao)}</td>
-            <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(responsavel)}</td>
-            <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(observacoes)}</td>
+            <td class="px-6 py-4 text-sm text-slate-700 max-w-xs">${escapeHtml(requisitos)}</td>
+            <td class="px-6 py-4 text-sm text-slate-700 max-w-xs">${escapeHtml(expectativas)}</td>
+            <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(frequencia)}</td>
+            <td class="px-6 py-4 text-sm font-medium text-slate-800">${escapeHtml(responsavel)}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(nacoes)}</td>
+            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(objetivos)}</td>
           </tr>
         `;
       }).join('');

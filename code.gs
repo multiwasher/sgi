@@ -1,97 +1,79 @@
 /**
- * SWOT + R&O Reader/Writer
+ * SWOT + R&O + Partes Interessadas Reader/Writer
  * 
- * GET  -> devolve dados do separador especificado em "SWOT" ou "R&O" (ou JSONP se vier ?callback=...)
- * POST -> adiciona um registo ao separador "SWOT" (por enquanto)
+ * GET  -> devolve dados do separador especificado (ou JSONP se vier ?callback=...)
+ * POST -> adiciona um registo ao separador "SWOT"
  * 
- * Parâmetro: ?sheet=SWOT (padrão) ou ?sheet=R&O
+ * Parâmetro: ?sheet=SWOT|R&O|Partes%20Interessadas (padrão: SWOT)
  */
 
-const SPREADSHEET_ID = "1n-9nPmr_owOXxOhfIqqIGnoBu8MdbkeknW1nRSKF6AI";
-
-// ========== CONFIGURAÇÃO POR SEPARADOR ==========
-
-const SHEET_CONFIG = {
-  "SWOT": {
-    name: "SWOT",
-    headers: [
-      "SWOT",
-      "código",
-      "Descrição",
-      "TOMADA DE AÇÃO?",
-      "CÓDIGO_AÇÃO 1", "AÇÃO 1",
-      "CÓDIGO_AÇÃO 2", "AÇÃO 2",
-      "CÓDIGO_AÇÃO 3", "AÇÃO 3",
-      "CÓDIGO_AÇÃO 4", "AÇÃO 4",
-      "CÓDIGO_AÇÃO 5", "AÇÃO 5",
-      "CÓDIGO_AÇÃO 6", "AÇÃO 6"
-    ]
-  },
-  "R&O": {
-    name: "R&O",
-    headers: [
-      "Descrição do  Risco / Oportunidade",
-      "R / O",
-      "Origem",
-      "Processos",
-      "Código (R&O)",
-      "PA",
-      "Proveniência (Origem do Risco)",
-      "Observações",
-      "KeyWord"
-    ]
-  }
-};
+const SPREADSHEET_ID = "1A0id_1DRMdpATDCB3Ctp8OZMqwwdj46BG5Pcdw2ULhw";
 
 /**
- * GET: devolve dados do separador especificado
- * Parâmetros: ?sheet=SWOT|R&O&callback=...
+ * GET: devolve dados de qualquer separador
+ * Parâmetros: ?sheet=NomeSeparador&callback=...
  */
 function doGet(e) {
   try {
-    // Determina qual separador ler
-    const sheetParam = e && e.parameter ? String(e.parameter.sheet || "SWOT").trim() : "SWOT";
-    const config = SHEET_CONFIG[sheetParam];
-
-    if (!config) {
-      const available = Object.keys(SHEET_CONFIG).join(" | ");
-      throw new Error(`Separador "${sheetParam}" não configurado. Disponíveis: ${available}`);
+    // Determina qual separador ler (padrão: Partes Interessadas)
+    let sheetParam = "Partes Interessadas";
+    
+    if (e && e.parameter && e.parameter.sheet) {
+      const param = String(e.parameter.sheet).trim();
+      if (param !== "") {
+        sheetParam = param;
+      }
     }
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(config.name);
+    const sheet = ss.getSheetByName(sheetParam);
 
     if (!sheet) {
       const available = ss.getSheets().map(s => s.getName()).join(" | ");
-      throw new Error(`Separador "${config.name}" não encontrado. Disponíveis: ${available}`);
+      return output_({ ok: false, error: `Separador "${sheetParam}" não encontrado. Disponíveis: ${available}` }, e);
     }
 
     const lastRow = sheet.getLastRow();
     const lastCol = sheet.getLastColumn();
 
-    if (lastRow < 2 || lastCol < 1) {
+    // Se não tem dados, retorna array vazio
+    if (lastRow < 1 || lastCol < 1) {
       return output_([], e);
     }
 
-    const values = sheet.getRange(1, 1, lastRow, lastCol).getDisplayValues();
-    const headers = values[0].map(h => String(h || "").trim());
+    // Se tem só cabeçalho (1 linha), retorna array vazio
+    if (lastRow < 2) {
+      return output_([], e);
+    }
+
+    const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    const headers = values[0].map((h, idx) => {
+      let name = String(h || "").trim();
+      // Normalizas espaços múltiplos e quebras de linha em espaços simples
+      name = name.replace(/\s+/g, " ");
+      return name !== "" ? name : `COL_${idx + 1}`;
+    });
+
     const rows = values.slice(1);
 
     const data = rows
       .map(r => {
         const obj = {};
         headers.forEach((h, i) => {
-          if (!h) return; // ignora colunas sem cabeçalho
-          obj[h] = r[i];
+          const v = r[i];
+          let value = (v === undefined || v === null) ? "" : String(v).trim();
+          // Normalizas espaços múltiplos e quebras de linha em espaços simples
+          value = value.replace(/\s+/g, " ");
+          obj[h] = value;
         });
         return obj;
       })
-      .filter(obj => Object.values(obj).some(v => String(v || "").trim() !== ""));
+      .filter(obj => Object.values(obj).some(v => v !== ""));
 
     return output_(data, e);
 
   } catch (err) {
-    return output_({ ok: false, error: String(err) }, e);
+    return output_({ ok: false, error: String(err), stack: err.stack }, e);
   }
 }
 
@@ -117,7 +99,6 @@ function doPost(e) {
     }
 
     const payload = JSON.parse(e.postData.contents);
-    const config = SHEET_CONFIG["SWOT"];
 
     // Normaliza campos base
     const swot = mapSwotToPt_(payload.swot);
@@ -136,8 +117,22 @@ function doPost(e) {
       acao: safeStr_(a && a.acao)
     }));
 
+    // Headers esperados para SWOT
+    const headers = [
+      "SWOT",
+      "código",
+      "Descrição",
+      "TOMADA DE AÇÃO?",
+      "CÓDIGO_AÇÃO 1", "AÇÃO 1",
+      "CÓDIGO_AÇÃO 2", "AÇÃO 2",
+      "CÓDIGO_AÇÃO 3", "AÇÃO 3",
+      "CÓDIGO_AÇÃO 4", "AÇÃO 4",
+      "CÓDIGO_AÇÃO 5", "AÇÃO 5",
+      "CÓDIGO_AÇÃO 6", "AÇÃO 6"
+    ];
+
     // Monta linha na ordem do cabeçalho SWOT
-    const row = new Array(config.headers.length).fill("");
+    const row = new Array(headers.length).fill("");
 
     row[0] = swot;
     row[1] = codigo;
@@ -152,11 +147,11 @@ function doPost(e) {
     }
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(config.name);
-    if (!sheet) throw new Error(`Separador "${config.name}" não encontrado.`);
+    const sheet = ss.getSheetByName("SWOT");
+    if (!sheet) throw new Error(`Separador "SWOT" não encontrado.`);
 
     // Validar que o cabeçalho bate certo
-    ensureHeader_(sheet, config);
+    ensureHeader_(sheet, headers);
 
     // Escreve no fim
     sheet.appendRow(row);
@@ -246,21 +241,21 @@ function mapTomadaAcao_(value) {
 /**
  * Garante que o cabeçalho da folha está alinhado com a configuração esperada.
  */
-function ensureHeader_(sheet, config) {
-  const headerRow = sheet.getRange(1, 1, 1, config.headers.length).getDisplayValues()[0]
+function ensureHeader_(sheet, expectedHeaders) {
+  const headerRow = sheet.getRange(1, 1, 1, expectedHeaders.length).getDisplayValues()[0]
     .map(h => String(h || "").trim());
 
   // Se a folha estiver vazia, escreve cabeçalho
   if (sheet.getLastRow() === 0) {
-    sheet.getRange(1, 1, 1, config.headers.length).setValues([config.headers]);
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
     return;
   }
 
   // Verifica se os cabeçalhos base batem
-  for (let i = 0; i < config.headers.length; i++) {
-    if (headerRow[i] !== config.headers[i]) {
+  for (let i = 0; i < expectedHeaders.length; i++) {
+    if (headerRow[i] !== expectedHeaders[i]) {
       throw new Error(
-        `Cabeçalho inesperado na coluna ${i + 1}. Esperado "${config.headers[i]}", encontrado "${headerRow[i]}".`
+        `Cabeçalho inesperado na coluna ${i + 1}. Esperado "${expectedHeaders[i]}", encontrado "${headerRow[i]}".`
       );
     }
   }
