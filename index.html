@@ -1554,6 +1554,12 @@
     let roData = [];
     let partesData = [];
     let pdcaData = [];
+    let currentPdcaFilters = {
+      ano: [],
+      processo: [],
+      status: [],
+      eficacia: []
+    };
 
     let currentDocTypeFilters = new Set(); // Multi-select para tipos de documentos
     let currentSwotFilterCategory = 'TODOS';
