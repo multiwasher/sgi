@@ -240,6 +240,32 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
+    /* Mobile Menu Styles */
+    #mobile-menu {
+      min-width: 200px;
+      animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mobile-tab-btn.active {
+      background-color: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+    }
+
+    #burger-menu-btn svg {
+      transition: all 0.3s ease;
+    }
+
     .swot-filter-btn { transition: all 0.2s; }
     .swot-filter-btn.active {
       background-color: #065f46;
@@ -418,7 +444,8 @@
           ✓ ÂMBITO
         </button>
 
-        <div class="flex bg-black/20 p-1 rounded-xl mr-4">
+        <!-- Menu Desktop (hidden on mobile) -->
+        <div class="hidden md:flex bg-black/20 p-1 rounded-xl mr-4">
           <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition-all">DOCUMENTAÇÃO</button>
           <button onclick="switchTab('swot')" id="tab-swot" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ANÁLISE SWOT</button>
           <button onclick="switchTab('ro')" id="tab-ro" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">R&O</button>
@@ -426,6 +453,29 @@
           <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
           <button onclick="switchTab('planning')" id="tab-planning" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PLANEAMENTO</button>
           <button onclick="switchTab('pdca')" id="tab-pdca" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PDCA</button>
+        </div>
+
+        <!-- Burger Menu (visible only on mobile) -->
+        <div class="md:hidden relative">
+          <button onclick="toggleMobileMenu()" id="burger-menu-btn" class="bg-black/20 hover:bg-black/40 text-white p-2 rounded-lg transition-all border border-white/10">
+            <svg id="burger-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <svg id="close-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+          
+          <!-- Mobile Menu Dropdown -->
+          <div id="mobile-menu" class="hidden absolute right-0 top-12 bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-50">
+            <button onclick="switchTabMobile('docs')" id="mob-tab-docs" class="mobile-tab-btn active block w-full text-left px-4 py-2 text-xs font-bold text-emerald-200 hover:bg-slate-800 rounded-t-lg">DOCUMENTAÇÃO</button>
+            <button onclick="switchTabMobile('swot')" id="mob-tab-swot" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ANÁLISE SWOT</button>
+            <button onclick="switchTabMobile('ro')" id="mob-tab-ro" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">R&O</button>
+            <button onclick="switchTabMobile('partes')" id="mob-tab-partes" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PARTES INTERESSADAS</button>
+            <button onclick="switchTabMobile('org')" id="mob-tab-org" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ORGANIGRAMA</button>
+            <button onclick="switchTabMobile('planning')" id="mob-tab-planning" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANEAMENTO</button>
+            <button onclick="switchTabMobile('pdca')" id="mob-tab-pdca" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg">PDCA</button>
+          </div>
         </div>
 
         <div class="bg-black/20 px-3 py-1.5 rounded-full flex items-center border border-white/5">
@@ -1829,6 +1879,35 @@
     function openModal(){ document.getElementById('adminModal').classList.add('active'); }
     function closeModal(){ document.getElementById('adminModal').classList.remove('active'); }
 
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const burgerIcon = document.getElementById('burger-icon');
+      const closeIcon = document.getElementById('close-icon');
+      
+      menu.classList.toggle('hidden');
+      burgerIcon.classList.toggle('hidden');
+      closeIcon.classList.toggle('hidden');
+    }
+
+    function closeMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const burgerIcon = document.getElementById('burger-icon');
+      const closeIcon = document.getElementById('close-icon');
+      
+      menu.classList.add('hidden');
+      burgerIcon.classList.remove('hidden');
+      closeIcon.classList.add('hidden');
+    }
+
+    function switchTabMobile(tab) {
+      switchTab(tab);
+      closeMobileMenu();
+      
+      // Update mobile menu button states
+      document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`mob-tab-${tab}`).classList.add('active');
+    }
+
     function openSwotModal() {
       const m = document.getElementById('swotModal');
       m.classList.remove('hidden');
@@ -1896,6 +1975,11 @@
         document.getElementById('tab-pdca').classList.add('active');
         if(pdcaData.length === 0) fetchPdca();
       }
+
+      // Update mobile menu button states
+      document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
+      const mobileBtn = document.getElementById(`mob-tab-${tab}`);
+      if (mobileBtn) mobileBtn.classList.add('active');
     }
 
     function switchPlanningView(view) {
@@ -3643,6 +3727,18 @@
         if (e.target.classList.contains('btn-ro-swot-modal')) {
           const codigo = e.target.getAttribute('data-codigo');
           if (codigo) openRoSwotModal(codigo);
+        }
+      });
+
+      // ✅ Close mobile menu when clicking outside
+      document.addEventListener('click', (e) => {
+        const mobileMenu = document.getElementById('mobile-menu');
+        const burgerMenuBtn = document.getElementById('burger-menu-btn');
+        
+        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+          if (!mobileMenu.contains(e.target) && !burgerMenuBtn.contains(e.target)) {
+            closeMobileMenu();
+          }
         }
       });
     };
