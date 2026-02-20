@@ -2123,7 +2123,7 @@
       };
 
       const script = document.createElement('script');
-      script.src = `${PARTES_APPS_SCRIPT_URL}?sheet=Partes%20Interessadas&callback=${callbackName}&t=${Date.now()}`;
+      script.src = `${PARTES_APPS_SCRIPT_URL}?callback=${callbackName}&t=${Date.now()}`;
       script.onload = () => script.remove();
       script.onerror = () => {
         const msg = `<tr><td colspan="8" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script Partes Interessadas.</td></tr>`;
