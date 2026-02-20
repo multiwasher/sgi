@@ -686,6 +686,20 @@
           <input type="text" id="searchRo" onkeyup="applyRoFilters()" placeholder="Filtrar por palavra-chave..." class="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-2 rounded-xl text-xs outline-none focus:border-emerald-500">
           <svg class="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
+        
+        <!-- Filtros de Processo -->
+        <div class="space-y-2">
+          <div class="text-[10px] font-black text-slate-600 uppercase">Processos</div>
+          <button onclick="setRoFilter('processo', 'TODOS')" id="filter-ro-processo-TODOS" class="ro-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">TODOS</button>
+          <div id="ro-processo-filters" class="flex flex-wrap gap-2"></div>
+        </div>
+        
+        <!-- Filtros de Origem -->
+        <div class="space-y-2">
+          <div class="text-[10px] font-black text-slate-600 uppercase">Origem</div>
+          <button onclick="setRoFilter('origem', 'TODOS')" id="filter-ro-origem-TODOS" class="ro-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">TODOS</button>
+          <div id="ro-origem-filters" class="flex flex-wrap gap-2"></div>
+        </div>
       </div>
 
       <!-- Tabela R&O -->
@@ -1567,6 +1581,10 @@
     let currentSwotActiveFilter = 'TODOS'; // TODOS | ATIVOS | NAO_ATIVOS
     let currentSwotPlanFilter = 'TODOS';   // TODOS | S | N
     let roTypeFilter = 'todos';   // 'todos', 'risco', 'oportunidade'
+    let currentRoFilters = {
+      processo: [],
+      origem: []
+    };
     
     // Dados das reuniões 2026
     const meetingsData = [
@@ -2089,6 +2107,7 @@
         }
 
         roData = Array.isArray(data) ? data : (data?.data || []);
+        updateRoFilterButtons();
         applyRoFilters();
         hideLoading();
         delete window[callbackName];
@@ -3093,6 +3112,24 @@
           if (roTypeFilter === 'oportunidade' && isRisco) return false;
         }
         
+        // Filtro por PROCESSO (cumulativo)
+        if (currentRoFilters['processo'] && currentRoFilters['processo'].length > 0) {
+          const processos = getAny(item, ['Processos', 'processos', 'PROCESSOS']) || '';
+          const processosNorm = normLoose(processos);
+          const filterNorm = currentRoFilters['processo'].map(f => normLoose(f));
+          const matches = filterNorm.some(fn => processosNorm.includes(fn));
+          if (!matches) return false;
+        }
+        
+        // Filtro por ORIGEM (cumulativo)
+        if (currentRoFilters['origem'] && currentRoFilters['origem'].length > 0) {
+          const origem = getAny(item, ['Origem', 'origem', 'ORIGEM']) || '';
+          const origemNorm = normLoose(origem);
+          const filterNorm = currentRoFilters['origem'].map(f => normLoose(f));
+          const matches = filterNorm.some(fn => origemNorm === fn);
+          if (!matches) return false;
+        }
+        
         // Filtro por palavra-chave de pesquisa
         if (!searchInput) return true;
         
@@ -3132,6 +3169,82 @@
       
       // Aplica filtros
       applyRoFilters();
+    }
+
+    function setRoFilter(category, value) {
+      // Multi-select com toggle para todos os filtros
+      if (value === 'TODOS') {
+        // Reset do filtro - limpar array
+        currentRoFilters[category] = [];
+        // Remover 'active' de todos exceto TODOS
+        document.querySelectorAll(`[id^="filter-ro-${category}-"]`).forEach(b => b.classList.remove('active'));
+        document.getElementById(`filter-ro-${category}-TODOS`).classList.add('active');
+      } else {
+        // Toggle do item específico
+        const index = currentRoFilters[category].indexOf(value);
+        
+        if (index > -1) {
+          // Já está selecionado, remover
+          currentRoFilters[category].splice(index, 1);
+        } else {
+          // Não está selecionado, adicionar
+          currentRoFilters[category].push(value);
+        }
+        
+        // Remover 'active' do botão TODOS quando há filtros específicos
+        const todosBtn = document.getElementById(`filter-ro-${category}-TODOS`);
+        if (currentRoFilters[category].length > 0) {
+          if (todosBtn) todosBtn.classList.remove('active');
+        }
+        
+        // Atualizar visual do botão específico
+        const btnId = `filter-ro-${category}-${value.replace(/\s+/g, '_')}`;
+        const btn = document.getElementById(btnId);
+        if (btn) btn.classList.toggle('active');
+      }
+
+      applyRoFilters();
+    }
+
+    function updateRoFilterButtons() {
+      // Extrair valores únicos de Processo e Origem
+      const valores = {
+        processo: new Set(),
+        origem: new Set()
+      };
+
+      roData.forEach(item => {
+        const processo = getAny(item, ['Processos', 'processos', 'PROCESSOS']) || '';
+        if (processo.trim()) {
+          valores.processo.add(processo.trim());
+        }
+        const origem = getAny(item, ['Origem', 'origem', 'ORIGEM']) || '';
+        if (origem.trim()) {
+          valores.origem.add(origem.trim());
+        }
+      });
+
+      // Criar botões para PROCESSO
+      const processoContainer = document.getElementById('ro-processo-filters');
+      if (processoContainer) {
+        const processoSorted = Array.from(valores.processo).sort();
+        processoContainer.innerHTML = processoSorted.map(val => `
+          <button onclick="setRoFilter('processo', '${escapeHtml(val)}')" 
+                  id="filter-ro-processo-${escapeHtml(val).replace(/\s+/g, '_')}" 
+                  class="ro-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
+        `).join('');
+      }
+
+      // Criar botões para ORIGEM
+      const origemContainer = document.getElementById('ro-origem-filters');
+      if (origemContainer) {
+        const origemSorted = Array.from(valores.origem).sort();
+        origemContainer.innerHTML = origemSorted.map(val => `
+          <button onclick="setRoFilter('origem', '${escapeHtml(val)}')" 
+                  id="filter-ro-origem-${escapeHtml(val).replace(/\s+/g, '_')}" 
+                  class="ro-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
+        `).join('');
+      }
     }
 
     function applyPartesFilters() {
