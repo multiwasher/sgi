@@ -746,26 +746,24 @@
 
       <!-- Tabela Partes Interessadas -->
       <div class="glass-card overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-slate-50 border-b-2 border-slate-200">
-              <tr>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Código</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Parte Interessada</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Fonte</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Requisitos</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Expectativas</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Frequência</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Responsável</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Ações</th>
-                <th class="px-6 py-3 text-left text-[10px] font-black uppercase text-slate-600">Objetivos</th>
-              </tr>
-            </thead>
-            <tbody id="partesTableBody" class="divide-y divide-slate-200">
-              <tr><td colspan="9" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
-            </tbody>
-          </table>
-        </div>
+        <table class="w-full table-auto" style="table-layout: fixed;">
+          <thead class="bg-slate-50 border-b-2 border-slate-200">
+            <tr>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-12">Código</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-24">Parte Interessada</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-16">Fonte</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-32">Requisitos</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-32">Expectativas</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-20">Frequência</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-20">Responsável</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-16">Ações</th>
+              <th class="px-3 py-3 text-left text-[9px] font-black uppercase text-slate-600 w-16">Objetivos</th>
+            </tr>
+          </thead>
+          <tbody id="partesTableBody" class="divide-y divide-slate-200">
+            <tr><td colspan="9" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -3177,17 +3175,17 @@
 
         return `
           <tr class="transition-colors group hover:bg-slate-50">
-            <td class="px-6 py-4 text-sm font-black text-emerald-700">${escapeHtml(codigo)}</td>
-            <td class="px-6 py-4 text-sm font-semibold text-slate-800">${escapeHtml(parteInteressada)}</td>
-            <td class="px-6 py-4 text-sm">
-              <span class="inline-block px-2 py-1 rounded-full text-[9px] font-black border ${fonteColor} uppercase">${escapeHtml(fonte)}</span>
+            <td class="px-3 py-3 text-xs font-black text-emerald-700 break-words">${escapeHtml(codigo)}</td>
+            <td class="px-3 py-3 text-xs font-semibold text-slate-800 break-words">${escapeHtml(parteInteressada)}</td>
+            <td class="px-3 py-3 text-xs break-words">
+              <span class="inline-block px-2 py-1 rounded-full text-[8px] font-black border ${fonteColor} uppercase">${escapeHtml(fonte)}</span>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-700 max-w-xs">${escapeHtml(requisitos)}</td>
-            <td class="px-6 py-4 text-sm text-slate-700 max-w-xs">${escapeHtml(expectativas)}</td>
-            <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(frequencia)}</td>
-            <td class="px-6 py-4 text-sm font-medium text-slate-800">${escapeHtml(responsavel)}</td>
-            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(nacoes)}</td>
-            <td class="px-6 py-4 text-sm text-slate-600">${escapeHtml(objetivos)}</td>
+            <td class="px-3 py-3 text-xs text-slate-700 break-words">${escapeHtml(requisitos)}</td>
+            <td class="px-3 py-3 text-xs text-slate-700 break-words">${escapeHtml(expectativas)}</td>
+            <td class="px-3 py-3 text-xs text-slate-700 break-words">${escapeHtml(frequencia)}</td>
+            <td class="px-3 py-3 text-xs font-medium text-slate-800 break-words">${escapeHtml(responsavel)}</td>
+            <td class="px-3 py-3 text-xs text-slate-600 break-words">${escapeHtml(nacoes)}</td>
+            <td class="px-3 py-3 text-xs text-slate-600 break-words">${escapeHtml(objetivos)}</td>
           </tr>
         `;
       }).join('');
