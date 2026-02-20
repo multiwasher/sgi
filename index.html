@@ -103,6 +103,31 @@
       margin-right: 4px;
     }
 
+    /* ✅ R&O FILTER BUTTON STATES */
+    .ro-filter-btn {
+      transition: all 0.3s ease;
+    }
+    .ro-filter-btn.active {
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: scale(1.05);
+      font-weight: 900;
+    }
+    #roFilterRisco.active {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #7f1d1d;
+      border-color: #dc2626;
+    }
+    #roFilterOportunidade.active {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      color: #15803d;
+      border-color: #22c55e;
+    }
+    #roFilterTodos.active {
+      background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+      color: #1e293b;
+      border-color: #64748b;
+    }
+
     /* ✅ STATUS TAGS */
     .status-em-curso {
       background: #fef9c3 !important;
@@ -628,10 +653,13 @@
           <p class="text-slate-500 text-sm">Matriz de Riscos e Oportunidades Ambientais</p>
           <div class="flex gap-6 mt-3">
             <div class="flex items-center gap-2">
-              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black text-red-700 bg-red-100 border border-red-300">⚠️ R = Risco</span>
+              <button id="roFilterRisco" onclick="setRoTypeFilter('risco')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black text-red-700 bg-red-100 border border-red-300 hover:bg-red-200 transition-colors cursor-pointer ro-filter-btn">⚠️ R = Risco</button>
             </div>
             <div class="flex items-center gap-2">
-              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black text-emerald-700 bg-emerald-100 border border-emerald-300">✓ O = Oportunidade</span>
+              <button id="roFilterOportunidade" onclick="setRoTypeFilter('oportunidade')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black text-emerald-700 bg-emerald-100 border border-emerald-300 hover:bg-emerald-200 transition-colors cursor-pointer ro-filter-btn">✓ O = Oportunidade</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="roFilterTodos" onclick="setRoTypeFilter('todos')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black text-slate-700 bg-slate-100 border border-slate-300 hover:bg-slate-200 transition-colors cursor-pointer ro-filter-btn">Todos</button>
             </div>
           </div>
         </div>
@@ -1475,6 +1503,7 @@
     let currentSwotFilterQuadrant = 'TODOS';
     let currentSwotActiveFilter = 'TODOS'; // TODOS | ATIVOS | NAO_ATIVOS
     let currentSwotPlanFilter = 'TODOS';   // TODOS | S | N
+    let roTypeFilter = 'todos';   // 'todos', 'risco', 'oportunidade'
     
     // Dados das reuniões 2026
     const meetingsData = [
@@ -2952,6 +2981,17 @@
       const normalized = (str) => normLoose(str);
 
       const filtered = roData.filter(item => {
+        // Filtro por tipo (Risco/Oportunidade/Todos)
+        if (roTypeFilter !== 'todos') {
+          const ro = getAny(item, ['R / O', 'R/O', 'Tipo']);
+          const roNormalized = normLoose(ro);
+          const isRisco = roNormalized.startsWith('r') || roNormalized.includes('risco');
+          
+          if (roTypeFilter === 'risco' && !isRisco) return false;
+          if (roTypeFilter === 'oportunidade' && isRisco) return false;
+        }
+        
+        // Filtro por palavra-chave de pesquisa
         if (!searchInput) return true;
         
         const descricao = getAny(item, ['Descrição do Risco / Oportunidade', 'Descricao do Risco / Oportunidade', 'Descrição']);
@@ -2970,6 +3010,26 @@
       });
 
       renderRo(filtered);
+    }
+
+    function setRoTypeFilter(type) {
+      roTypeFilter = type;
+      
+      // Atualiza estado visual dos botões
+      document.getElementById('roFilterTodos').classList.remove('active');
+      document.getElementById('roFilterRisco').classList.remove('active');
+      document.getElementById('roFilterOportunidade').classList.remove('active');
+      
+      if (type === 'todos') {
+        document.getElementById('roFilterTodos').classList.add('active');
+      } else if (type === 'risco') {
+        document.getElementById('roFilterRisco').classList.add('active');
+      } else if (type === 'oportunidade') {
+        document.getElementById('roFilterOportunidade').classList.add('active');
+      }
+      
+      // Aplica filtros
+      applyRoFilters();
     }
 
     function renderRo(data) {
@@ -3247,6 +3307,13 @@
       fetchFromSheet();
       fetchSwot();
       fetchRo();
+      
+      // ✅ Inicializa estado do filtro R&O
+      setTimeout(() => {
+        if (document.getElementById('roFilterTodos')) {
+          document.getElementById('roFilterTodos').classList.add('active');
+        }
+      }, 100);
 
       // Event listeners para botões de departamento no organigrama
       document.querySelectorAll('.org-dept-btn').forEach(btn => {
