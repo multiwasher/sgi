@@ -2562,10 +2562,11 @@
     }
 
     function getEficaciaClass(eficacia) {
-      const ef = (eficacia || '').toLowerCase();
+      const ef = (eficacia || '').toLowerCase().trim();
+      if (ef.includes('eficaz') && !ef.includes('não') && !ef.includes('nao')) return 'eficacia-eficaz';
       if (ef.includes('não eficaz') || ef.includes('nao eficaz')) return 'eficacia-nao-eficaz';
-      if (ef.includes('eficaz')) return 'eficacia-eficaz';
-      return '';
+      if (ef === '-') return 'eficacia-indefinido';
+      return 'eficacia-indefinido';
     }
 
     function renderPdca(data) {
@@ -2587,9 +2588,9 @@
         const dataConclusao = formatDate(getAny(item, ['Data de Conclusão', 'data de conclusao', 'DATA DE CONCLUSÃO'])) || '-';
         const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '-';
         const eficacia = getAny(item, ['Análise da Eficácia']) || '-';
-        const discussaoEficacia = getAny(item, ['Discussão Eficácia', 'discussao eficacia', 'DISCUSSÃO EFICÁCIA', 'Discussão da Eficácia']) || '-';
         
         const statusClass = getStatusClass(status);
+        const eficaciaClass = getEficaciaClass(eficacia);
         
         return `
         <tr class="hover:bg-slate-50/50 transition-colors group pdca-row" data-item-id="${escapeHtml(itemNum)}">
@@ -2609,7 +2610,12 @@
             <option value="Em curso">Em curso</option>
             <option value="-">-</option>
           </select></td>
-          <td class="px-4 py-3 text-xs text-slate-600"><div contenteditable="true" class="pdca-edit-cell rounded hover:bg-slate-100 px-1 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50" data-field="Análise da Eficácia" data-original="${escapeHtml(eficacia)}">${escapeHtml(eficacia)}</div></td>
+          <td class="px-4 py-3"><select class="pdca-eficacia-select rounded px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs font-semibold border border-slate-300 ${eficaciaClass}" data-field="Análise da Eficácia" data-original="${escapeHtml(eficacia)}">
+            <option value="${escapeHtml(eficacia)}" selected>${escapeHtml(eficacia)}</option>
+            <option value="Eficaz">Eficaz</option>
+            <option value="Não Eficaz">Não Eficaz</option>
+            <option value="-">-</option>
+          </select></td>
         </tr>
       `;
         
@@ -2679,6 +2685,35 @@
           }
         });
       });
+
+      // Event listeners para Eficácia select dropdowns
+      const eficaciaSelects = document.querySelectorAll('.pdca-eficacia-select');
+      eficaciaSelects.forEach(select => {
+        select.addEventListener('change', function() {
+          const newValue = this.value;
+          const original = this.getAttribute('data-original');
+          const field = this.getAttribute('data-field');
+          const row = this.closest('.pdca-row');
+          const itemId = row.getAttribute('data-item-id');
+          
+          // Atualizar classe visual baseado na nova eficácia
+          const newEficaciaClass = getEficaciaClass(newValue);
+          
+          // Remover todas as classes de eficácia
+          this.classList.remove('eficacia-eficaz', 'eficacia-nao-eficaz', 'eficacia-indefinido');
+          
+          // Adicionar nova classe de eficácia
+          if (newEficaciaClass) {
+            this.classList.add(newEficaciaClass);
+          }
+          
+          // Se mudou, salva
+          if (newValue !== original) {
+            this.classList.add('ring-2', 'ring-yellow-400');
+            savePdcaCell(itemId, field, newValue);
+          }
+        });
+      });
     }
 
     function savePdcaCell(itemId, fieldName, newValue) {
@@ -2686,6 +2721,13 @@
       const ALLOWED_STATUS_VALUES = ['Concluído', 'Aberto', 'Em curso', '-'];
       if (fieldName === 'Status das Ações' && !ALLOWED_STATUS_VALUES.includes(newValue)) {
         showError(`Valor inválido para Status. Valores permitidos: ${ALLOWED_STATUS_VALUES.join(', ')}`);
+        return;
+      }
+
+      // Validação para o campo Análise da Eficácia
+      const ALLOWED_EFICACIA_VALUES = ['Eficaz', 'Não Eficaz', '-'];
+      if (fieldName === 'Análise da Eficácia' && !ALLOWED_EFICACIA_VALUES.includes(newValue)) {
+        showError(`Valor inválido para Eficácia. Valores permitidos: ${ALLOWED_EFICACIA_VALUES.join(', ')}`);
         return;
       }
       
