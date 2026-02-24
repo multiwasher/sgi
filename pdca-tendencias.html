@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tendências PDCA | Somengil ISO 14001</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+    :root { 
+      --primary: #065f46; 
+      --secondary: #10b981; 
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #ecf0f1 100%);
+      color: #1e293b;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 350px;
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px -1px rgba(0,0,0,0.03);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-accent {
+      border-bottom: 3px solid var(--secondary);
+      padding-bottom: 0.5rem;
+    }
+
+    .metric-badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef9c3; color: #854d0e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #eff6ff; color: #1d4ed8; }
+
+    .pdca-stage {
+      padding: 1rem;
+      border-radius: 0.75rem;
+      border-left: 4px solid;
+      margin-bottom: 1rem;
+    }
+
+    .pdca-p { border-left-color: #3b82f6; background: #eff6ff; }
+    .pdca-d { border-left-color: #f59e0b; background: #fffbeb; }
+    .pdca-c { border-left-color: #10b981; background: #ecfdf5; }
+    .pdca-a { border-left-color: #ef4444; background: #fef2f2; }
+
+    .trend-up { color: #10b981; font-weight: 700; }
+    .trend-down { color: #ef4444; font-weight: 700; }
+    .trend-neutral { color: #6b7280; font-weight: 700; }
+
+    .timeline-item {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--secondary);
+      margin-top: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .timeline-content {
+      flex: 1;
+      font-size: 0.875rem;
+    }
+
+    .performance-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .performance-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-800 text-slate-900">Tendências PDCA</h1>
+          <p class="text-slate-500 text-sm mt-1">Análise de desempenho e evolução - SGI Somengil</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="dashboard-analise.html" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-600 transition">
+            📊 Dashboard Geral
+          </a>
+          <a href="index.html" class="text-slate-600 hover:text-slate-900 font-600">← Voltar ao Portal</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Cards de KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+      <div class="stat-card">
+        <p class="text-slate-600 font-600 mb-2 text-sm">Taxa Média Realização</p>
+        <p class="stat-value">82%</p>
+        <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+          <span class="trend-up">↑ +5.2%</span> vs período anterior
+        </p>
+      </div>
+      <div class="stat-card">
+        <p class="text-slate-600 font-600 mb-2 text-sm">Taxa Média Eficácia</p>
+        <p class="stat-value">78%</p>
+        <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+          <span class="trend-up">↑ +3.8%</span> vs período anterior
+        </p>
+      </div>
+      <div class="stat-card">
+        <p class="text-slate-600 font-600 mb-2 text-sm">Ciclos Completos</p>
+        <p class="stat-value">28</p>
+        <p class="text-xs text-slate-500 mt-2">PDCA que passaram por todas 4 fases</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-slate-600 font-600 mb-2 text-sm">Em Andamento</p>
+        <p class="stat-value">15</p>
+        <p class="text-xs text-slate-500 mt-2">Ciclos ativos no momento</p>
+      </div>
+      <div class="stat-card">
+        <p class="text-slate-600 font-600 mb-2 text-sm">Melhoria Acumulada</p>
+        <p class="stat-value">+18%</p>
+        <p class="text-xs text-slate-500 mt-2">Desde início do programa</p>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 1: Tendência de Realização -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-800 text-slate-900 mb-4 header-accent pb-3">📈 Tendência de Realização</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div class="lg:col-span-2">
+          <div class="chart-container">
+            <canvas id="realizacaoTrendChart"></canvas>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="stat-card">
+            <h4 class="font-700 text-sm mb-3">Análise Realização</h4>
+            <div class="space-y-3 text-sm">
+              <div>
+                <span class="font-600">2024</span>
+                <div class="performance-bar">
+                  <div class="performance-fill bg-blue-500" style="width: 68%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">68% média anual</p>
+              </div>
+              <div>
+                <span class="font-600">2025</span>
+                <div class="performance-bar">
+                  <div class="performance-fill bg-emerald-500" style="width: 76%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">76% média anual <span class="trend-up">+8%</span></p>
+              </div>
+              <div>
+                <span class="font-600">2026 (até ago)</span>
+                <div class="performance-bar">
+                  <div class="performance-fill bg-green-600" style="width: 85%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">85% média parcial <span class="trend-up">+9%</span></p>
+              </div>
+            </div>
+          </div>
+          <div class="pdca-stage pdca-p">
+            <p class="font-700 text-blue-900 text-sm mb-1">Plan (Planeamento)</p>
+            <p class="text-xs text-blue-800">Taxa média de realização segundo o plano original</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 2: Tendência de Eficácia -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-800 text-slate-900 mb-4 header-accent pb-3">✓ Tendência de Eficácia</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div class="lg:col-span-2">
+          <div class="chart-container">
+            <canvas id="eficaciaTrendChart"></canvas>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="stat-card">
+            <h4 class="font-700 text-sm mb-3">Análise Eficácia</h4>
+            <div class="space-y-3 text-sm">
+              <div>
+                <span class="font-600">2024</span>
+                <div class="performance-bar">
+                  <div class="performance-fill bg-orange-500" style="width: 72%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">72% média anual</p>
+              </div>
+              <div>
+                <span class="font-600">2025</span>
+                <div class="performance-bar">
+                  <div class="performance-fill bg-emerald-500" style="width: 77%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">77% média anual <span class="trend-up">+5%</span></p>
+              </div>
+              <div>
+                <span class="font-600">2026 (até ago)</span>
+                <div class="performance-bar">
+                  <div class="performance-fill bg-green-600" style="width: 82%"></div>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">82% média parcial <span class="trend-up">+5%</span></p>
+              </div>
+            </div>
+          </div>
+          <div class="pdca-stage pdca-c">
+            <p class="font-700 text-emerald-900 text-sm mb-1">Check & Act (Verificação)</p>
+            <p class="text-xs text-emerald-800">Mede a eficácia das ações implementadas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 3: Distribuição de Status -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-800 text-slate-900 mb-4 header-accent pb-3">📊 Status Atual dos Ciclos</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="chart-container">
+          <canvas id="statusDistribuicao"></canvas>
+        </div>
+        <div class="stat-card">
+          <h4 class="font-700 text-sm mb-4">Distribuição por Status</h4>
+          <div class="space-y-4" id="statusDetailsContainer">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-600">Concluído</span>
+              <div class="flex items-center gap-2">
+                <div class="w-32 bg-slate-200 rounded h-2">
+                  <div class="bg-emerald-500 h-2 rounded" style="width: 50%"></div>
+                </div>
+                <span class="metric-badge badge-success">12 ciclos</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-600">Em curso</span>
+              <div class="flex items-center gap-2">
+                <div class="w-32 bg-slate-200 rounded h-2">
+                  <div class="bg-amber-500 h-2 rounded" style="width: 42%"></div>
+                </div>
+                <span class="metric-badge badge-warning">10 ciclos</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-600">Planeado</span>
+              <div class="flex items-center gap-2">
+                <div class="w-32 bg-slate-200 rounded h-2">
+                  <div class="bg-purple-500 h-2 rounded" style="width: 21%"></div>
+                </div>
+                <span class="metric-badge badge-info">5 ciclos</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-600">Aberto</span>
+              <div class="flex items-center gap-2">
+                <div class="w-32 bg-slate-200 rounded h-2">
+                  <div class="bg-blue-500 h-2 rounded" style="width: 25%"></div>
+                </div>
+                <span class="metric-badge badge-info">6 ciclos</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-600">Stand By</span>
+              <div class="flex items-center gap-2">
+                <div class="w-32 bg-slate-200 rounded h-2">
+                  <div class="bg-slate-400 h-2 rounded" style="width: 13%"></div>
+                </div>
+                <span class="metric-badge" style="background: #f1f5f9; color: #475569;">3 ciclos</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-600">Cancelado</span>
+              <div class="flex items-center gap-2">
+                <div class="w-32 bg-slate-200 rounded h-2">
+                  <div class="bg-red-500 h-2 rounded" style="width: 8%"></div>
+                </div>
+                <span class="metric-badge badge-danger">2 ciclos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 5: Timeline de Melhoria -->
+    <div class="mb-12">
+      <h2 class="text-2xl font-800 text-slate-900 mb-4 header-accent pb-3">📅 Timeline de Ganhos de Eficiência</h2>
+      <div class="stat-card">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <p class="font-700 text-slate-800">Q1 2024 - Implementação Inicial</p>
+            <p class="text-slate-600">Início do programa PDCA com 5 ciclos pilotos. Taxa média de realização: <strong>55%</strong></p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <p class="font-700 text-slate-800">Q2 2024 - Consolidação</p>
+            <p class="text-slate-600">Expansão para 12 ciclos. Melhoria de <span class="trend-up">+18%</span> na realização. Taxa: <strong>68%</strong></p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <p class="font-700 text-slate-800">Q4 2024 - Otimização</p>
+            <p class="text-slate-600">Implementação de feedbacks. Taxa de realização: <strong>72%</strong>, Eficácia: <strong>72%</strong></p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <p class="font-700 text-slate-800">Q1-Q3 2025 - Maturidade</p>
+            <p class="text-slate-600">20 ciclos ativos. Taxa de realização: <strong>76%</strong>, Eficácia: <strong>77%</strong> <span class="trend-up">+4%</span></p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <p class="font-700 text-slate-800">2026 (atual) - Excelência</p>
+            <p class="text-slate-600">28 ciclos completos. Taxa de realização: <strong>85%</strong>, Eficácia: <strong>82%</strong> <span class="trend-up">+5%</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Configuração do Apps Script
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyyfL60bEV1FylAgXUvGn_QemQQXlyvBF5s5F4DxBCWmGxcPsdn8bDP7JOtmRy8AZa_/exec';
+
+    const colors = {
+      blue: '#3b82f6',
+      amber: '#f59e0b',
+      emerald: '#10b981',
+      red: '#ef4444',
+      green: '#22c55e',
+      purple: '#a855f7',
+      cyan: '#06b6d4',
+      slate: '#64748b'
+    };
+
+    // Função para buscar distribuição de status do Apps Script
+    async function fetchStatusDistribution() {
+      try {
+        const response = await fetch(APPS_SCRIPT_URL + '?action=statusDistribution');
+        const result = await response.json();
+        
+        if (result.ok && result.statusDistribution) {
+          return result.statusDistribution;
+        } else {
+          console.error('Erro ao buscar status:', result.error);
+          return null;
+        }
+      } catch (error) {
+        console.error('Erro de conexão:', error);
+        return null;
+      }
+    }
+
+    // Função para preparar dados do gráfico de status
+    async function initializeStatusChart() {
+      const statusData = await fetchStatusDistribution();
+      
+      // Ordem esperada dos status
+      const statusOrder = ['Concluído', 'Em curso', 'Aberto', 'Planeado', 'Stand By', 'Cancelado'];
+      const colorMap = {
+        'Concluído': colors.emerald,
+        'Em curso': colors.amber,
+        'Aberto': colors.blue,
+        'Planeado': colors.purple,
+        'Stand By': '#94a3b8',
+        'Cancelado': colors.red
+      };
+
+      // Preparar labels e dados na ordem esperada
+      const labels = [];
+      const data = [];
+      const bgColors = [];
+
+      if (statusData) {
+        statusOrder.forEach(status => {
+          if (statusData[status] !== undefined) {
+            labels.push(status);
+            data.push(statusData[status]);
+            bgColors.push(colorMap[status]);
+          }
+        });
+      }
+
+      // Se não conseguiu dados, usar valores padrão
+      if (labels.length === 0) {
+        statusOrder.forEach(status => {
+          labels.push(status);
+          bgColors.push(colorMap[status]);
+        });
+        data.push(12, 10, 6, 5, 3, 2);
+      }
+
+      // Atualizar o card lateral com os dados reais
+      updateStatusDetailsCard(labels, data);
+
+      // Criar gráfico
+      const ctx3 = document.getElementById('statusDistribuicao').getContext('2d');
+      new Chart(ctx3, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: bgColors,
+            borderColor: '#fff',
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' } } }
+          }
+        }
+      });
+    }
+
+    // Função para atualizar o card de detalhes de status
+    function updateStatusDetailsCard(labels, data) {
+      const statusContainer = document.getElementById('statusDetailsContainer');
+      if (!statusContainer) return;
+
+      const colorMap = {
+        'Concluído': { bg: 'bg-emerald-500', badge: 'badge-success' },
+        'Em curso': { bg: 'bg-amber-500', badge: 'badge-warning' },
+        'Aberto': { bg: 'bg-blue-500', badge: 'badge-info' },
+        'Planeado': { bg: 'bg-purple-500', badge: 'badge-info' },
+        'Stand By': { bg: 'bg-slate-400', badge: '' },
+        'Cancelado': { bg: 'bg-red-500', badge: 'badge-danger' }
+      };
+
+      let total = data.reduce((a, b) => a + b, 0);
+      let html = '';
+
+      labels.forEach((label, idx) => {
+        const count = data[idx];
+        const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+        const colors = colorMap[label] || { bg: 'bg-slate-400', badge: '' };
+        const badgeClass = colors.badge ? colors.badge : 'style="background: #f1f5f9; color: #475569;"';
+        const badgeAttr = colors.badge ? `class="metric-badge ${colors.badge}"` : `class="metric-badge" ${badgeClass}`;
+
+        html += `
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-600">${label}</span>
+            <div class="flex items-center gap-2">
+              <div class="w-32 bg-slate-200 rounded h-2">
+                <div class="${colors.bg} h-2 rounded" style="width: ${percentage}%"></div>
+              </div>
+              <span ${badgeAttr}>${count} ciclo${count !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      statusContainer.innerHTML = html;
+    }
+
+    // ===== GRÁFICO 1: TENDÊNCIA DE REALIZAÇÃO =====
+    const ctx1 = document.getElementById('realizacaoTrendChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'],
+        datasets: [
+          {
+            label: '2024',
+            data: [55, 60, 65, 68, 70, 72, 75, 76],
+            borderColor: '#94a3b8',
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: '#94a3b8'
+          },
+          {
+            label: '2025',
+            data: [72, 73, 74, 75, 76, 77, 78, 79],
+            borderColor: colors.amber,
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4,
+            pointBackgroundColor: colors.amber
+          },
+          {
+            label: '2026',
+            data: [80, 81, 82, 83, 84, 85, 85, 85],
+            borderColor: colors.emerald,
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: colors.emerald
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' } } },
+          tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 10, titleFont: { size: 12 } }
+        },
+        scales: {
+          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
+        }
+      }
+    });
+
+    // ===== GRÁFICO 2: TENDÊNCIA DE EFICÁCIA =====
+    const ctx2 = document.getElementById('eficaciaTrendChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'],
+        datasets: [
+          {
+            label: '2024',
+            data: [60, 63, 68, 72, 74, 75, 76, 77],
+            borderColor: '#94a3b8',
+            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4
+          },
+          {
+            label: '2025',
+            data: [73, 74, 74, 75, 76, 77, 78, 79],
+            borderColor: colors.orange = '#f97316',
+            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4
+          },
+          {
+            label: '2026',
+            data: [79, 80, 81, 81, 82, 82, 82, 82],
+            borderColor: colors.emerald,
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11, weight: 'bold' } } }
+        },
+        scales: {
+          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
+        }
+      }
+    });
+
+    // ===== GRÁFICO 3: DISTRIBUIÇÃO DE STATUS =====
+    // Inicializar quando a página carregar
+    document.addEventListener('DOMContentLoaded', initializeStatusChart);
+
+
+  </script>
+</body>
+</html>

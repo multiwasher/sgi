@@ -492,6 +492,7 @@
           <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
           <button onclick="switchTab('planning')" id="tab-planning" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PLANEAMENTO</button>
           <button onclick="switchTab('pdca')" id="tab-pdca" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PDCA</button>
+          <a href="dashboard-analise.html" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white ml-2">📊 ANÁLISE</a>
         </div>
 
         <!-- Burger Menu (visible only on mobile) -->
@@ -513,7 +514,8 @@
             <button onclick="switchTabMobile('partes')" id="mob-tab-partes" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PARTES INTERESSADAS</button>
             <button onclick="switchTabMobile('org')" id="mob-tab-org" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ORGANIGRAMA</button>
             <button onclick="switchTabMobile('planning')" id="mob-tab-planning" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANEAMENTO</button>
-            <button onclick="switchTabMobile('pdca')" id="mob-tab-pdca" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg">PDCA</button>
+            <button onclick="switchTabMobile('pdca')" id="mob-tab-pdca" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PDCA</button>
+            <a href="dashboard-analise.html" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg">📊 ANÁLISE VISUAL</a>
           </div>
         </div>
 
@@ -1559,16 +1561,16 @@
             ATUALIZAR
           </button>
 
-          <button
-            onclick="openPdcaTrendAnalysis()"
+          <a
+            href="pdca-tendencias.html"
             class="text-[10px] font-black text-slate-600 hover:text-slate-800 uppercase tracking-widest bg-white px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-2"
-            title="Análise de tendências de realização e eficácia"
+            title="Análise visual de tendências de realização e eficácia"
           >
             <svg class="w-4 h-4 inline-block" viewBox="0 0 20 20" fill="currentColor">
               <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
             </svg>
             TENDÊNCIAS
-          </button>
+          </a>
 
         </div>
       </div>
@@ -1696,10 +1698,13 @@
 
       <!-- Filtro por Ano -->
       <div class="mb-6">
-        <label class="block text-sm font-semibold text-slate-700 mb-2">Filtrar por Ano:</label>
-        <select id="pdcaTrendYearFilter" onchange="updatePdcaTrendAnalysis()" class="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none">
-          <option value="">Todos os Anos</option>
-        </select>
+        <label class="block text-sm font-semibold text-slate-700 mb-3">Selecionar Anos para Comparação:</label>
+        <div id="pdcaTrendYearFilters" class="flex flex-wrap gap-3">
+          <!-- Checkboxes preenchidas dinamicamente -->
+        </div>
+        <button onclick="selectAllPdcaTrendYears()" class="mt-3 text-xs font-semibold text-emerald-600 hover:text-emerald-800 uppercase">
+          Selecionar Todos
+        </button>
       </div>
 
       <!-- Gráficos/Tabelas -->
@@ -4102,11 +4107,11 @@
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       
-      // Preencher dropdown de anos
+      // Preencher checkboxes de anos
       populateTrendYearFilter();
       
-      // Inicializar análise
-      updatePdcaTrendAnalysis();
+      // Inicializar análise (selecionar último ano por padrão)
+      selectLastPdcaTrendYear();
     }
 
     function closePdcaTrendAnalysis(event) {
@@ -4123,47 +4128,80 @@
         if (ano) years.add(ano.toString());
       });
 
-      const select = document.getElementById('pdcaTrendYearFilter');
+      const container = document.getElementById('pdcaTrendYearFilters');
+      container.innerHTML = '';
+      
       const sortedYears = Array.from(years).sort().reverse();
       
-      // Manter opção "Todos os Anos"
-      while (select.options.length > 1) {
-        select.remove(1);
-      }
-
       sortedYears.forEach(year => {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        select.appendChild(option);
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors';
+        label.innerHTML = `
+          <input type="checkbox" value="${year}" onchange="updatePdcaTrendAnalysis()" class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-2 focus:ring-emerald-500">
+          <span class="font-semibold text-slate-700">${year}</span>
+        `;
+        container.appendChild(label);
       });
     }
 
-    function updatePdcaTrendAnalysis() {
-      const selectedYear = document.getElementById('pdcaTrendYearFilter').value;
-      
-      // Filtrar dados
-      const filteredData = selectedYear 
-        ? pdcaData.filter(item => {
-            const ano = getAny(item, ['Ano', 'ano', 'ANO']);
-            return ano && ano.toString() === selectedYear;
-          })
-        : pdcaData;
+    function selectLastPdcaTrendYear() {
+      const years = new Set();
+      pdcaData.forEach(item => {
+        const ano = getAny(item, ['Ano', 'ano', 'ANO']);
+        if (ano) years.add(ano.toString());
+      });
 
-      if (filteredData.length === 0) {
-        document.getElementById('pdcaTrendRealizationChart').innerHTML = '<p class="text-slate-500">Sem dados disponíveis</p>';
-        document.getElementById('pdcaTrendEficaciaChart').innerHTML = '<p class="text-slate-500">Sem dados disponíveis</p>';
-        document.getElementById('pdcaTrendStatsSummary').innerHTML = '<p class="text-slate-500">Sem dados disponíveis</p>';
+      const sortedYears = Array.from(years).sort().reverse();
+      if (sortedYears.length > 0) {
+        const lastYear = sortedYears[0];
+        const checkbox = document.querySelector(`input[value="${lastYear}"]`);
+        if (checkbox) {
+          checkbox.checked = true;
+        }
+      }
+      
+      updatePdcaTrendAnalysis();
+    }
+
+    function selectAllPdcaTrendYears() {
+      document.querySelectorAll('#pdcaTrendYearFilters input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+      });
+      updatePdcaTrendAnalysis();
+    }
+
+    function getSelectedPdcaTrendYears() {
+      const checkboxes = document.querySelectorAll('#pdcaTrendYearFilters input[type="checkbox"]:checked');
+      return Array.from(checkboxes).map(cb => cb.value).sort().reverse();
+    }
+
+    function updatePdcaTrendAnalysis() {
+      const selectedYears = getSelectedPdcaTrendYears();
+      
+      if (selectedYears.length === 0) {
+        document.getElementById('pdcaTrendRealizationChart').innerHTML = '<p class="text-slate-500">Selecione pelo menos um ano</p>';
+        document.getElementById('pdcaTrendEficaciaChart').innerHTML = '<p class="text-slate-500">Selecione pelo menos um ano</p>';
+        document.getElementById('pdcaTrendStatsSummary').innerHTML = '<p class="text-slate-500">Selecione pelo menos um ano</p>';
         return;
       }
-
-      // Calcular estatísticas
-      const stats = calculatePdcaTrendStats(filteredData);
       
-      // Renderizar gráficos
-      renderRealizationTrend(stats);
-      renderEficaciaTrend(stats);
-      renderStatsSummary(stats);
+      // Calcular estatísticas por ano
+      const yearStats = {};
+      selectedYears.forEach(year => {
+        const yearsData = pdcaData.filter(item => {
+          const ano = getAny(item, ['Ano', 'ano', 'ANO']);
+          return ano && ano.toString() === year;
+        });
+        
+        if (yearsData.length > 0) {
+          yearStats[year] = calculatePdcaTrendStats(yearsData);
+        }
+      });
+
+      // Renderizar gráficos de comparação
+      renderRealizationComparison(yearStats);
+      renderEficaciaComparison(yearStats);
+      renderStatsComparison(yearStats);
     }
 
     function calculatePdcaTrendStats(data) {
@@ -4201,89 +4239,109 @@
       return stats;
     }
 
-    function renderRealizationTrend(stats) {
-      const html = `
-        <table class="w-full border-collapse border border-slate-300">
-          <tr class="bg-slate-100">
-            <th class="border border-slate-300 px-4 py-2 text-left font-bold">Status</th>
-            <th class="border border-slate-300 px-4 py-2 text-center font-bold">Quantidade</th>
-            <th class="border border-slate-300 px-4 py-2 text-center font-bold">%</th>
-          </tr>
-          <tr>
-            <td class="border border-slate-300 px-4 py-2">🟢 Concluído</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.concluido}</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.concluido / stats.total * 100).toFixed(1)}%</td>
-          </tr>
-          <tr class="bg-slate-50">
-            <td class="border border-slate-300 px-4 py-2">🟡 Aberto</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.aberto}</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.aberto / stats.total * 100).toFixed(1)}%</td>
-          </tr>
-          <tr>
-            <td class="border border-slate-300 px-4 py-2">🟠 Em Curso</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.emCurso}</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.emCurso / stats.total * 100).toFixed(1)}%</td>
-          </tr>
-          <tr class="bg-emerald-50 font-bold">
-            <td class="border border-slate-300 px-4 py-2">Taxa de Realização</td>
-            <td colspan="2" class="border border-slate-300 px-4 py-2 text-center text-emerald-700">${stats.realizationRate}%</td>
-          </tr>
-        </table>
-      `;
+    function renderRealizationComparison(yearStats) {
+      const years = Object.keys(yearStats).sort().reverse();
+      
+      let headerHtml = '<tr class="bg-slate-100"><th class="border border-slate-300 px-4 py-2 text-left font-bold">Status</th>';
+      years.forEach(year => {
+        headerHtml += `<th class="border border-slate-300 px-4 py-2 text-center font-bold">${year}</th>`;
+      });
+      headerHtml += '</tr>';
+
+      let rows = '';
+      const statuses = ['Concluído', 'Aberto', 'Em Curso', 'Taxa de Realização'];
+      const statusKeys = ['concluido', 'aberto', 'emCurso', 'realizationRate'];
+      const statusLabels = ['🟢 Concluído', '🟡 Aberto', '🟠 Em Curso', '📊 Taxa de Realização'];
+
+      statuses.forEach((status, idx) => {
+        const key = statusKeys[idx];
+        const label = statusLabels[idx];
+        const isSummary = key === 'realizationRate';
+        
+        let row = `<tr class="${isSummary ? 'bg-emerald-50 font-bold' : idx % 2 === 1 ? 'bg-slate-50' : ''}">
+          <td class="border border-slate-300 px-4 py-2">${label}</td>`;
+        
+        years.forEach(year => {
+          const stats = yearStats[year];
+          if (isSummary) {
+            row += `<td class="border border-slate-300 px-4 py-2 text-center font-bold text-emerald-700">${stats.realizationRate}%</td>`;
+          } else {
+            const value = stats[key];
+            const pct = (value / stats.total * 100).toFixed(1);
+            row += `<td class="border border-slate-300 px-4 py-2 text-center">${value} (${pct}%)</td>`;
+          }
+        });
+        row += '</tr>';
+        rows += row;
+      });
+
+      const html = `<table class="w-full border-collapse border border-slate-300 text-sm">${headerHtml}${rows}</table>`;
       document.getElementById('pdcaTrendRealizationChart').innerHTML = html;
     }
 
-    function renderEficaciaTrend(stats) {
-      const html = `
-        <table class="w-full border-collapse border border-slate-300">
-          <tr class="bg-slate-100">
-            <th class="border border-slate-300 px-4 py-2 text-left font-bold">Eficácia</th>
-            <th class="border border-slate-300 px-4 py-2 text-center font-bold">Quantidade</th>
-            <th class="border border-slate-300 px-4 py-2 text-center font-bold">%</th>
-          </tr>
-          <tr>
-            <td class="border border-slate-300 px-4 py-2">🟢 Eficaz</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.eficaz}</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.eficaz + stats.naoEficaz > 0 ? (stats.eficaz / (stats.eficaz + stats.naoEficaz) * 100).toFixed(1) : 0}%</td>
-          </tr>
-          <tr class="bg-slate-50">
-            <td class="border border-slate-300 px-4 py-2">🔴 Não Eficaz</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.naoEficaz}</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.naoEficaz + stats.eficaz > 0 ? (stats.naoEficaz / (stats.eficaz + stats.naoEficaz) * 100).toFixed(1) : 0}%</td>
-          </tr>
-          <tr>
-            <td class="border border-slate-300 px-4 py-2">⚪ Indefinido</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.indefinido}</td>
-            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.indefinido / stats.total * 100).toFixed(1)}%</td>
-          </tr>
-          <tr class="bg-emerald-50 font-bold">
-            <td class="border border-slate-300 px-4 py-2">Taxa de Eficácia</td>
-            <td colspan="2" class="border border-slate-300 px-4 py-2 text-center text-emerald-700">${stats.eficaciaRate}%</td>
-          </tr>
-        </table>
-      `;
+    function renderEficaciaComparison(yearStats) {
+      const years = Object.keys(yearStats).sort().reverse();
+      
+      let headerHtml = '<tr class="bg-slate-100"><th class="border border-slate-300 px-4 py-2 text-left font-bold">Eficácia</th>';
+      years.forEach(year => {
+        headerHtml += `<th class="border border-slate-300 px-4 py-2 text-center font-bold">${year}</th>`;
+      });
+      headerHtml += '</tr>';
+
+      let rows = '';
+      const eficaciaItems = ['Eficaz', 'Não Eficaz', 'Indefinido', 'Taxa de Eficácia'];
+      const eficaciaKeys = ['eficaz', 'naoEficaz', 'indefinido', 'eficaciaRate'];
+      const eficaciaLabels = ['🟢 Eficaz', '🔴 Não Eficaz', '⚪ Indefinido', '📊 Taxa de Eficácia'];
+
+      eficaciaItems.forEach((item, idx) => {
+        const key = eficaciaKeys[idx];
+        const label = eficaciaLabels[idx];
+        const isSummary = key === 'eficaciaRate';
+        
+        let row = `<tr class="${isSummary ? 'bg-emerald-50 font-bold' : idx % 2 === 1 ? 'bg-slate-50' : ''}">
+          <td class="border border-slate-300 px-4 py-2">${label}</td>`;
+        
+        years.forEach(year => {
+          const stats = yearStats[year];
+          if (isSummary) {
+            row += `<td class="border border-slate-300 px-4 py-2 text-center font-bold text-emerald-700">${stats.eficaciaRate}%</td>`;
+          } else {
+            const value = stats[key];
+            const pct = (value / stats.total * 100).toFixed(1);
+            row += `<td class="border border-slate-300 px-4 py-2 text-center">${value} (${pct}%)</td>`;
+          }
+        });
+        row += '</tr>';
+        rows += row;
+      });
+
+      const html = `<table class="w-full border-collapse border border-slate-300 text-sm">${headerHtml}${rows}</table>`;
       document.getElementById('pdcaTrendEficaciaChart').innerHTML = html;
     }
 
-    function renderStatsSummary(stats) {
-      const html = `
-        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border border-emerald-200">
-          <p class="text-xs text-emerald-600 font-bold uppercase mb-1">Total de Ações</p>
-          <p class="text-3xl font-black text-emerald-900">${stats.total}</p>
-        </div>
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-          <p class="text-xs text-blue-600 font-bold uppercase mb-1">Taxa de Realização</p>
-          <p class="text-3xl font-black text-blue-900">${stats.realizationRate}%</p>
-        </div>
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-          <p class="text-xs text-purple-600 font-bold uppercase mb-1">Taxa de Eficácia</p>
-          <p class="text-3xl font-black text-purple-900">${stats.eficaciaRate}%</p>
-        </div>
-        <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-          <p class="text-xs text-orange-600 font-bold uppercase mb-1">Em Análise</p>
-          <p class="text-3xl font-black text-orange-900">${stats.indefinido}</p>
-        </div>
-      `;
+    function renderStatsComparison(yearStats) {
+      const years = Object.keys(yearStats).sort().reverse();
+      
+      const colors = ['emerald', 'blue', 'purple', 'orange', 'pink', 'indigo'];
+      let html = '<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">';
+
+      years.forEach((year, idx) => {
+        const stats = yearStats[year];
+        const color = colors[idx % colors.length];
+        
+        html += `
+          <div class="bg-gradient-to-br from-${color}-50 to-${color}-100 rounded-lg p-4 border border-${color}-200">
+            <p class="text-xs text-${color}-600 font-bold uppercase mb-1">${year}</p>
+            <p class="text-2xl font-black text-${color}-900 mb-2">${stats.total}</p>
+            <div class="text-xs space-y-1">
+              <p class="text-${color}-700"><span class="font-bold">Real:</span> ${stats.realizationRate}%</p>
+              <p class="text-${color}-700"><span class="font-bold">Eficácia:</span> ${stats.eficaciaRate}%</p>
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
       document.getElementById('pdcaTrendStatsSummary').innerHTML = html;
     }
 

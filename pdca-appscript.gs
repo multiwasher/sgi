@@ -78,9 +78,33 @@ function doGet(e) {
     ensureHeaders_(sheet);
 
     const params = (e && e.parameter) ? e.parameter : {};
+    const action = (params.action || "").trim().toLowerCase();
     const item = (params.item || "").trim();
     const limit = clampInt_(params.limit, 1, 5000, 2000);
     const offset = clampInt_(params.offset, 0, 1000000, 0);
+
+    // GET action=statusDistribution: retorna contagem de cada status
+    if (action === "statusdistribution") {
+      const data = sheet.getDataRange().getValues();
+      const rows = data.slice(1);
+
+      // Coluna "Status das Ações" está no índice 15
+      const statusColumnIndex = HEADERS.indexOf("Status das Ações");
+      if (statusColumnIndex === -1) {
+        return output_({ ok: false, error: 'Coluna "Status das Ações" não encontrada' }, e);
+      }
+
+      // Contar ocorrências de cada status
+      const statusCount = {};
+      rows.forEach(row => {
+        const status = String(row[statusColumnIndex] || "").trim();
+        if (status) {
+          statusCount[status] = (statusCount[status] || 0) + 1;
+        }
+      });
+
+      return output_({ ok: true, statusDistribution: statusCount }, e);
+    }
 
     // GET por item: lê só a linha (rápido)
     if (item) {

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard de Análise | Somengil ISO 14001</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+    :root { 
+      --primary: #065f46; 
+      --secondary: #10b981; 
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #ecf0f1 100%);
+      color: #1e293b;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px -1px rgba(0,0,0,0.03);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-accent {
+      border-bottom: 3px solid var(--secondary);
+      padding-bottom: 0.5rem;
+    }
+
+    .metric-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef9c3; color: #854d0e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #eff6ff; color: #1d4ed8; }
+
+    .nav-link {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .nav-link:hover {
+      background: #f1f5f9;
+    }
+
+    .nav-link.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-800 text-slate-900">Dashboard Analítico</h1>
+          <p class="text-slate-500 text-sm mt-1">SGI ISO 14001 - Somengil</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <button onclick="exportCharts()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-600 transition">
+            📊 Exportar
+          </button>
+          <a href="pdca-tendencias.html" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-600 transition">
+            📈 PDCA Tendências
+          </a>
+          <a href="index.html" class="text-slate-600 hover:text-slate-900 font-600">← Voltar</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Navegação de Abas -->
+    <div class="flex gap-2 mb-8 overflow-x-auto pb-2">
+      <button class="nav-link active" onclick="switchTab('overview')">📈 Visão Geral</button>
+      <button class="nav-link" onclick="switchTab('reunioes')">📅 Reuniões</button>
+      <button class="nav-link" onclick="switchTab('auditorias')">🔍 Auditorias</button>
+      <button class="nav-link" onclick="switchTab('categorias')">🏷️ Categorias</button>
+    </div>
+
+    <!-- TAB 1: Visão Geral -->
+    <div id="overview" class="tab-content">
+      <!-- Cards de Estatísticas -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="stat-card">
+          <p class="text-slate-600 font-600 mb-2">Reuniões Planejadas</p>
+          <p class="stat-value">17</p>
+          <p class="text-xs text-slate-500 mt-2">Todas as reuniões do SGI</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-slate-600 font-600 mb-2">Taxa de Conclusão</p>
+          <p class="stat-value">71%</p>
+          <p class="text-xs text-slate-500 mt-2">Reuniões completadas</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-slate-600 font-600 mb-2">Auditorias Agendadas</p>
+          <p class="stat-value">3</p>
+          <p class="text-xs text-slate-500 mt-2">Em Abril de 2026</p>
+        </div>
+        <div class="stat-card">
+          <p class="text-slate-600 font-600 mb-2">Responsáveis Ativos</p>
+          <p class="stat-value">2</p>
+          <p class="text-xs text-slate-500 mt-2">TV, MF</p>
+        </div>
+      </div>
+
+      <!-- Gráficos Principais -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Taxa de Conclusão por Trimestre -->
+        <div class="chart-container">
+          <h3 class="text-lg font-700 mb-4 header-accent">Taxa de Conclusão por Trimestre</h3>
+          <canvas id="taxaConclusaoChart"></canvas>
+        </div>
+
+        <!-- Status do Planejamento -->
+        <div class="chart-container">
+          <h3 class="text-lg font-700 mb-4 header-accent">Status do Planejamento</h3>
+          <canvas id="statusPlanejamentoChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Gráfico de Distribuição por Tipo -->
+      <div class="chart-container mb-8">
+        <h3 class="text-lg font-700 mb-4 header-accent">Distribuição de Reuniões por Tipo</h3>
+        <canvas id="distribuicaoTipoChart"></canvas>
+      </div>
+    </div>
+
+    <!-- TAB 2: Reuniões -->
+    <div id="reunioes" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Timeline de Reuniões -->
+        <div class="chart-container">
+          <h3 class="text-lg font-700 mb-4 header-accent">Progresso de Reuniões por Categoria</h3>
+          <canvas id="progressoReunioesChart"></canvas>
+        </div>
+
+        <!-- Responsáveis -->
+        <div class="stat-card">
+          <h3 class="text-lg font-700 mb-4">Responsáveis e Volume</h3>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between mb-2">
+                <span class="font-600">Mário Fragoso (MF)</span>
+                <span class="badge-success metric-badge">15 reuniões</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2">
+                <div class="bg-green-500 h-2 rounded-full" style="width: 88%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-2">
+                <span class="font-600">Teresa Vide (TV)</span>
+                <span class="badge-info metric-badge">2 reuniões</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full" style="width: 12%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detalhes das Reuniões -->
+      <div class="chart-container mt-8">
+        <h3 class="text-lg font-700 mb-4 header-accent">Completude por Reunião (Trimestres)</h3>
+        <canvas id="completudePorReuniao"></canvas>
+      </div>
+    </div>
+
+    <!-- TAB 3: Auditorias -->
+    <div id="auditorias" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Timeline de Auditorias -->
+        <div class="chart-container">
+          <h3 class="text-lg font-700 mb-4 header-accent">Cronograma de Auditorias (2026)</h3>
+          <canvas id="cronogramaAuditoriasChart"></canvas>
+        </div>
+
+        <!-- Sumário de Auditorias -->
+        <div class="stat-card">
+          <h3 class="text-lg font-700 mb-4">Sumário de Auditorias</h3>
+          <div class="space-y-4">
+            <div class="border-l-4 border-blue-500 pl-4">
+              <p class="font-600 text-blue-900">Auditorias Internas</p>
+              <p class="text-2xl font-800 text-blue-600">3</p>
+              <p class="text-xs text-slate-500 mt-1">Compras, Financeiro, Logística</p>
+            </div>
+            <div class="border-l-4 border-green-500 pl-4">
+              <p class="font-600 text-green-900">Data Prevista</p>
+              <p class="text-2xl font-800 text-green-600">14-Abr</p>
+              <p class="text-xs text-slate-500 mt-1">Hora: 10:30 - Somengil</p>
+            </div>
+            <div class="border-l-4 border-purple-500 pl-4">
+              <p class="font-600 text-purple-900">Lei y Regalado</p>
+              <p class="text-lg font-700">+ Mário Fragoso</p>
+              <p class="text-xs text-slate-500 mt-1">Auditores responsáveis</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distribuição por Processo -->
+      <div class="chart-container">
+        <h3 class="text-lg font-700 mb-4 header-accent">Distribuição de Auditorias por Processo</h3>
+        <canvas id="distribuicaoProcessosChart"></canvas>
+      </div>
+    </div>
+
+    <!-- TAB 4: Categorias -->
+    <div id="categorias" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Categorias Principais -->
+        <div class="chart-container">
+          <h3 class="text-lg font-700 mb-4 header-accent">Tipos de Reunião</h3>
+          <canvas id="tiposReuniao"></canvas>
+        </div>
+
+        <!-- Legenda de Categorias -->
+        <div class="stat-card">
+          <h3 class="text-lg font-700 mb-4">Categorias de Reunião</h3>
+          <div class="space-y-3">
+            <div class="legend-item">
+              <div class="legend-color" style="background: #10b981;"></div>
+              <span><strong>Estratégica</strong> - Planejamento de alto nível</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #f59e0b;"></div>
+              <span><strong>Revisão</strong> - Avaliação de gestão</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #3b82f6;"></div>
+              <span><strong>Operacional</strong> - Execução de processos</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #ef4444;"></div>
+              <span><strong>Auditoria</strong> - Conformidade e verificação</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #a855f7;"></div>
+              <span><strong>Qualidade</strong> - Melhorias contínuas</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #06b6d4;"></div>
+              <span><strong>Performance</strong> - KPI's e objetivos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparativo Trimestral -->
+      <div class="chart-container">
+        <h3 class="text-lg font-700 mb-4 header-accent">Análise Trimestral: Planejadas vs Completadas</h3>
+        <canvas id="comparativoTrimestral"></canvas>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Cores para os gráficos
+    const colors = {
+      primary: '#065f46',
+      secondary: '#10b981',
+      danger: '#ef4444',
+      warning: '#f59e0b',
+      info: '#3b82f6',
+      success: '#22c55e',
+      purple: '#a855f7',
+      cyan: '#06b6d4',
+      pink: '#ec4899',
+      indigo: '#6366f1'
+    };
+
+    // Função para trocar abas
+    function switchTab(tabName) {
+      // Esconder todas as abas
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+      // Mostrar aba selecionada
+      document.getElementById(tabName).classList.remove('hidden');
+      
+      // Atualizar botões de navegação
+      document.querySelectorAll('.nav-link').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      // Redraw charts após mudar de aba
+      setTimeout(() => {
+        Object.keys(chartInstances).forEach(key => {
+          if (chartInstances[key]) {
+            chartInstances[key].resize();
+          }
+        });
+      }, 100);
+    }
+
+    // Armazenar instâncias dos gráficos
+    const chartInstances = {};
+
+    // GRÁFICO 1: Taxa de Conclusão por Trimestre
+    const ctx1 = document.getElementById('taxaConclusaoChart').getContext('2d');
+    chartInstances.taxaConclusao = new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: ['Q1 (Jan-Mar)', 'Q2 (Abr-Jun)', 'Q3 (Jul-Set)', 'Q4 (Out-Dez)'],
+        datasets: [
+          {
+            label: 'Taxa de Conclusão (%)',
+            data: [100, 67, 0, 0],
+            borderColor: colors.secondary,
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: colors.secondary,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+          },
+          {
+            label: 'Reuniões Planejadas',
+            data: [12, 3, 1, 1],
+            borderColor: colors.info,
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: { font: { size: 12, weight: 'bold' } }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 12 }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { callback: value => value + '%' }
+          }
+        }
+      }
+    });
+
+    // GRÁFICO 2: Status do Planejamento (Doughnut)
+    const ctx2 = document.getElementById('statusPlanejamentoChart').getContext('2d');
+    chartInstances.statusPlanejamento = new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: ['Completadas', 'Planejadas', 'Pendentes'],
+        datasets: [{
+          data: [12, 4, 1],
+          backgroundColor: [colors.success, colors.info, colors.warning],
+          borderColor: '#fff',
+          borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 12, weight: 'bold' } } },
+          tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed } }
+        }
+      }
+    });
+
+    // GRÁFICO 3: Distribuição por Tipo
+    const ctx3 = document.getElementById('distribuicaoTipoChart').getContext('2d');
+    chartInstances.distribuicaoTipo = new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: ['Estratégica', 'Revisão', 'Operacional', 'Auditoria', 'Qualidade', 'Performance', 'Cliente', 'Recursos', 'Suprimentos'],
+        datasets: [{
+          label: 'Quantidade de Reuniões',
+          data: [2, 2, 1, 4, 3, 1, 1, 1, 1],
+          backgroundColor: [
+            colors.secondary, colors.warning, colors.info, colors.danger,
+            colors.purple, colors.cyan, colors.pink, colors.indigo, colors.primary
+          ],
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { beginAtZero: true, max: 5 }
+        }
+      }
+    });
+
+    // GRÁFICO 4: Progresso de Reuniões
+    const ctx4 = document.getElementById('progressoReunioesChart').getContext('2d');
+    chartInstances.progressoReunioes = new Chart(ctx4, {
+      type: 'line',
+      data: {
+        labels: ['Steering Committee', 'Revisão de Gestão', 'Ações PAC', 'Eficácia R&O', 'Mudanças', 'Oportunidades', 'Recursos', 'Satisfação Cliente', 'KPI\'s', 'Auditoria', 'RNC\'s', 'SGQA', 'Fornecedores'],
+        datasets: [{
+          label: 'Trimestre 1',
+          data: [1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0],
+          borderColor: colors.secondary,
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: undefined,
+        plugins: {
+          legend: { display: true },
+          tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)' }
+        },
+        scales: {
+          y: { beginAtZero: true, max: 1 }
+        }
+      }
+    });
+
+    // GRÁFICO 5: Completude por Reunião
+    const ctx5 = document.getElementById('completudePorReuniao').getContext('2d');
+    chartInstances.completudePorReuniao = new Chart(ctx5, {
+      type: 'bar',
+      data: {
+        labels: ['Steering', 'Revisão Gest.', 'PAC', 'R&O', 'Mudanças', 'Oportunidades', 'Recursos', 'Satisfação', 'KPI\'s', 'Auditoria', 'RNC', 'SGQA', 'Fornec.'],
+        datasets: [
+          {
+            label: 'Q1 Completadas',
+            data: [1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0],
+            backgroundColor: colors.success
+          },
+          {
+            label: 'Q2 Planejadas',
+            data: [1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0],
+            backgroundColor: colors.info
+          },
+          {
+            label: 'Q3 Planejadas',
+            data: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            backgroundColor: colors.warning
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: { stacked: false, beginAtZero: true, max: 1 }
+        }
+      }
+    });
+
+    // GRÁFICO 6: Cronograma de Auditorias
+    const ctx6 = document.getElementById('cronogramaAuditoriasChart').getContext('2d');
+    chartInstances.cronogramaAuditorias = new Chart(ctx6, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+        datasets: [{
+          label: 'Auditorias Agendadas',
+          data: [0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+          borderColor: colors.danger,
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: colors.danger,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          segment: {
+            borderColor: ctx => ctx.p0DataIndex === 2 ? colors.danger : 'rgba(200, 200, 200, 0.5)',
+            borderDash: ctx => ctx.p0DataIndex === 2 ? [] : [5, 5]
+          }
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, max: 4 }
+        }
+      }
+    });
+
+    // GRÁFICO 7: Distribuição por Processo
+    const ctx7 = document.getElementById('distribuicaoProcessosChart').getContext('2d');
+    chartInstances.distribuicaoProcessos = new Chart(ctx7, {
+      type: 'bar',
+      data: {
+        labels: ['Compras', 'Financeiro', 'Logística Interna'],
+        datasets: [{
+          label: 'Auditorias',
+          data: [1, 1, 1],
+          backgroundColor: [colors.info, colors.warning, colors.secondary],
+          borderRadius: 8,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+
+    // GRÁFICO 8: Tipos de Reunião
+    const ctx8 = document.getElementById('tiposReuniao').getContext('2d');
+    chartInstances.tiposReuniao = new Chart(ctx8, {
+      type: 'radar',
+      data: {
+        labels: ['Estratégica', 'Revisão', 'Operacional', 'Cliente', 'Auditoria', 'Qualidade', 'Performance'],
+        datasets: [{
+          label: 'Distribuição de Reuniões',
+          data: [2, 2, 1, 1, 4, 3, 1],
+          borderColor: colors.secondary,
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          borderWidth: 2,
+          pointBackgroundColor: colors.secondary,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            beginAtZero: true,
+            max: 5,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
+
+    // GRÁFICO 9: Comparativo Trimestral
+    const ctx9 = document.getElementById('comparativoTrimestral').getContext('2d');
+    chartInstances.comparativoTrimestral = new Chart(ctx9, {
+      type: 'line',
+      data: {
+        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+        datasets: [
+          {
+            label: 'Reuniões Planejadas',
+            data: [12, 3, 1, 1],
+            borderColor: colors.info,
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 6
+          },
+          {
+            label: 'Reuniões Completadas',
+            data: [12, 2, 0, 0],
+            borderColor: colors.success,
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 6
+          },
+          {
+            label: 'Pendentes',
+            data: [0, 1, 1, 1],
+            borderColor: colors.warning,
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 12, weight: 'bold' } } },
+          tooltip: { backgroundColor: 'rgba(0, 0, 0, 0.8)', padding: 12, titleFont: { size: 14, weight: 'bold' } }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    // Função para exportar gráficos
+    function exportCharts() {
+      alert('📊 Recurso de exportação em desenvolvimento.\n\nOs gráficos podem ser salvos usando a função Print do navegador (Ctrl+P) ou Print to PDF.');
+    }
+  </script>
+</body>
+</html>
