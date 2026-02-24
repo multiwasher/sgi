@@ -129,19 +129,29 @@
     }
 
     /* ✅ STATUS TAGS */
-    .status-em-curso {
-      background: #fef9c3 !important;
+    .status-concluido {
+      background: #dcfce7 !important;
+      color: #166534 !important;
+    }
+
+    .status-aberto {
+      background: #fef08a !important;
       color: #854d0e !important;
+    }
+
+    .status-em-curso {
+      background: #fed7aa !important;
+      color: #92400e !important;
+    }
+
+    .status-indefinido {
+      background: #f3f4f6 !important;
+      color: #6b7280 !important;
     }
 
     .status-cancelado {
       background: #f3f4f6 !important;
       color: #6b7280 !important;
-    }
-
-    .status-aberto {
-      background: #fed7aa !important;
-      color: #92400e !important;
     }
 
     /* ✅ EFICÁCIA TAGS */
@@ -2542,12 +2552,13 @@
     }
 
     function getStatusClass(status) {
-      const st = (status || '').toLowerCase();
-      if (st.includes('cancelado')) return 'status-cancelado';
-      if (st.includes('em curso')) return 'status-em-curso';
+      const st = (status || '').toLowerCase().trim();
+      if (st.includes('concluído') || st.includes('concluido')) return 'status-concluido';
       if (st.includes('aberto')) return 'status-aberto';
-      if (st.includes('concluído') || st.includes('concluido')) return 'bg-green-100 text-green-700';
-      return '';
+      if (st.includes('em curso')) return 'status-em-curso';
+      if (st.includes('cancelado')) return 'status-cancelado';
+      if (st === '-') return 'status-indefinido';
+      return 'status-indefinido';
     }
 
     function getEficaciaClass(eficacia) {
@@ -2600,7 +2611,7 @@
           <td class="px-4 py-3 text-xs text-slate-600"><div contenteditable="true" class="pdca-edit-cell rounded hover:bg-slate-100 px-1 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50" data-field="Responsável" data-original="${escapeHtml(responsavel)}">${escapeHtml(responsavel)}</div></td>
           <td class="px-4 py-3 text-xs text-slate-600"><div contenteditable="true" class="pdca-edit-cell rounded hover:bg-slate-100 px-1 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50" data-field="Prazo" data-original="${escapeHtml(prazo)}">${escapeHtml(prazo)}</div></td>
           <td class="px-4 py-3 text-xs text-slate-600"><div contenteditable="true" class="pdca-edit-cell rounded hover:bg-slate-100 px-1 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50" data-field="Data de Conclusão" data-original="${escapeHtml(dataConclusao)}">${escapeHtml(dataConclusao)}</div></td>
-          <td class="px-4 py-3"><select class="pdca-status-select rounded hover:bg-slate-100 px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs font-semibold border border-slate-300" data-field="Status das Ações" data-original="${escapeHtml(status)}">
+          <td class="px-4 py-3"><select class="pdca-status-select rounded px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50 text-xs font-semibold border border-slate-300 ${statusClass}" data-field="Status das Ações" data-original="${escapeHtml(status)}">
             <option value="${escapeHtml(status)}" selected>${escapeHtml(status)}</option>
             <option value="Concluído">Concluído</option>
             <option value="Aberto">Aberto</option>
@@ -2659,6 +2670,17 @@
           const field = this.getAttribute('data-field');
           const row = this.closest('.pdca-row');
           const itemId = row.getAttribute('data-item-id');
+          
+          // Atualizar classe visual baseado no novo status
+          const newStatusClass = getStatusClass(newValue);
+          
+          // Remover todas as classes de status
+          this.classList.remove('status-concluido', 'status-aberto', 'status-em-curso', 'status-indefinido', 'status-cancelado');
+          
+          // Adicionar nova classe de status
+          if (newStatusClass) {
+            this.classList.add(newStatusClass);
+          }
           
           // Se mudou, salva
           if (newValue !== original) {
