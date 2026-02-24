@@ -1671,6 +1671,24 @@
     </div>
   </div>
 
+  <!-- Botão Flutuante de Salvamento PDCA -->
+  <div id="pdcaSavePrompt" class="fixed bottom-6 right-6 hidden z-[110] p-4 bg-white rounded-lg shadow-2xl border-l-4 border-emerald-500">
+    <div class="flex items-center gap-4">
+      <div>
+        <p class="font-bold text-slate-800">Alterações não salvas</p>
+        <p class="text-sm text-slate-500">Deseja salvar as mudanças?</p>
+      </div>
+      <div class="flex gap-2 ml-4">
+        <button onclick="discardPdcaChanges()" class="px-4 py-2 text-sm font-semibold text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          Descartar
+        </button>
+        <button onclick="savePdcaAllChanges()" class="px-4 py-2 text-sm font-semibold text-white bg-emerald-500 rounded-lg hover:bg-emerald-600 transition-colors">
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const MAIN_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdEqBsG1Fbt_KJNnyXtbZQPRvTLKwdzn1SFZcJm6Lw3HSctLGQmp2h9sBgxR6fiUPgBw/exec';
     const SWOT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
@@ -1691,7 +1709,8 @@
       eficacia: []
     };
 
-    let currentDocTypeFilters = new Set(); // Multi-select para tipos de documentos
+    // Rastreamento de mudanças do PDCA
+    let pdcaPendingChanges = new Map(); // Map<itemId, Map<field, value>>
     let currentSwotFilterCategory = 'TODOS';
     let currentSwotFilterQuadrant = 'TODOS';
     let currentSwotActiveFilter = 'TODOS'; // TODOS | ATIVOS | NAO_ATIVOS
@@ -2639,10 +2658,11 @@
           const row = this.closest('.pdca-row');
           const itemId = row.getAttribute('data-item-id');
           
-          // Se mudou, marca como editado e salva
+          // Se mudou, armazena a mudança
           if (newValue !== original) {
             this.classList.add('ring-2', 'ring-yellow-400');
-            savePdcaCell(itemId, field, newValue);
+            recordPdcaChange(itemId, field, newValue);
+            showPdcaSavePrompt();
           }
         });
         
@@ -2681,10 +2701,11 @@
             this.classList.add(newStatusClass);
           }
           
-          // Se mudou, salva
+          // Se mudou, armazena a mudança
           if (newValue !== original) {
             this.classList.add('ring-2', 'ring-yellow-400');
-            savePdcaCell(itemId, field, newValue);
+            recordPdcaChange(itemId, field, newValue);
+            showPdcaSavePrompt();
           }
         });
       });
@@ -2710,18 +2731,131 @@
             this.classList.add(newEficaciaClass);
           }
           
-          // Se mudou, salva
+          // Se mudou, armazena a mudança
           if (newValue !== original) {
             this.classList.add('ring-2', 'ring-yellow-400');
-            savePdcaCell(itemId, field, newValue);
+            recordPdcaChange(itemId, field, newValue);
+            showPdcaSavePrompt();
           }
         });
       });
     }
 
+    function recordPdcaChange(itemId, field, newValue) {
+      // Validação para o campo Status das Ações
+      const ALLOWED_STATUS_VALUES = ['Concluído', 'Aberto', 'Em curso', '-'];
+      if (field === 'Status das Ações' && !ALLOWED_STATUS_VALUES.includes(newValue)) {
+        showError(`Valor inválido para Status. Valores permitidos: ${ALLOWED_STATUS_VALUES.join(', ')}`);
+        return;
+      }
+
+      // Validação para o campo Análise da Eficácia
+      const ALLOWED_EFICACIA_VALUES = ['Eficaz', 'Não Eficaz', '-'];
+      if (field === 'Análise da Eficácia' && !ALLOWED_EFICACIA_VALUES.includes(newValue)) {
+        showError(`Valor inválido para Eficácia. Valores permitidos: ${ALLOWED_EFICACIA_VALUES.join(', ')}`);
+        return;
+      }
+
+      // Armazenar mudança no mapa
+      if (!pdcaPendingChanges.has(itemId)) {
+        pdcaPendingChanges.set(itemId, new Map());
+      }
+      pdcaPendingChanges.get(itemId).set(field, newValue);
+    }
+
+    function showPdcaSavePrompt() {
+      const prompt = document.getElementById('pdcaSavePrompt');
+      if (prompt) {
+        prompt.classList.remove('hidden');
+        prompt.classList.add('flex');
+      }
+    }
+
+    function hidePdcaSavePrompt() {
+      const prompt = document.getElementById('pdcaSavePrompt');
+      if (prompt) {
+        prompt.classList.add('hidden');
+        prompt.classList.remove('flex');
+      }
+    }
+
+    function discardPdcaChanges() {
+      // Limpar mudanças pendentes
+      pdcaPendingChanges.clear();
+      
+      // Remover marca visual de edição
+      document.querySelectorAll('.pdca-edit-cell, .pdca-status-select, .pdca-eficacia-select').forEach(el => {
+        el.classList.remove('ring-2', 'ring-yellow-400');
+      });
+      
+      // Recarregar dados para restaurar valores originais
+      renderPdca(pdcaData);
+      attachPdcaEditListeners();
+      
+      // Esconder prompt
+      hidePdcaSavePrompt();
+      showSuccess('Alterações descartadas');
+    }
+
+    async function savePdcaAllChanges() {
+      if (pdcaPendingChanges.size === 0) {
+        hidePdcaSavePrompt();
+        return;
+      }
+
+      showLoading('A salvar alterações...');
+      
+      // Converter Map para objeto para envio
+      const changes = {};
+      pdcaPendingChanges.forEach((fields, itemId) => {
+        changes[itemId] = {};
+        fields.forEach((value, field) => {
+          changes[itemId][field] = value;
+        });
+      });
+
+      try {
+        const formData = new FormData();
+        formData.append('sheet', 'PDCA');
+        formData.append('changes', JSON.stringify(changes));
+
+        const response = await fetch(PDCA_APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+          // Limpar mudanças pendentes após sucesso
+          pdcaPendingChanges.clear();
+          
+          // Remover marca visual
+          document.querySelectorAll('.pdca-edit-cell, .pdca-status-select, .pdca-eficacia-select').forEach(el => {
+            el.classList.remove('ring-2', 'ring-yellow-400');
+          });
+
+          hideLoading();
+          hidePdcaSavePrompt();
+          showSuccess('Alterações salvas com sucesso!');
+          
+          // Atualizar UI com novos dados
+          setTimeout(() => refreshPdcaData(), 1000);
+        } else {
+          hideLoading();
+          showError(`Erro ao salvar: ${result.error}`);
+        }
+      } catch (error) {
+        hideLoading();
+        showError('Erro na comunicação com o servidor');
+        console.error('Save error:', error);
+      }
+    }
+
     function savePdcaCell(itemId, fieldName, newValue) {
       // Validação para o campo Status das Ações
       const ALLOWED_STATUS_VALUES = ['Concluído', 'Aberto', 'Em curso', '-'];
+
       if (fieldName === 'Status das Ações' && !ALLOWED_STATUS_VALUES.includes(newValue)) {
         showError(`Valor inválido para Status. Valores permitidos: ${ALLOWED_STATUS_VALUES.join(', ')}`);
         return;
