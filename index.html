@@ -2333,22 +2333,51 @@
     }
 
     function refreshPdcaData() {
-      // Resetar filtros para "TODOS"
-      Object.keys(currentPdcaFilters).forEach(key => {
-        currentPdcaFilters[key] = [];
-      });
+      // Guardar os filtros e buscas atuais
+      const savedFilters = JSON.parse(JSON.stringify(currentPdcaFilters));
+      const savedOrigemSearch = document.getElementById('searchOrigemPdca').value;
+      const savedResponsavelSearch = document.getElementById('searchResponsavelPdca').value;
       
-      // Limpar buscas
-      document.getElementById('searchOrigemPdca').value = '';
-      document.getElementById('searchResponsavelPdca').value = '';
-      
-      // Atualizar UI dos filtros
-      document.querySelectorAll('.pdca-filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.id.includes('-TODOS'));
-      });
-      
-      // Forçar atualização dos dados
-      fetchPdca();
+      // Função custom para o callback
+      const callbackName = `cb_pdca_refresh_${Date.now()}`;
+      window[callbackName] = (data) => {
+        if (data && data.ok === false) {
+          const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro ao atualizar: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          document.getElementById('pdcaTableBody').innerHTML = msg;
+          hideLoading();
+          delete window[callbackName];
+          return;
+        }
+
+        // Atualizar dados
+        pdcaData = Array.isArray(data) ? data : (data?.data || []);
+        
+        // Restaurar filtros e buscas
+        currentPdcaFilters = savedFilters;
+        document.getElementById('searchOrigemPdca').value = savedOrigemSearch;
+        document.getElementById('searchResponsavelPdca').value = savedResponsavelSearch;
+        
+        // Reconstruir tabela com dados atualizados e filtros preservados
+        buildPdcaFilters();
+        applyPdcaFilters();
+        hideLoading();
+        delete window[callbackName];
+      };
+
+      showLoading('A atualizar dados PDCA...');
+      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A atualizar dados...</span></div></td></tr>';
+
+      const script = document.createElement('script');
+      script.src = `${PDCA_APPS_SCRIPT_URL}?sheet=PDCA&callback=${callbackName}&t=${Date.now()}`;
+      script.onload = () => script.remove();
+      script.onerror = () => {
+        const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a atualizar dados PDCA.</td></tr>`;
+        document.getElementById('pdcaTableBody').innerHTML = msg;
+        hideLoading();
+        script.remove();
+        delete window[callbackName];
+      };
+      document.body.appendChild(script);
     }
 
     // =========
