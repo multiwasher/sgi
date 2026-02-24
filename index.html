@@ -2590,15 +2590,6 @@
         const discussaoEficacia = getAny(item, ['Discussão Eficácia', 'discussao eficacia', 'DISCUSSÃO EFICÁCIA', 'Discussão da Eficácia']) || '-';
         
         const statusClass = getStatusClass(status);
-        const eficaciaClass = getEficaciaClass(eficacia);
-        
-        // Se "Não Eficaz", fazer a tag clicável
-        let eficaciaHtml = '';
-        if (eficacia.toLowerCase().includes('não eficaz') || eficacia.toLowerCase().includes('nao eficaz')) {
-          eficaciaHtml = `<span class="inline-block text-xs font-semibold px-2 py-1 rounded ${eficaciaClass} cursor-pointer hover:opacity-80 transition-opacity" onclick="openPdcaEficaciaModal('${escapeHtml(discussaoEficacia)}', '${escapeHtml(eficacia)}')">${escapeHtml(eficacia)}</span>`;
-        } else {
-          eficaciaHtml = `<span class="inline-block text-xs font-semibold px-2 py-1 rounded ${eficaciaClass}">${escapeHtml(eficacia)}</span>`;
-        }
         
         return `
         <tr class="hover:bg-slate-50/50 transition-colors group pdca-row" data-item-id="${escapeHtml(itemNum)}">
@@ -2618,11 +2609,10 @@
             <option value="Em curso">Em curso</option>
             <option value="-">-</option>
           </select></td>
-          <td class="px-4 py-3">
-            ${eficaciaHtml}
-          </td>
+          <td class="px-4 py-3 text-xs text-slate-600"><div contenteditable="true" class="pdca-edit-cell rounded hover:bg-slate-100 px-1 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50" data-field="Análise da Eficácia" data-original="${escapeHtml(eficacia)}">${escapeHtml(eficacia)}</div></td>
         </tr>
       `;
+        
       }).join('');
       
       // Adiciona event listeners após renderizar
