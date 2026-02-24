@@ -1625,10 +1625,11 @@
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data Conclusão</th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Eficácia</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Análise da Eficácia</th>
               </tr>
             </thead>
             <tbody id="pdcaTableBody" class="divide-y divide-slate-50">
-              <tr><td colspan="11" class="px-8 py-20 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</span></div></td></tr>
+              <tr><td colspan="12" class="px-8 py-20 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -2310,12 +2311,12 @@
 
     function fetchPdca() {
       showLoading('A carregar dados PDCA...');
-      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</span></div></td></tr>';
+      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="12" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados PDCA...</span></div></td></tr>';
 
       const callbackName = `cb_pdca_${Date.now()}`;
       window[callbackName] = (data) => {
         if (data && data.ok === false) {
-          const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro PDCA: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          const msg = `<tr><td colspan="12" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro PDCA: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
           document.getElementById('pdcaTableBody').innerHTML = msg;
           hideLoading();
           delete window[callbackName];
@@ -2333,7 +2334,7 @@
       script.src = `${PDCA_APPS_SCRIPT_URL}?sheet=PDCA&callback=${callbackName}&t=${Date.now()}`;
       script.onload = () => script.remove();
       script.onerror = () => {
-        const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script PDCA.</td></tr>`;
+        const msg = `<tr><td colspan="12" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script PDCA.</td></tr>`;
         document.getElementById('pdcaTableBody').innerHTML = msg;
         hideLoading();
         script.remove();
@@ -2352,7 +2353,7 @@
       const callbackName = `cb_pdca_refresh_${Date.now()}`;
       window[callbackName] = (data) => {
         if (data && data.ok === false) {
-          const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro ao atualizar: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          const msg = `<tr><td colspan="12" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro ao atualizar: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
           document.getElementById('pdcaTableBody').innerHTML = msg;
           hideLoading();
           delete window[callbackName];
@@ -2375,13 +2376,13 @@
       };
 
       showLoading('A atualizar dados PDCA...');
-      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A atualizar dados...</span></div></td></tr>';
+      document.getElementById('pdcaTableBody').innerHTML = '<tr><td colspan="12" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A atualizar dados...</span></div></td></tr>';
 
       const script = document.createElement('script');
       script.src = `${PDCA_APPS_SCRIPT_URL}?sheet=PDCA&callback=${callbackName}&t=${Date.now()}`;
       script.onload = () => script.remove();
       script.onerror = () => {
-        const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a atualizar dados PDCA.</td></tr>`;
+        const msg = `<tr><td colspan="12" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a atualizar dados PDCA.</td></tr>`;
         document.getElementById('pdcaTableBody').innerHTML = msg;
         hideLoading();
         script.remove();
@@ -2572,7 +2573,7 @@
     function renderPdca(data) {
       const body = document.getElementById('pdcaTableBody');
       if (!data || data.length === 0) {
-        body.innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados para a pesquisa</td></tr>';
+        body.innerHTML = '<tr><td colspan="12" class="px-8 py-10 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados para a pesquisa</td></tr>';
         return;
       }
 
@@ -2588,6 +2589,7 @@
         const dataConclusao = formatDate(getAny(item, ['Data de Conclusão', 'data de conclusao', 'DATA DE CONCLUSÃO'])) || '-';
         const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '-';
         const eficacia = getAny(item, ['Análise da Eficácia']) || '-';
+        const discussaoEficacia = getAny(item, ['Discussão da Eficácia', 'discussao da eficacia', 'DISCUSSÃO DA EFICÁCIA', 'Discussão Eficácia', 'discussao eficacia', 'DISCUSSÃO EFICÁCIA']) || '-';
         
         const statusClass = getStatusClass(status);
         const eficaciaClass = getEficaciaClass(eficacia);
@@ -2616,6 +2618,7 @@
             <option value="Não Eficaz">Não Eficaz</option>
             <option value="-">-</option>
           </select></td>
+          <td class="px-4 py-3 text-xs text-slate-600"><div contenteditable="true" class="pdca-edit-cell rounded hover:bg-slate-100 px-1 py-1 outline-none focus:ring-2 focus:ring-emerald-500/50" data-field="Discussão da Eficácia" data-original="${escapeHtml(discussaoEficacia)}">${escapeHtml(discussaoEficacia)}</div></td>
         </tr>
       `;
         
