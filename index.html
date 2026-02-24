@@ -2334,8 +2334,8 @@
 
     function refreshPdcaData() {
       // Resetar filtros para "TODOS"
-      Object.keys(pdcaFilters).forEach(key => {
-        pdcaFilters[key] = 'TODOS';
+      Object.keys(currentPdcaFilters).forEach(key => {
+        currentPdcaFilters[key] = [];
       });
       
       // Limpar buscas
