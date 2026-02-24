@@ -1559,6 +1559,17 @@
             ATUALIZAR
           </button>
 
+          <button
+            onclick="openPdcaTrendAnalysis()"
+            class="text-[10px] font-black text-slate-600 hover:text-slate-800 uppercase tracking-widest bg-white px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-2"
+            title="Análise de tendências de realização e eficácia"
+          >
+            <svg class="w-4 h-4 inline-block" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+            </svg>
+            TENDÊNCIAS
+          </button>
+
         </div>
       </div>
 
@@ -1667,6 +1678,55 @@
       </div>
       <div id="pdcaEficaciaModalContent" class="space-y-4">
         <!-- Conteúdo preenchido dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Análise de Tendências PDCA -->
+  <div id="pdcaTrendAnalysisModal" class="fixed inset-0 hidden z-[120] items-center justify-center bg-slate-900/60 backdrop-blur-sm" onclick="closePdcaTrendAnalysis(event)">
+    <div class="glass-card w-full max-w-5xl p-8 m-4 shadow-2xl overflow-y-auto max-h-[90vh]" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">Análise de Tendências</h2>
+        <button onclick="closePdcaTrendAnalysis()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Filtro por Ano -->
+      <div class="mb-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-2">Filtrar por Ano:</label>
+        <select id="pdcaTrendYearFilter" onchange="updatePdcaTrendAnalysis()" class="w-full md:w-64 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none">
+          <option value="">Todos os Anos</option>
+        </select>
+      </div>
+
+      <!-- Gráficos/Tabelas -->
+      <div class="space-y-6">
+        <!-- Realização -->
+        <div class="glass-card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Tendência de Realização</h3>
+          <div id="pdcaTrendRealizationChart" class="overflow-x-auto">
+            <!-- Conteúdo dinâmico -->
+          </div>
+        </div>
+
+        <!-- Eficácia -->
+        <div class="glass-card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Tendência de Eficácia</h3>
+          <div id="pdcaTrendEficaciaChart" class="overflow-x-auto">
+            <!-- Conteúdo dinâmico -->
+          </div>
+        </div>
+
+        <!-- Resumo Estatístico -->
+        <div class="glass-card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Resumo Estatístico</h3>
+          <div id="pdcaTrendStatsSummary" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Conteúdo dinâmico -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4035,6 +4095,196 @@
       const modal = document.getElementById('pdcaEficaciaModal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+    }
+
+    function openPdcaTrendAnalysis() {
+      const modal = document.getElementById('pdcaTrendAnalysisModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      
+      // Preencher dropdown de anos
+      populateTrendYearFilter();
+      
+      // Inicializar análise
+      updatePdcaTrendAnalysis();
+    }
+
+    function closePdcaTrendAnalysis(event) {
+      if (event && event.target && event.target.id !== 'pdcaTrendAnalysisModal') return;
+      const modal = document.getElementById('pdcaTrendAnalysisModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function populateTrendYearFilter() {
+      const years = new Set();
+      pdcaData.forEach(item => {
+        const ano = getAny(item, ['Ano', 'ano', 'ANO']);
+        if (ano) years.add(ano.toString());
+      });
+
+      const select = document.getElementById('pdcaTrendYearFilter');
+      const sortedYears = Array.from(years).sort().reverse();
+      
+      // Manter opção "Todos os Anos"
+      while (select.options.length > 1) {
+        select.remove(1);
+      }
+
+      sortedYears.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        select.appendChild(option);
+      });
+    }
+
+    function updatePdcaTrendAnalysis() {
+      const selectedYear = document.getElementById('pdcaTrendYearFilter').value;
+      
+      // Filtrar dados
+      const filteredData = selectedYear 
+        ? pdcaData.filter(item => {
+            const ano = getAny(item, ['Ano', 'ano', 'ANO']);
+            return ano && ano.toString() === selectedYear;
+          })
+        : pdcaData;
+
+      if (filteredData.length === 0) {
+        document.getElementById('pdcaTrendRealizationChart').innerHTML = '<p class="text-slate-500">Sem dados disponíveis</p>';
+        document.getElementById('pdcaTrendEficaciaChart').innerHTML = '<p class="text-slate-500">Sem dados disponíveis</p>';
+        document.getElementById('pdcaTrendStatsSummary').innerHTML = '<p class="text-slate-500">Sem dados disponíveis</p>';
+        return;
+      }
+
+      // Calcular estatísticas
+      const stats = calculatePdcaTrendStats(filteredData);
+      
+      // Renderizar gráficos
+      renderRealizationTrend(stats);
+      renderEficaciaTrend(stats);
+      renderStatsSummary(stats);
+    }
+
+    function calculatePdcaTrendStats(data) {
+      const stats = {
+        total: data.length,
+        concluido: 0,
+        aberto: 0,
+        emCurso: 0,
+        eficaz: 0,
+        naoEficaz: 0,
+        indefinido: 0,
+        statusByMonth: {},
+        eficaciaByMonth: {}
+      };
+
+      data.forEach(item => {
+        // Contar status
+        const status = (getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '-').toLowerCase();
+        if (status.includes('concluído') || status.includes('concluido')) stats.concluido++;
+        else if (status.includes('aberto')) stats.aberto++;
+        else if (status.includes('em curso')) stats.emCurso++;
+
+        // Contar eficácia
+        const eficacia = (getAny(item, ['Análise da Eficácia']) || '-').toLowerCase();
+        if (eficacia.includes('eficaz') && !eficacia.includes('não')) stats.eficaz++;
+        else if (eficacia.includes('não eficaz')) stats.naoEficaz++;
+        else stats.indefinido++;
+      });
+
+      stats.realizationRate = ((stats.concluido + stats.aberto) / stats.total * 100).toFixed(1);
+      stats.eficaciaRate = ((stats.eficaz + stats.naoEficaz) > 0 
+        ? (stats.eficaz / (stats.eficaz + stats.naoEficaz) * 100).toFixed(1) 
+        : 0);
+
+      return stats;
+    }
+
+    function renderRealizationTrend(stats) {
+      const html = `
+        <table class="w-full border-collapse border border-slate-300">
+          <tr class="bg-slate-100">
+            <th class="border border-slate-300 px-4 py-2 text-left font-bold">Status</th>
+            <th class="border border-slate-300 px-4 py-2 text-center font-bold">Quantidade</th>
+            <th class="border border-slate-300 px-4 py-2 text-center font-bold">%</th>
+          </tr>
+          <tr>
+            <td class="border border-slate-300 px-4 py-2">🟢 Concluído</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.concluido}</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.concluido / stats.total * 100).toFixed(1)}%</td>
+          </tr>
+          <tr class="bg-slate-50">
+            <td class="border border-slate-300 px-4 py-2">🟡 Aberto</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.aberto}</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.aberto / stats.total * 100).toFixed(1)}%</td>
+          </tr>
+          <tr>
+            <td class="border border-slate-300 px-4 py-2">🟠 Em Curso</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.emCurso}</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.emCurso / stats.total * 100).toFixed(1)}%</td>
+          </tr>
+          <tr class="bg-emerald-50 font-bold">
+            <td class="border border-slate-300 px-4 py-2">Taxa de Realização</td>
+            <td colspan="2" class="border border-slate-300 px-4 py-2 text-center text-emerald-700">${stats.realizationRate}%</td>
+          </tr>
+        </table>
+      `;
+      document.getElementById('pdcaTrendRealizationChart').innerHTML = html;
+    }
+
+    function renderEficaciaTrend(stats) {
+      const html = `
+        <table class="w-full border-collapse border border-slate-300">
+          <tr class="bg-slate-100">
+            <th class="border border-slate-300 px-4 py-2 text-left font-bold">Eficácia</th>
+            <th class="border border-slate-300 px-4 py-2 text-center font-bold">Quantidade</th>
+            <th class="border border-slate-300 px-4 py-2 text-center font-bold">%</th>
+          </tr>
+          <tr>
+            <td class="border border-slate-300 px-4 py-2">🟢 Eficaz</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.eficaz}</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.eficaz + stats.naoEficaz > 0 ? (stats.eficaz / (stats.eficaz + stats.naoEficaz) * 100).toFixed(1) : 0}%</td>
+          </tr>
+          <tr class="bg-slate-50">
+            <td class="border border-slate-300 px-4 py-2">🔴 Não Eficaz</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.naoEficaz}</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.naoEficaz + stats.eficaz > 0 ? (stats.naoEficaz / (stats.eficaz + stats.naoEficaz) * 100).toFixed(1) : 0}%</td>
+          </tr>
+          <tr>
+            <td class="border border-slate-300 px-4 py-2">⚪ Indefinido</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${stats.indefinido}</td>
+            <td class="border border-slate-300 px-4 py-2 text-center font-semibold">${(stats.indefinido / stats.total * 100).toFixed(1)}%</td>
+          </tr>
+          <tr class="bg-emerald-50 font-bold">
+            <td class="border border-slate-300 px-4 py-2">Taxa de Eficácia</td>
+            <td colspan="2" class="border border-slate-300 px-4 py-2 text-center text-emerald-700">${stats.eficaciaRate}%</td>
+          </tr>
+        </table>
+      `;
+      document.getElementById('pdcaTrendEficaciaChart').innerHTML = html;
+    }
+
+    function renderStatsSummary(stats) {
+      const html = `
+        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border border-emerald-200">
+          <p class="text-xs text-emerald-600 font-bold uppercase mb-1">Total de Ações</p>
+          <p class="text-3xl font-black text-emerald-900">${stats.total}</p>
+        </div>
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+          <p class="text-xs text-blue-600 font-bold uppercase mb-1">Taxa de Realização</p>
+          <p class="text-3xl font-black text-blue-900">${stats.realizationRate}%</p>
+        </div>
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+          <p class="text-xs text-purple-600 font-bold uppercase mb-1">Taxa de Eficácia</p>
+          <p class="text-3xl font-black text-purple-900">${stats.eficaciaRate}%</p>
+        </div>
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+          <p class="text-xs text-orange-600 font-bold uppercase mb-1">Em Análise</p>
+          <p class="text-3xl font-black text-orange-900">${stats.indefinido}</p>
+        </div>
+      `;
+      document.getElementById('pdcaTrendStatsSummary').innerHTML = html;
     }
 
     // =========
