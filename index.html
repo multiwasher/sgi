@@ -397,7 +397,7 @@
       <p class="text-slate-600 text-sm mb-6">Selecione o tipo de KPI que deseja visualizar:</p>
 
       <div class="space-y-3">
-        <button onclick="" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
+        <button onclick="loadKpiEstrategicos()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
           📊 KPI'S ESTRATÉGICOS
         </button>
         <button onclick="loadKpiSustentabilidade()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
@@ -4897,7 +4897,9 @@
 
     // KPI's Functions
     let kpiCurrentType = null;
+    let kpiEstrategicosData = [];
     let kpiSustentabilidadeData = [];
+    let kpiCurrentType = 'sustentabilidade'; // Rastreia qual dashboard está activo
     let kpiChartLine = null;
     let kpiChartBar = null;
 
@@ -5004,7 +5006,114 @@
       m.classList.remove('flex');
     }
 
+    async function loadKpiEstrategicos() {
+      kpiCurrentType = 'estrategicos';
+      closeKpiModal();
+      switchTab('kpi');
+      
+      document.getElementById('kpi-title').textContent = 'KPI\'s Estratégicos';
+      document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores Estratégicos';
+      
+      fetchKpiEstrategicos();
+    }
 
+    async function fetchKpiEstrategicos() {
+      try {
+        showLoading('A carregar KPI\'s Estratégicos...');
+        
+        // URL do Google Sheets em formato CSV (A1:O)
+        const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        
+        console.log('📥 Fetching Estratégicos CSV from:', csvUrl);
+        const response = await fetch(csvUrl);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const csv = await response.text();
+        const lines = csv.trim().split('\n');
+        
+        if (lines.length < 2) {
+          hideLoading();
+          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
+          return;
+        }
+        
+        // Parse CSV - Cabeçalhos em linha 1:
+        // A(0): ID, B(1): ano, C(2): Processo, D(3): Objetivo, E(4): Risco, F(5): Recursos
+        // G(6): Responsável Processo, H(7): Responsável Monitorização, I(8): Nome do Indicador
+        // J(9): Fórmula de Controlo, K(10): Frequência de Análise, L(11): Un., M(12): Goal
+        // N(13): Meta (Objetivo), O(14): Real (Valor)
+        
+        console.log('📋 Parsing Estratégicos CSV...');
+        kpiEstrategicosData = [];
+        let validRows = 0;
+        let skippedRows = 0;
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) {
+            skippedRows++;
+            continue;
+          }
+          
+          const cols = lines[i].split(',').map(c => c.trim());
+          
+          // Validar colunas necessárias
+          if (cols.length < 15) {
+            skippedRows++;
+            continue;
+          }
+          
+          const ano = cols[1]?.trim() || '';
+          const processo = cols[2]?.trim() || '';
+          const indicador = cols[8]?.trim() || '';
+          const unidade = cols[11]?.trim() || '';
+          const goal = cols[12]?.trim() || '';
+          const meta = parseFloat(cols[13]) || 0;
+          const real = parseFloat(cols[14]) || 0;
+          
+          // Requer processo e indicador
+          if (!processo || !indicador) {
+            skippedRows++;
+            continue;
+          }
+          
+          kpiEstrategicosData.push({
+            id: cols[0]?.trim() || '',
+            ano: ano,
+            processo: processo,
+            objetivo: cols[3]?.trim() || '',
+            indicador: indicador,
+            unidade: unidade,
+            meta: meta,
+            real: real,
+            goal: goal,
+            formula: cols[9]?.trim() || '',
+            frequencia: cols[10]?.trim() || '',
+            responsavelProcesso: cols[6]?.trim() || '',
+            responsavelMonitorizacao: cols[7]?.trim() || ''
+          });
+          
+          validRows++;
+        }
+        
+        console.log(`✅ Loaded ${validRows} KPI Estratégicos records. Skipped ${skippedRows}.`);
+        if (validRows === 0) {
+          throw new Error('Nenhum registro válido foi carregado do CSV');
+        }
+        
+        populateKpiFilters();
+        updateKpiDashboard();
+        hideLoading();
+      } catch (error) {
+        console.error('Erro ao carregar KPI Estratégicos:', error);
+        hideLoading();
+        alert(`Erro ao carregar dados:\n${error.message}`);
+        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="9" class="px-8 py-12 text-center text-red-500">Erro: ${error.message}</td></tr>`;
+      }
+    }
 
     async function loadKpiSustentabilidade() {
       kpiCurrentType = 'sustentabilidade';
@@ -5141,9 +5250,9 @@
 
     function populateKpiFilters() {
       // Obter dados corretos baseado no tipo de KPI
-      const currentData = kpiSustentabilidadeData;
+      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
       
-      console.log(`\n🔄 populateKpiFilters() called`);
+      console.log(`\n🔄 populateKpiFilters() called for: ${kpiCurrentType}`);
       console.log(`Total records in currentData: ${currentData.length}`);
       
       // Extrair valores únicos para filtros
@@ -5155,7 +5264,7 @@
       console.log('Indicadores brutos encontrados:', indicadores);
       console.log('Anos encontrados:', anos);
       
-      // Para Sustentabilidade, ordenar alfabeticamente
+      // Ordenar alfabeticamente
       processos = processos.sort();
       indicadores = indicadores.sort();
       
@@ -5186,7 +5295,7 @@
 
     function updateKpiDashboard() {
       // Obter dados corretos baseado no tipo de KPI
-      const currentData = kpiSustentabilidadeData;
+      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
       
       // Obter valores de filtro
       // Anos: múltipla seleção
@@ -5240,14 +5349,21 @@
         return;
       }
       
-      // Ordenar por ano, mês
+      // Ordenar por ano, mês (ou ano para Estratégicos)
       data.sort((a, b) => {
         if (a.ano !== b.ano) return b.ano - a.ano;
-        return a.mes.localeCompare(b.mes);
+        if (a.mes && b.mes) return a.mes.localeCompare(b.mes);
+        return 0;
       });
       
       tbody.innerHTML = data.map(d => {
-        const performance = d.valorObjetivo > 0 ? ((d.valor / d.valorObjetivo) * 100).toFixed(0) : 'N/A';
+        // Usar estrutura diferente para Estratégicos vs Sustentabilidade
+        const valor = d.valor !== undefined ? d.valor : d.real;
+        const objetivo = d.valorObjetivo !== undefined ? d.valorObjetivo : d.meta;
+        const mes = d.mes || 'Anual';
+        const responsavel = d.responsavel || d.responsavelMonitorizacao || '-';
+        
+        const performance = objetivo > 0 ? ((valor / objetivo) * 100).toFixed(0) : 'N/A';
         let statusClass = 'bg-slate-100 text-slate-600';
         
         if (performance !== 'N/A') {
@@ -5260,20 +5376,144 @@
         return `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="px-4 py-3 text-sm font-semibold text-slate-800">${d.ano}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${d.mes}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${mes}</td>
             <td class="px-4 py-3 text-sm text-slate-700"><strong>${d.indicador}</strong></td>
             <td class="px-4 py-3 text-sm text-slate-700">${d.processo}</td>
-            <td class="px-4 py-3 text-sm font-bold text-blue-600">${d.valor} ${d.unidade}</td>
-            <td class="px-4 py-3 text-sm text-slate-600">${d.valorObjetivo} ${d.unidade}</td>
+            <td class="px-4 py-3 text-sm font-bold text-blue-600">${valor} ${d.unidade}</td>
+            <td class="px-4 py-3 text-sm text-slate-600">${objetivo} ${d.unidade}</td>
             <td class="px-4 py-3 text-sm text-slate-600"><span class="px-2 py-1 rounded text-xs font-bold ${statusClass}">${performance}%</span></td>
             <td class="px-4 py-3 text-sm text-slate-600">${d.objetivo}</td>
-            <td class="px-4 py-3 text-sm text-slate-600">${d.responsavel}</td>
+            <td class="px-4 py-3 text-sm text-slate-600">${responsavel}</td>
           </tr>
         `;
       }).join('');
     }
 
     function updateKpiCharts(data) {
+      // if Estratégicos, usar abordagem simples
+      if (kpiCurrentType === 'estrategicos') {
+        updateKpiChartsEstrategicos(data);
+      } else {
+        updateKpiChartsSustentabilidade(data);
+      }
+    }
+
+    function updateKpiChartsEstrategicos(data) {
+      // Para Estratégicos: Gráficos simples de Real vs Meta por indicador
+      
+      // Gráfico de Barras (Real vs Meta)
+      const comparison = {};
+      data.forEach(d => {
+        const key = d.indicador;
+        if (!comparison[key]) {
+          comparison[key] = { real: 0, meta: 0, count: 0 };
+        }
+        comparison[key].real += d.real;
+        comparison[key].meta += d.meta;
+        comparison[key].count += 1;
+      });
+      
+      const labels = Object.keys(comparison);
+      const realValues = labels.map(k => (comparison[k].real / comparison[k].count).toFixed(2));
+      const metaValues = labels.map(k => (comparison[k].meta / comparison[k].count).toFixed(2));
+      
+      // Gráfico de Linha
+      if (kpiChartLine) kpiChartLine.destroy();
+      
+      const ctxLine = document.getElementById('kpi-chart-line').getContext('2d');
+      kpiChartLine = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Valor Real',
+              data: realValues,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 3,
+              pointRadius: 5,
+              pointBackgroundColor: '#10b981',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Meta',
+              data: metaValues,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0)',
+              borderWidth: 3,
+              pointRadius: 5,
+              pointBackgroundColor: '#f59e0b',
+              borderDash: [5, 5],
+              tension: 0.4,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' }
+          },
+          scales: {
+            y: { beginAtZero: true },
+            x: {
+              ticks: {
+                maxRotation: 45,
+                minRotation: 45,
+                font: { size: 10 },
+                autoSkip: false
+              }
+            }
+          }
+        }
+      });
+      
+      // Gráfico de Barras
+      if (kpiChartBar) kpiChartBar.destroy();
+      
+      const ctxBar = document.getElementById('kpi-chart-bar').getContext('2d');
+      kpiChartBar = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Valor Real',
+              data: realValues,
+              backgroundColor: '#10b981'
+            },
+            {
+              label: 'Meta',
+              data: metaValues,
+              backgroundColor: '#f59e0b'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' }
+          },
+          scales: {
+            y: { beginAtZero: true },
+            x: {
+              ticks: {
+                maxRotation: 90,
+                minRotation: 90,
+                font: { size: 10 },
+                autoSkip: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateKpiChartsSustentabilidade(data) {
       // Meses em português
       const monthNames = {
         '1': 'Janeiro', '2': 'Fevereiro', '3': 'Março', '4': 'Abril',
@@ -5490,7 +5730,11 @@
     }
 
     function reloadCurrentKpi() {
-      fetchKpiSustentabilidade();
+      if (kpiCurrentType === 'estrategicos') {
+        fetchKpiEstrategicos();
+      } else {
+        fetchKpiSustentabilidade();
+      }
     }
 
     // ⚠️ NOTA: addDocumentToSheet não estava no snippet original (mantém a tua função anterior)
