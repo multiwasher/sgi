@@ -397,9 +397,6 @@
       <p class="text-slate-600 text-sm mb-6">Selecione o tipo de KPI que deseja visualizar:</p>
 
       <div class="space-y-3">
-        <button onclick="loadKpiEstrategicos()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
-          📊 KPI'S ESTRATÉGICOS
-        </button>
         <button onclick="loadKpiSustentabilidade()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
           🌍 KPI'S SUSTENTABILIDADE
         </button>
@@ -4897,57 +4894,9 @@
 
     // KPI's Functions
     let kpiCurrentType = null;
-    let kpiEstrategicosData = [];
     let kpiSustentabilidadeData = [];
     let kpiChartLine = null;
     let kpiChartBar = null;
-
-    // Listas de validação para KPI's Estratégicos
-    const VALID_PROCESSOS = [
-      'Engenharia',
-      'Gestão da Qualidade',
-      'Gestão da Qualidade e Ambiente',
-      'Gestão de Compras',
-      'Gestão de Negócio',
-      'Gestão de Recursos',
-      'Marketing',
-      'Pós Venda'
-    ];
-
-    const VALID_INDICADORES = [
-      'digital',
-      'EBITDA',
-      'Eficácia das Formações',
-      'Evolução Custo Médio por Modelo - MWS300',
-      'Evolução Custo Médio por Modelo - MWS500',
-      'Evolução Custo Médio por Modelo - MWS700',
-      'Evolução Custo Médio por Modelo - MWS715',
-      'Faturado',
-      'Índice de Rotatividade',
-      'Lead Time de Instalação',
-      'MARGEM',
-      'MKT digital',
-      'N.º de Novas Propostas',
-      'N.º de RNC\'s',
-      'N.º de RNC\'s Vs. Σ Equipamentos Produzidos',
-      'N.º Máximo de RNC\'s em Aberto',
-      'N.º Novas Máquinas Vendidas',
-      'N.º Novas Oportunidades de Negócio',
-      'N.º Total de Intervenções em Aberto',
-      'N.º Total de Pedidos criados',
-      'Nível de Entregas - Prazo',
-      'Nível de Entregas - Qualidade',
-      'Projetos SIFIDE - Apoio Despesas',
-      'Projetos SIFIDE - Vendas',
-      'Satisfação do cliente - IOT',
-      'Satisfação do Cliente - IOT [Assistência técnica prestada (interna/externa)]',
-      'Satisfação do Cliente - IOT [Instalação]',
-      'Satisfação do Cliente - IOT [Satisfação Equipamento]',
-      'Satisfação do cliente - IOT [Serviço Técnico Prestado]',
-      'Tempo de Resolução Médio',
-      'Vendido',
-      'VOLUME DE NEGÓCIOS'
-    ];
 
     // Função de diagnóstico - fetch direto do CSV
     async function diagnoseCsvData() {
@@ -5052,224 +5001,7 @@
       m.classList.remove('flex');
     }
 
-    async function loadKpiEstrategicos() {
-      kpiCurrentType = 'estrategicos';
-      closeKpiModal();
-      switchTab('kpi');
-      
-      document.getElementById('kpi-title').textContent = 'KPI\'s Estratégicos';
-      document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores Estratégicos';
-      
-      // Carregar dados do Google Sheets
-      fetchKpiEstrategicos();
-    }
 
-    async function fetchKpiEstrategicos() {
-      try {
-        showLoading('A carregar KPI\'s Estratégicos...');
-        
-        // URL do Google Sheets BD em formato CSV
-        const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
-        // gid para sheet BD (ajustar se necessário)
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-        
-        console.log('📥 Fetching Estratégicos CSV from:', csvUrl);
-        const response = await fetch(csvUrl);
-        
-        console.log('Response status:', response.status, response.statusText);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const csv = await response.text();
-        console.log('CSV received, length:', csv.length, 'bytes');
-        console.log('First 500 chars:', csv.substring(0, 500));
-        
-        const lines = csv.trim().split('\n');
-        console.log('Total lines:', lines.length);
-        
-        if (lines.length < 2) {
-          hideLoading();
-          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
-          return;
-        }
-        
-        // Parse CSV com estrutura ESTRATÉGICOS:
-        // Col A (0): ID
-        // Col B (1): ano
-        // Col C (2): Processo
-        // Col D (3): Objetivo (descrição)
-        // Col E (4): Risco
-        // Col F (5): Recursos
-        // Col G (6): Responsável Processo
-        // Col H (7): Responsável Monitorização
-        // Col I (8): Nome do Indicador ← INDICADOR
-        // Col J (9): Fórmula de Controlo
-        // Col K (10): Frequência de Análise
-        // Col L (11): Un. (Unidade) ← UNIDADE
-        // Col M (12): Goal (sinal matemático)
-        // Col N (13): Meta ← VALOR OBJETIVO
-        // Col O (14): Real ← VALOR
-        // Cols P+ : valores mensais (Jan, Fev, etc.)
-        
-        console.log('📋 Parsing Estratégicos CSV lines...');
-        console.log('Linha cabeçalho (0):', lines[0]);
-        const headerCols = parseCSVLine(lines[0]);
-        console.log('Cabeçalhos parseados:', headerCols);
-        console.log('Col 2 (Processo):', headerCols[2]);
-        
-        kpiEstrategicosData = [];
-        let validRows = 0;
-        let skippedRows = 0;
-        let processosColetados = new Set();
-        let indicadoresColetados = new Set();
-        let processosComProblemas = {}; // Contar por razão de rejeição
-        
-        console.log('\n🔍 ANÁLISE DETALHADA DE CADA LINHA:');
-        console.log('='.repeat(80));
-        
-        for (let i = 1; i < lines.length; i++) {
-          if (!lines[i].trim()) {
-            skippedRows++;
-            continue; // Skip empty lines
-          }
-          
-          const cols = parseCSVLine(lines[i]);
-          const processo = cols[2]?.trim() || '';
-          const indicador = cols[8]?.trim() || '';
-          
-          // Registar TODOS os processos e indicadores encontrados (mesmo inválidos)
-          if (processo) processosColetados.add(processo);
-          if (indicador) indicadoresColetados.add(indicador);
-          
-          // Debug TODAS as primeiras 20 linhas
-          if (i <= 20) {
-            console.log(`\n📍 Row ${i}:`);
-            console.log(`  Colunas totais: ${cols.length}`);
-            console.log(`  Col 2 (Processo): "${processo}" ${!processo ? '❌ VAZIO' : '✅'}`);
-            console.log(`  Col 8 (Indicador): "${indicador}" ${!indicador ? '❌ VAZIO' : '✅'}`);
-          }
-          
-          // Necessário até coluna O (índice 14). Sheet vai até AB (28 colunas)
-          if (cols.length < 15) {
-            if (i <= 20) {
-              console.log(`  ❌ DESCARTADA: insufficient columns (${cols.length} < 15)`);
-            }
-            const reason = `Cols:${cols.length}`;
-            processosComProblemas[reason] = (processosComProblemas[reason] || 0) + 1;
-            skippedRows++;
-            continue;
-          }
-          
-          const record = {
-            ano: cols[1]?.trim() || '',
-            mes: 'Anual', // Estratégicos são anuais (não mensais como Sustentabilidade)
-            valor: parseFloat(cols[14]) || 0,         // Col O: Real
-            processo: processo,                        // Col C: Processo
-            indicador: indicador,                      // Col I: Nome do Indicador
-            unidade: cols[11]?.trim() || '',           // Col L: Un.
-            objetivo: cols[3]?.trim() || '',           // Col D: Objetivo descrição
-            valorObjetivo: parseFloat(cols[13]) || 0,  // Col N: Meta
-            responsavel: cols[7]?.trim() || '',        // Col H: Responsável Monitorização
-            // Campos extras específicos de Estratégicos
-            id: cols[0]?.trim() || '',                 // Col A: ID
-            goal: cols[12]?.trim() || '',              // Col M: Goal (sinal matemático)
-            formula: cols[9]?.trim() || '',            // Col J: Fórmula de Controlo
-            frequencia: cols[10]?.trim() || '',        // Col K: Frequência de Análise
-            responsavelProcesso: cols[6]?.trim() || '' // Col G: Responsável Processo
-          };
-          
-          // Registar razão se for descartada
-          if (!record.indicador || !record.processo) {
-            if (i <= 20) {
-              console.log(`  ❌ DESCARTADA: indicador="${record.indicador}" processo="${record.processo}"`);
-            }
-            const reason = `ind:${!record.indicador},proc:${!record.processo}`;
-            processosComProblemas[reason] = (processosComProblemas[reason] || 0) + 1;
-            skippedRows++;
-            continue;
-          }
-          
-          // Debug first few processed records
-          if (validRows <= 3) {
-            console.log(`  ✅ ADICIONADA ao dataset`);
-          }
-          
-          kpiEstrategicosData.push(record);
-          validRows++;
-        }
-        
-        console.log('\n' + '='.repeat(80));
-        console.log(`\n✅ RESULTADO DO PARSING:`);
-        console.log(`   - Registos válidos adicionados: ${validRows}`);
-        console.log(`   - Registos descartados: ${skippedRows}`);
-        console.log(`   - Total processos encontrados (em todo CSV): ${processosColetados.size}`);
-        console.log(`   - Total indicadores encontrados (em todo CSV): ${indicadoresColetados.size}`);
-        console.log(`\n📊 RAZÕES DE REJEIÇÃO DE REGISTOS:`);
-        Object.entries(processosComProblemas).forEach(([reason, count]) => {
-          console.log(`   - ${reason}: ${count} registos`);
-        });
-        console.log('\n📊 PROCESSOS ENCONTRADOS EM TODO O CSV (brutos):');
-        Array.from(processosColetados).forEach(p => console.log(`   ✓ "${p}"`));
-        console.log('\n📊 INDICADORES ENCONTRADOS EM TODO O CSV (brutos):');
-        Array.from(indicadoresColetados).forEach(ind => console.log(`   ✓ "${ind}"`));
-        console.log('='.repeat(80) + '\n');
-        
-        // Validar contra listas conhecidas
-        const uniqueProcessos = [...new Set(kpiEstrategicosData.map(r => r.processo))];
-        const uniqueIndicadores = [...new Set(kpiEstrategicosData.map(r => r.indicador))];
-        
-        console.log('\n📊 VALIDAÇÃO DE DADOS (apenas registos adicionados):');
-        console.log('Processos únicos nos dados válidos:', uniqueProcessos);
-        console.log('Processos esperados:', VALID_PROCESSOS);
-        
-        const processosInvalidos = uniqueProcessos.filter(p => !VALID_PROCESSOS.includes(p));
-        if (processosInvalidos.length > 0) {
-          console.warn('⚠️ PROCESSOS INVÁLIDOS ENCONTRADOS:', processosInvalidos);
-        } else {
-          console.log('✅ Todos os processos adicionados são válidos!');
-        }
-        
-        console.log('\n⚠️ RESUMO CRÍTICO:');
-        console.log(`  Processos NO CSV (brutos): ${Array.from(processosColetados).join(', ')}`);
-        console.log(`  Processos ADICIONADOS (válidos): ${uniqueProcessos.join(', ')}`);
-        console.log(`  Processos FALTANDO: ${VALID_PROCESSOS.filter(p => !processosColetados.has(p)).join(', ')}`);
-        
-        console.log('\nIndicadores únicos encontrados:', uniqueIndicadores);
-        console.log('Indicadores válidos:', VALID_INDICADORES);
-        
-        const indicadoresInvalidos = uniqueIndicadores.filter(ind => !VALID_INDICADORES.includes(ind));
-        if (indicadoresInvalidos.length > 0) {
-          console.warn('⚠️ INDICADORES INVÁLIDOS ENCONTRADOS:', indicadoresInvalidos);
-        } else {
-          console.log('✅ Todos os indicadores são válidos!');
-        }
-        
-        if (kpiEstrategicosData.length > 0) {
-          console.log('\nFirst record:', kpiEstrategicosData[0]);
-          const withObj = kpiEstrategicosData.filter(r => r.valorObjetivo > 0);
-          console.log(`Records with valorObjetivo > 0: ${withObj.length}`);
-          if (withObj.length > 0) {
-            console.log('Sample:', withObj.slice(0, 3));
-          }
-        } else {
-          throw new Error('Nenhum registro válido foi carregado do CSV');
-        }
-        
-        // Preencher os filtros
-        populateKpiFilters();
-        
-        // Atualizar dashboard
-        updateKpiDashboard();
-        hideLoading();
-      } catch (error) {
-        console.error('Erro ao carregar KPI Estratégicos:', error);
-        console.error('Stack:', error.stack);
-        hideLoading();
-        alert(`Erro ao carregar dados:\n${error.message}`);
-        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="9" class="px-8 py-12 text-center text-red-500">Erro ao carregar dados: ${error.message}</td></tr>`;
-      }
-    }
 
     async function loadKpiSustentabilidade() {
       kpiCurrentType = 'sustentabilidade';
@@ -5406,9 +5138,9 @@
 
     function populateKpiFilters() {
       // Obter dados corretos baseado no tipo de KPI
-      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
+      const currentData = kpiSustentabilidadeData;
       
-      console.log(`\n🔄 populateKpiFilters() called for: ${kpiCurrentType}`);
+      console.log(`\n🔄 populateKpiFilters() called`);
       console.log(`Total records in currentData: ${currentData.length}`);
       
       // Extrair valores únicos para filtros
@@ -5420,17 +5152,9 @@
       console.log('Indicadores brutos encontrados:', indicadores);
       console.log('Anos encontrados:', anos);
       
-      // Se é KPI Estratégicos, ordenar conforme as listas de validação
-      if (kpiCurrentType === 'estrategicos') {
-        // Para Estratégicos, usar a lista COMPLETA de processos/indicadores válidos
-        // (aparecem todos, mesmo que alguns não tenham dados no CSV)
-        processos = VALID_PROCESSOS.slice(); // Cópia da lista completa
-        indicadores = VALID_INDICADORES.slice(); // Cópia da lista completa
-      } else {
-        // Para Sustentabilidade, ordenar alfabeticamente
-        processos = processos.sort();
-        indicadores = indicadores.sort();
-      }
+      // Para Sustentabilidade, ordenar alfabeticamente
+      processos = processos.sort();
+      indicadores = indicadores.sort();
       
       console.log('Processos após ordenação/filtragem:', processos);
       console.log('Indicadores após ordenação/filtragem:', indicadores);
@@ -5459,7 +5183,7 @@
 
     function updateKpiDashboard() {
       // Obter dados corretos baseado no tipo de KPI
-      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
+      const currentData = kpiSustentabilidadeData;
       
       // Obter valores de filtro
       // Anos: múltipla seleção
@@ -5763,11 +5487,7 @@
     }
 
     function reloadCurrentKpi() {
-      if (kpiCurrentType === 'sustentabilidade') {
-        fetchKpiSustentabilidade();
-      } else if (kpiCurrentType === 'estrategicos') {
-        fetchKpiEstrategicos();
-      }
+      fetchKpiSustentabilidade();
     }
 
     // ⚠️ NOTA: addDocumentToSheet não estava no snippet original (mantém a tua função anterior)
