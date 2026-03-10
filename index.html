@@ -4949,6 +4949,59 @@
       'VOLUME DE NEGÓCIOS'
     ];
 
+    // Função de diagnóstico - fetch direto do CSV
+    async function diagnoseCsvData() {
+      console.log('\n🔍 INICIANDO DIAGNÓSTICO DO CSV ESTRATÉGICOS...\n');
+      try {
+        const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        
+        const response = await fetch(csvUrl);
+        const csv = await response.text();
+        const lines = csv.trim().split('\n');
+        
+        console.log('📊 CSV BRUTO:');
+        console.log('Total de linhas:', lines.length);
+        console.log('\n🏷️ CABEÇALHO (linha 0):');
+        console.log(lines[0]);
+        
+        const headerCols = parseCSVLine(lines[0]);
+        console.log('\n📍 Cabeçalhos parseados:');
+        headerCols.forEach((col, idx) => {
+          console.log(`  Col ${idx}: "${col}"`);
+        });
+        
+        console.log('\n📝 PRIMEIRAS 5 LINHAS DE DADOS:');
+        for (let i = 1; i < Math.min(6, lines.length); i++) {
+          const cols = parseCSVLine(lines[i]);
+          console.log(`\n📌 Linha ${i}:`);
+          console.log(`  Col 1 (Ano): "${cols[1]}"`);
+          console.log(`  Col 2 (Processo): "${cols[2]}"`);
+          console.log(`  Col 8 (Indicador): "${cols[8]}"`);
+          console.log(`  Todas colunas: [${cols.map(c => `"${c}"`).join(', ')}]`);
+        }
+        
+        // Extrair processos únicos
+        console.log('\n🔎 ANÁLISE DE PROCESSOS:');
+        const processos = new Set();
+        for (let i = 1; i < lines.length; i++) {
+          const cols = parseCSVLine(lines[i]);
+          if (cols[2]) {
+            processos.add(cols[2].trim());
+          }
+        }
+        console.log(`Processos únicos encontrados (${processos.size}):`);
+        Array.from(processos).forEach(p => console.log(`  - "${p}"`));
+        
+        console.log('\n✅ DIAGNÓSTICO COMPLETO. Verificar acima os dados.');
+      } catch (error) {
+        console.error('❌ Erro ao fazer diagnóstico:', error);
+      }
+    }
+    
+    // Disponibilizar no console: dignoze()
+    window.diagnose = diagnoseCsvData;
+
     // Parse CSV line com suporte a valores com aspas
     function parseCSVLine(line) {
       const result = [];
@@ -5060,6 +5113,8 @@
         kpiEstrategicosData = [];
         let validRows = 0;
         let skippedRows = 0;
+        let processosColetados = new Set();
+        let indicadoresColetados = new Set();
         
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) {
@@ -5068,15 +5123,16 @@
           }
           
           const cols = parseCSVLine(lines[i]);
+          const processo = cols[2]?.trim() || '';
+          const indicador = cols[8]?.trim() || '';
           
-          // Debug TODAS as primeiras linhas e cada 10ª
-          if (i <= 5 || i % 10 === 0) {
+          // Debug TODAS as primeiras 10 linhas
+          if (i <= 10) {
             console.log(`\n📍 Row ${i}: ${cols.length} cols total`);
-            console.log(`  Col 0 (ID): ${cols[0]}`);
-            console.log(`  Col 1 (Ano): ${cols[1]}`);
-            console.log(`  Col 2 (Processo): "${cols[2]}"`);
-            console.log(`  Col 8 (Indicador): ${cols[8]}`);
-            console.log(`  Full row:`, cols);
+            console.log(`  Col 0 (ID): "${cols[0]}"`);
+            console.log(`  Col 1 (Ano): "${cols[1]}"`);
+            console.log(`  Col 2 (Processo): "${processo}" ${!processo ? '❌ VAZIO' : '✅'}`);
+            console.log(`  Col 8 (Indicador): "${indicador}" ${!indicador ? '❌ VAZIO' : '✅'}`);
           }
           
           if (cols.length < 15) {
@@ -5089,8 +5145,8 @@
             ano: cols[1]?.trim() || '',
             mes: 'Anual', // Estratégicos são anuais (não mensais como Sustentabilidade)
             valor: parseFloat(cols[14]) || 0,         // Col O: Real
-            processo: cols[2]?.trim() || '',           // Col C: Processo
-            indicador: cols[8]?.trim() || '',          // Col I: Nome do Indicador
+            processo: processo,                        // Col C: Processo
+            indicador: indicador,                      // Col I: Nome do Indicador
             unidade: cols[11]?.trim() || '',           // Col L: Un.
             objetivo: cols[3]?.trim() || '',           // Col D: Objetivo descrição
             valorObjetivo: parseFloat(cols[13]) || 0,  // Col N: Meta
@@ -5108,25 +5164,45 @@
             console.log(`[Row ${i}] Parsed record:`, record);
           }
           
+          // Recolher todos os processos e indicadores (mesmo inválidos)
+          if (processo) processosColetados.add(processo);
+          if (indicador) indicadoresColetados.add(indicador);
+          
           // Validar que temos dados principais
           if (record.indicador && record.processo) {
             kpiEstrategicosData.push(record);
             validRows++;
+            if (i <= 10) {
+              console.log(`  ✅ Row ${i} ADICIONADA ao dataset`);
+            }
           } else {
-            if (!record.indicador) console.warn(`Row ${i}: missing indicador (col I)`);
-            if (!record.processo) console.warn(`Row ${i}: missing processo (col C) - valor recebido: "${cols[2]}"`);
+            if (i <= 10) {
+              console.log(`  ❌ Row ${i} DESCARTADA - Motivo:`);
+              if (!record.indicador) console.log(`     - Indicador vazio (col 8)`);
+              if (!record.processo) console.log(`     - Processo vazio (col 2)`);
+            }
             skippedRows++;
           }
         }
         
-        console.log(`✅ Loaded ${validRows} Estratégicos records. Skipped ${skippedRows} invalid rows.`);
+        console.log(`\n\n${'='.repeat(60)}`);
+        console.log(`✅ RESULTADO DO PARSING:`);
+        console.log(`   - Registos válidos adicionados: ${validRows}`);
+        console.log(`   - Registos descartados: ${skippedRows}`);
+        console.log(`   - Total processos encontrados (brutos): ${processosColetados.size}`);
+        console.log(`   - Total indicadores encontrados (brutos): ${indicadoresColetados.size}`);
+        console.log(`${'='.repeat(60)}\n`);
+        
+        console.log('\n📊 DADOS BRUTOS ENCONTRADOS:');
+        console.log('Processos coletados (' + processosColetados.size + '):', Array.from(processosColetados));
+        console.log('Indicadores coletados (' + indicadoresColetados.size + '):', Array.from(indicadoresColetados));
         
         // Validar contra listas conhecidas
         const uniqueProcessos = [...new Set(kpiEstrategicosData.map(r => r.processo))];
         const uniqueIndicadores = [...new Set(kpiEstrategicosData.map(r => r.indicador))];
         
         console.log('\n📊 VALIDAÇÃO DE DADOS:');
-        console.log('Processos únicos encontrados:', uniqueProcessos);
+        console.log('Processos únicos nos dados válidos:', uniqueProcessos);
         console.log('Processos válidos:', VALID_PROCESSOS);
         
         const processosInvalidos = uniqueProcessos.filter(p => !VALID_PROCESSOS.includes(p));
