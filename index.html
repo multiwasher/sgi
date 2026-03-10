@@ -5004,6 +5004,11 @@
         const csv = await response.text();
         const lines = csv.trim().split('\n');
         
+        // 🔍 Log raw CSV info
+        console.log('📋 Raw CSV length:', csv.length, 'characters');
+        console.log('📋 Total lines in CSV:', lines.length);
+        console.log('📋 Header line:', lines[0]);
+        
         if (lines.length < 2) {
           hideLoading();
           document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="10" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
@@ -5021,6 +5026,16 @@
         console.log('📋 First 5 raw lines:');
         for (let i = 0; i < Math.min(5, lines.length); i++) {
           console.log(`  Line ${i}: ${lines[i].substring(0, 100)}...`);
+        }
+        
+        // Parse header row to verify structure
+        const headerCols = parseCSVLine(lines[0]);
+        console.log('📋 Parsed header columns count:', headerCols.length);
+        console.log('📋 Parsed headers:', headerCols);
+        if (headerCols.length >= 2) {
+          console.log(`📋 Column 0 (should be "ano"): "${headerCols[0]}"`);
+          console.log(`📋 Column 1 (should be "Processo"): "${headerCols[1]}"`);
+          console.log(`📋 Column 7 (should be "Nome do Indicador"): "${headerCols[7]}"`);
         }
         
         kpiEstrategicosData = [];
