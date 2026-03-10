@@ -4948,7 +4948,133 @@
       kpiCurrentType = 'estrategicos';
       closeKpiModal();
       switchTab('kpi');
-      alert('KPI\'s Estratégicos ainda não estão configurados. Adicione a URL do Google Sheets.');
+      
+      document.getElementById('kpi-title').textContent = 'KPI\'s Estratégicos';
+      document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores Estratégicos';
+      
+      // Carregar dados do Google Sheets
+      fetchKpiEstrategicos();
+    }
+
+    async function fetchKpiEstrategicos() {
+      try {
+        showLoading('A carregar KPI\'s Estratégicos...');
+        
+        // URL do Google Sheets BD em formato CSV
+        const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
+        // gid para sheet BD (ajustar se necessário)
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        
+        console.log('📥 Fetching Estratégicos CSV from:', csvUrl);
+        const response = await fetch(csvUrl);
+        
+        console.log('Response status:', response.status, response.statusText);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const csv = await response.text();
+        console.log('CSV received, length:', csv.length, 'bytes');
+        console.log('First 500 chars:', csv.substring(0, 500));
+        
+        const lines = csv.trim().split('\n');
+        console.log('Total lines:', lines.length);
+        
+        if (lines.length < 2) {
+          hideLoading();
+          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
+          return;
+        }
+        
+        // Parse CSV com o mesmo formato: 
+        // Col A (0): Ano
+        // Col B (1): Mês  
+        // Col C (2): Valor
+        // Col D (3): Processo
+        // Col E (4): Indicador
+        // Col F (5): Unidade
+        // Col G (6): Objetivo (descrição)
+        // Col H (7): Valor Objetivo (valor numérico para comparação)
+        // Col I (8): Responsável
+        
+        console.log('📋 Parsing Estratégicos CSV lines...');
+        kpiEstrategicosData = [];
+        let validRows = 0;
+        let skippedRows = 0;
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) {
+            skippedRows++;
+            continue; // Skip empty lines
+          }
+          
+          const cols = parseCSVLine(lines[i]);
+          
+          // Debug first and every 10th row
+          if (i <= 3 || i % 10 === 0) {
+            console.log(`Row ${i}: ${cols.length} cols, raw:`, lines[i].substring(0, 100));
+            console.log(`  Parsed:`, cols);
+          }
+          
+          if (cols.length < 9) {
+            console.warn(`Row ${i}: insufficient columns (${cols.length} < 9)`);
+            skippedRows++;
+            continue;
+          }
+          
+          const record = {
+            ano: cols[0]?.trim() || '',
+            mes: cols[1]?.trim() || '',
+            valor: parseFloat(cols[2]) || 0,
+            processo: cols[3]?.trim() || '',      // Coluna D
+            indicador: cols[4]?.trim() || '',     // Coluna E
+            unidade: cols[5]?.trim() || '',
+            objetivo: cols[6]?.trim() || '',      // Coluna G - descrição
+            valorObjetivo: parseFloat(cols[7]) || 0,  // Coluna H - valor numérico
+            responsavel: cols[8]?.trim() || ''    // Coluna I
+          };
+          
+          // Debug first few records
+          if (i <= 3) {
+            console.log(`[Row ${i}] Parsed record:`, record);
+          }
+          
+          // Validar que temos dados principais
+          if (record.indicador && record.processo) {
+            kpiEstrategicosData.push(record);
+            validRows++;
+          } else {
+            if (!record.indicador) console.warn(`Row ${i}: missing indicador`);
+            if (!record.processo) console.warn(`Row ${i}: missing processo`);
+            skippedRows++;
+          }
+        }
+        
+        console.log(`✅ Loaded ${validRows} Estratégicos records. Skipped ${skippedRows} invalid rows.`);
+        if (kpiEstrategicosData.length > 0) {
+          console.log('First record:', kpiEstrategicosData[0]);
+          const withObj = kpiEstrategicosData.filter(r => r.valorObjetivo > 0);
+          console.log(`Records with valorObjetivo > 0: ${withObj.length}`);
+          if (withObj.length > 0) {
+            console.log('Sample:', withObj.slice(0, 3));
+          }
+        } else {
+          throw new Error('Nenhum registro válido foi carregado do CSV');
+        }
+        
+        // Preencher os filtros
+        populateKpiFilters();
+        
+        // Atualizar dashboard
+        updateKpiDashboard();
+        hideLoading();
+      } catch (error) {
+        console.error('Erro ao carregar KPI Estratégicos:', error);
+        console.error('Stack:', error.stack);
+        hideLoading();
+        alert(`Erro ao carregar dados:\n${error.message}`);
+        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="9" class="px-8 py-12 text-center text-red-500">Erro ao carregar dados: ${error.message}</td></tr>`;
+      }
     }
 
     async function loadKpiSustentabilidade() {
@@ -5084,10 +5210,13 @@
     }
 
     function populateKpiFilters() {
+      // Obter dados corretos baseado no tipo de KPI
+      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
+      
       // Extrair valores únicos para filtros
-      const anos = [...new Set(kpiSustentabilidadeData.map(d => d.ano))].sort((a, b) => a - b);
-      const processos = [...new Set(kpiSustentabilidadeData.map(d => d.processo))].sort();
-      const indicadores = [...new Set(kpiSustentabilidadeData.map(d => d.indicador))].sort();
+      const anos = [...new Set(currentData.map(d => d.ano))].sort((a, b) => a - b);
+      const processos = [...new Set(currentData.map(d => d.processo))].sort();
+      const indicadores = [...new Set(currentData.map(d => d.indicador))].sort();
       
       // Preencher select de anos
       const anoSelect = document.getElementById('kpi-filter-ano');
@@ -5106,13 +5235,16 @@
     }
 
     function updateKpiDashboard() {
+      // Obter dados corretos baseado no tipo de KPI
+      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
+      
       // Obter valores de filtro
       const anoFilter = document.getElementById('kpi-filter-ano').value;
       const processoFilter = document.getElementById('kpi-filter-processo').value;
       const indicadorFilter = document.getElementById('kpi-filter-indicador').value;
       
       // Filtrar dados
-      let filteredData = kpiSustentabilidadeData;
+      let filteredData = currentData;
       
       if (anoFilter) {
         filteredData = filteredData.filter(d => d.ano === anoFilter);
@@ -5404,7 +5536,7 @@
       if (kpiCurrentType === 'sustentabilidade') {
         fetchKpiSustentabilidade();
       } else if (kpiCurrentType === 'estrategicos') {
-        alert('KPI\'s Estratégicos ainda não estão configurados.');
+        fetchKpiEstrategicos();
       }
     }
 
