@@ -1835,6 +1835,43 @@
         </div>
       </div>
 
+      <!-- Filtros Cumulativos -->
+      <div class="glass-card p-6">
+        <h3 class="text-lg font-black text-slate-800 mb-4">Filtros</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <!-- Filtro: Ano -->
+          <div>
+            <label for="kpi-filter-ano" class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">Ano</label>
+            <select id="kpi-filter-ano" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Todos os Anos</option>
+            </select>
+          </div>
+
+          <!-- Filtro: Processo -->
+          <div>
+            <label for="kpi-filter-processo" class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">Processo</label>
+            <select id="kpi-filter-processo" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Todos os Processos</option>
+            </select>
+          </div>
+
+          <!-- Filtro: Nome do Indicador -->
+          <div>
+            <label for="kpi-filter-indicador" class="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-widest">Indicador</label>
+            <select id="kpi-filter-indicador" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Todos os Indicadores</option>
+            </select>
+          </div>
+
+          <!-- Botão: Limpar Filtros -->
+          <div class="flex items-end">
+            <button onclick="clearKpiFilters()" class="w-full px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition-colors text-sm">
+              Limpar Filtros
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Tabela de Dados Filtrados -->
       <div class="glass-card p-6">
         <h3 class="text-lg font-black text-slate-800 mb-4">Detalhes dos Dados</h3>
@@ -5043,11 +5080,6 @@
         
         const lines = parseCSV(csv);
         
-        // 🔍 Log raw CSV info
-        console.log('📋 Raw CSV length:', csv.length, 'characters');
-        console.log('📋 Total lines after CSV parsing:', lines.length);
-        console.log('📋 Header line:', lines[0]);
-        
         if (lines.length < 2) {
           hideLoading();
           document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="10" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
@@ -5061,11 +5093,6 @@
         // M(12): Meta, N(13): Real
         
         console.log('📋 Parsing Estratégicos CSV...');
-        console.log('📋 Total lines in CSV:', lines.length);
-        console.log('📋 First 3 data lines (after header):');
-        for (let i = 1; i < Math.min(4, lines.length); i++) {
-          console.log(`  Line ${i}: cols count will be shown during parsing`);
-        }
         
         kpiEstrategicosData = [];
         let validRows = 0;
@@ -5079,11 +5106,6 @@
           
           // Parser CSV robusto para lidar com valores entre aspas
           const cols = parseCSVLine(lines[i]);
-          
-          // Log first 5 parsed rows with column details
-          if (i <= 5 && cols.length >= 2) {
-            console.log(`  Parsed row ${i}: cols.length=${cols.length}, col[0]="${cols[0]}", col[1]="${cols[1]}"`);
-          }
           
           // Validar colunas necessárias (até coluna N = 14 colunas)
           if (cols.length < 14) {
@@ -5133,28 +5155,13 @@
         }
         
         console.log(`✅ Loaded ${validRows} KPI Estratégicos records. Skipped ${skippedRows}.`);
-        console.log('First record (DEBUG):', kpiEstrategicosData[0]);
-        
-        // 🔍 DIAGNOSTIC LOGGING - Processos
-        const processosCounts = {};
-        kpiEstrategicosData.forEach(record => {
-          const p = record.processo;
-          processosCounts[p] = (processosCounts[p] || 0) + 1;
-        });
-        
-        console.log('📊 Unique Processos found:', Object.keys(processosCounts));
-        console.log('📊 Processos with counts:', processosCounts);
-        console.log('📊 Total unique processos:', Object.keys(processosCounts).length);
-        
-        // Show first 30 processo values as parsed
-        const processosList = kpiEstrategicosData.slice(0, 30).map(d => `"${d.processo}"`).join(', ');
-        console.log('📝 First 30 processo values:', processosList);
         
         if (validRows === 0) {
           throw new Error('Nenhum registro válido foi carregado do CSV');
         }
         
         // Exibir todos os dados sem filtros
+        populateKpiFilters(kpiEstrategicosData);
         displayKpiTable(kpiEstrategicosData);
         updateKpiCharts(kpiEstrategicosData);
         hideLoading();
@@ -5422,6 +5429,79 @@
           </tr>
         `;
       }).join('');
+    }
+
+    // 🔍 Populate filter dropdowns with unique values
+    function populateKpiFilters(data) {
+      console.log('📊 Populating KPI filters...');
+      
+      // Extract unique values
+      const anos = [...new Set(data.map(d => d.ano).filter(Boolean))].sort((a, b) => b - a);
+      const processos = [...new Set(data.map(d => d.processo).filter(Boolean))].sort();
+      const indicadores = [...new Set(data.map(d => d.indicador).filter(Boolean))].sort();
+      
+      console.log(`📊 Found: ${anos.length} anos, ${processos.length} processos, ${indicadores.length} indicadores`);
+      
+      // Populate Ano select
+      const anoSelect = document.getElementById('kpi-filter-ano');
+      anoSelect.innerHTML = '<option value="">Todos os Anos</option>';
+      anos.forEach(ano => {
+        anoSelect.innerHTML += `<option value="${ano}">${ano}</option>`;
+      });
+      
+      // Populate Processo select
+      const processoSelect = document.getElementById('kpi-filter-processo');
+      processoSelect.innerHTML = '<option value="">Todos os Processos</option>';
+      processos.forEach(processo => {
+        processoSelect.innerHTML += `<option value="${processo}">${processo}</option>`;
+      });
+      
+      // Populate Indicador select
+      const indicadorSelect = document.getElementById('kpi-filter-indicador');
+      indicadorSelect.innerHTML = '<option value="">Todos os Indicadores</option>';
+      indicadores.forEach(indicador => {
+        indicadorSelect.innerHTML += `<option value="${indicador}">${indicador}</option>`;
+      });
+      
+      // Add change listeners for cumulative filtering
+      anoSelect.addEventListener('change', applyKpiFilters);
+      processoSelect.addEventListener('change', applyKpiFilters);
+      indicadorSelect.addEventListener('change', applyKpiFilters);
+    }
+
+    // 🔄 Apply cumulative filters and update table/charts
+    function applyKpiFilters() {
+      const anoFilter = document.getElementById('kpi-filter-ano').value;
+      const processoFilter = document.getElementById('kpi-filter-processo').value;
+      const indicadorFilter = document.getElementById('kpi-filter-indicador').value;
+      
+      console.log(`🔄 Applying filters - Ano: "${anoFilter}", Processo: "${processoFilter}", Indicador: "${indicadorFilter}"`);
+      
+      // Apply cumulative filters to the original data
+      let filteredData = kpiEstrategicosData.filter(d => {
+        const matchAno = !anoFilter || d.ano === parseInt(anoFilter) || d.ano === anoFilter;
+        const matchProcesso = !processoFilter || d.processo === processoFilter;
+        const matchIndicador = !indicadorFilter || d.indicador === indicadorFilter;
+        return matchAno && matchProcesso && matchIndicador;
+      });
+      
+      console.log(`📊 Filtered data: ${filteredData.length} records`);
+      
+      // Update table and charts with filtered data
+      displayKpiTable(filteredData);
+      updateKpiCharts(filteredData);
+    }
+
+    // 🧹 Clear all filters
+    function clearKpiFilters() {
+      console.log('🧹 Clearing all filters');
+      document.getElementById('kpi-filter-ano').value = '';
+      document.getElementById('kpi-filter-processo').value = '';
+      document.getElementById('kpi-filter-indicador').value = '';
+      
+      // Display all data
+      displayKpiTable(kpiEstrategicosData);
+      updateKpiCharts(kpiEstrategicosData);
     }
 
     function updateKpiCharts(data) {
