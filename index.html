@@ -5017,6 +5017,12 @@
         // M(12): Meta, N(13): Real
         
         console.log('📋 Parsing Estratégicos CSV...');
+        console.log('📋 Total lines in CSV:', lines.length);
+        console.log('📋 First 5 raw lines:');
+        for (let i = 0; i < Math.min(5, lines.length); i++) {
+          console.log(`  Line ${i}: ${lines[i].substring(0, 100)}...`);
+        }
+        
         kpiEstrategicosData = [];
         let validRows = 0;
         let skippedRows = 0;
@@ -5029,6 +5035,11 @@
           
           // Parser CSV robusto para lidar com valores entre aspas
           const cols = parseCSVLine(lines[i]);
+          
+          // Log first 5 parsed rows with column details
+          if (i <= 5 && cols.length >= 2) {
+            console.log(`  Parsed row ${i}: cols.length=${cols.length}, col[0]="${cols[0]}", col[1]="${cols[1]}"`);
+          }
           
           // Validar colunas necessárias (até coluna N = 14 colunas)
           if (cols.length < 14) {
@@ -5079,6 +5090,22 @@
         
         console.log(`✅ Loaded ${validRows} KPI Estratégicos records. Skipped ${skippedRows}.`);
         console.log('First record (DEBUG):', kpiEstrategicosData[0]);
+        
+        // 🔍 DIAGNOSTIC LOGGING - Processos
+        const processosCounts = {};
+        kpiEstrategicosData.forEach(record => {
+          const p = record.processo;
+          processosCounts[p] = (processosCounts[p] || 0) + 1;
+        });
+        
+        console.log('📊 Unique Processos found:', Object.keys(processosCounts));
+        console.log('📊 Processos with counts:', processosCounts);
+        console.log('📊 Total unique processos:', Object.keys(processosCounts).length);
+        
+        // Show first 30 processo values as parsed
+        const processosList = kpiEstrategicosData.slice(0, 30).map(d => `"${d.processo}"`).join(', ');
+        console.log('📝 First 30 processo values:', processosList);
+        
         if (validRows === 0) {
           throw new Error('Nenhum registro válido foi carregado do CSV');
         }
