@@ -5052,6 +5052,11 @@
         // Cols P+ : valores mensais (Jan, Fev, etc.)
         
         console.log('📋 Parsing Estratégicos CSV lines...');
+        console.log('Linha cabeçalho (0):', lines[0]);
+        const headerCols = parseCSVLine(lines[0]);
+        console.log('Cabeçalhos parseados:', headerCols);
+        console.log('Col 2 (Processo):', headerCols[2]);
+        
         kpiEstrategicosData = [];
         let validRows = 0;
         let skippedRows = 0;
@@ -5064,10 +5069,14 @@
           
           const cols = parseCSVLine(lines[i]);
           
-          // Debug first and every 10th row
-          if (i <= 3 || i % 10 === 0) {
-            console.log(`Row ${i}: ${cols.length} cols`);
-            console.log(`  ID: ${cols[0]}, Ano: ${cols[1]}, Indicador: ${cols[8]}, Nome Processo: ${cols[2]}`);
+          // Debug TODAS as primeiras linhas e cada 10ª
+          if (i <= 5 || i % 10 === 0) {
+            console.log(`\n📍 Row ${i}: ${cols.length} cols total`);
+            console.log(`  Col 0 (ID): ${cols[0]}`);
+            console.log(`  Col 1 (Ano): ${cols[1]}`);
+            console.log(`  Col 2 (Processo): "${cols[2]}"`);
+            console.log(`  Col 8 (Indicador): ${cols[8]}`);
+            console.log(`  Full row:`, cols);
           }
           
           if (cols.length < 15) {
@@ -5105,7 +5114,7 @@
             validRows++;
           } else {
             if (!record.indicador) console.warn(`Row ${i}: missing indicador (col I)`);
-            if (!record.processo) console.warn(`Row ${i}: missing processo (col C)`);
+            if (!record.processo) console.warn(`Row ${i}: missing processo (col C) - valor recebido: "${cols[2]}"`);
             skippedRows++;
           }
         }
@@ -5299,10 +5308,17 @@
       // Obter dados corretos baseado no tipo de KPI
       const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
       
+      console.log(`\n🔄 populateKpiFilters() called for: ${kpiCurrentType}`);
+      console.log(`Total records in currentData: ${currentData.length}`);
+      
       // Extrair valores únicos para filtros
       const anos = [...new Set(currentData.map(d => d.ano))].sort((a, b) => a - b);
       let processos = [...new Set(currentData.map(d => d.processo))];
       let indicadores = [...new Set(currentData.map(d => d.indicador))];
+      
+      console.log('Processos brutos encontrados:', processos);
+      console.log('Indicadores brutos encontrados:', indicadores);
+      console.log('Anos encontrados:', anos);
       
       // Se é KPI Estratégicos, ordenar conforme as listas de validação
       if (kpiCurrentType === 'estrategicos') {
@@ -5329,19 +5345,29 @@
         indicadores = indicadores.sort();
       }
       
+      console.log('Processos após ordenação/filtragem:', processos);
+      console.log('Indicadores após ordenação/filtragem:', indicadores);
+      
       // Preencher select de anos (multi-select, sem "Todos")
       const anoSelect = document.getElementById('kpi-filter-ano');
       anoSelect.innerHTML = anos.map(a => `<option value="${a}">${a}</option>`).join('');
+      
+      console.log('✅ Anos select preenchido com:', anos.length, 'valores');
       
       // Preencher select de processos
       const processoSelect = document.getElementById('kpi-filter-processo');
       processoSelect.innerHTML = '<option value="">Todos os Processos</option>' + 
         processos.map(p => `<option value="${p}">${p}</option>`).join('');
       
+      console.log('✅ Processos select preenchido com:', processos.length, 'valores');
+      console.log('Processos renderizados:', Array.from(processoSelect.options).map(o => o.value).filter(v => v !== ''));
+      
       // Preencher select de indicadores
       const indicadorSelect = document.getElementById('kpi-filter-indicador');
       indicadorSelect.innerHTML = '<option value="">Todos os Indicadores</option>' + 
         indicadores.map(ind => `<option value="${ind}">${ind}</option>`).join('');
+      
+      console.log('✅ Indicadores select preenchido com:', indicadores.length, 'valores');
     }
 
     function updateKpiDashboard() {
