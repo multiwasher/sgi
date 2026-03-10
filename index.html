@@ -5002,11 +5002,50 @@
         }
         
         const csv = await response.text();
-        const lines = csv.trim().split('\n');
+        
+        // 🔍 Parse CSV properly - handling multiline quoted fields
+        function parseCSV(rawCSV) {
+          const lines = [];
+          let currentLine = '';
+          let inQuotes = false;
+          
+          for (let i = 0; i < rawCSV.length; i++) {
+            const char = rawCSV[i];
+            const nextChar = i + 1 < rawCSV.length ? rawCSV[i + 1] : '';
+            
+            if (char === '"') {
+              // Toggle quote state, handle escaped quotes
+              if (inQuotes && nextChar === '"') {
+                currentLine += '"';
+                i++; // skip next quote
+              } else {
+                inQuotes = !inQuotes;
+              }
+              currentLine += char;
+            } else if (char === '\n' && !inQuotes) {
+              // Only treat \n as line Break if we're not inside quotes
+              if (currentLine.trim()) {
+                lines.push(currentLine);
+              }
+              currentLine = '';
+            } else {
+              currentLine += char;
+            }
+          }
+          
+          // Don't forget the last line
+          if (currentLine.trim()) {
+            lines.push(currentLine);
+          }
+          
+          return lines;
+        }
+        
+        const lines = parseCSV(csv);
         
         // 🔍 Log raw CSV info
         console.log('📋 Raw CSV length:', csv.length, 'characters');
-        console.log('📋 Total lines in CSV:', lines.length);
+        console.log('📋 Total lines after CSV parsing:', lines.length);
         console.log('📋 Header line:', lines[0]);
         
         if (lines.length < 2) {
@@ -5023,19 +5062,9 @@
         
         console.log('📋 Parsing Estratégicos CSV...');
         console.log('📋 Total lines in CSV:', lines.length);
-        console.log('📋 First 5 raw lines:');
-        for (let i = 0; i < Math.min(5, lines.length); i++) {
-          console.log(`  Line ${i}: ${lines[i].substring(0, 100)}...`);
-        }
-        
-        // Parse header row to verify structure
-        const headerCols = parseCSVLine(lines[0]);
-        console.log('📋 Parsed header columns count:', headerCols.length);
-        console.log('📋 Parsed headers:', headerCols);
-        if (headerCols.length >= 2) {
-          console.log(`📋 Column 0 (should be "ano"): "${headerCols[0]}"`);
-          console.log(`📋 Column 1 (should be "Processo"): "${headerCols[1]}"`);
-          console.log(`📋 Column 7 (should be "Nome do Indicador"): "${headerCols[7]}"`);
+        console.log('📋 First 3 data lines (after header):');
+        for (let i = 1; i < Math.min(4, lines.length); i++) {
+          console.log(`  Line ${i}: cols count will be shown during parsing`);
         }
         
         kpiEstrategicosData = [];
