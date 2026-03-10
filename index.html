@@ -5042,10 +5042,10 @@
         }
         
         // Parse CSV - Cabeçalhos em linha 1:
-        // A(0): ID, B(1): ano, C(2): Processo, D(3): Objetivo, E(4): Risco, F(5): Recursos
-        // G(6): Responsável Processo, H(7): Responsável Monitorização, I(8): Nome do Indicador
-        // J(9): Fórmula de Controlo, K(10): Frequência de Análise, L(11): Un., M(12): Goal
-        // N(13): Meta (Objetivo), O(14): Real (Valor)
+        // A(0): ano, B(1): Processo, C(2): Objetivo, D(3): Risco, E(4): Recursos
+        // F(5): Responsável Processo, G(6): Responsável Monitorização, H(7): Nome do Indicador
+        // I(8): Fórmula de Controlo, J(9): Frequência de Análise, K(10): Un., L(11): Goal
+        // M(12): Meta, N(13): Real
         
         console.log('📋 Parsing Estratégicos CSV...');
         kpiEstrategicosData = [];
@@ -5061,22 +5061,26 @@
           // Parser CSV robusto para lidar com valores entre aspas
           const cols = parseCSVLine(lines[i]);
           
-          // Validar colunas necessárias
-          if (cols.length < 15) {
+          // Validar colunas necessárias (até coluna N = 14 colunas)
+          if (cols.length < 14) {
             skippedRows++;
             continue;
           }
           
-          const ano = cols[1]?.trim() || '';
-          const processo = cols[2]?.trim() || '';
-          const objetivo = cols[3]?.trim() || '';
-          const risco = cols[4]?.trim() || '';
-          const responsavelProcesso = cols[6]?.trim() || '';
-          const indicador = cols[8]?.trim() || '';
-          const formula = cols[9]?.trim() || '';
-          const frequencia = cols[10]?.trim() || '';
-          const meta = parseFloat(cols[13]) || 0;
-          const real = parseFloat(cols[14]) || 0;
+          const ano = cols[0]?.trim() || '';
+          const processo = cols[1]?.trim() || '';
+          const objetivo = cols[2]?.trim() || '';
+          const risco = cols[3]?.trim() || '';
+          const recursos = cols[4]?.trim() || '';
+          const responsavelProcesso = cols[5]?.trim() || '';
+          const responsavelMonitorizacao = cols[6]?.trim() || '';
+          const indicador = cols[7]?.trim() || '';
+          const formula = cols[8]?.trim() || '';
+          const frequencia = cols[9]?.trim() || '';
+          const unidade = cols[10]?.trim() || '';
+          const goal = cols[11]?.trim() || '';
+          const meta = parseFloat(cols[12]) || 0;
+          const real = parseFloat(cols[13]) || 0;
           
           // Requer processo e indicador
           if (!processo || !indicador) {
@@ -5089,10 +5093,14 @@
             processo: processo,
             objetivo: objetivo,
             risco: risco,
+            recursos: recursos,
             responsavelProcesso: responsavelProcesso,
+            responsavelMonitorizacao: responsavelMonitorizacao,
             indicador: indicador,
             formula: formula,
             frequencia: frequencia,
+            unidade: unidade,
+            goal: goal,
             meta: meta,
             real: real
           });
