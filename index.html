@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portal de Gestão ISO 14001 | Somengil</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=track_changes" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -381,6 +382,31 @@
     </div>
   </div>
 
+  <!-- Modal: KPI's - Escolher tipo -->
+  <div id="kpiModal" class="fixed inset-0 hidden z-[120] items-center justify-center bg-slate-900/60 backdrop-blur-sm" onclick="closeKpiModal(event)">
+    <div class="glass-card w-full max-w-md p-8 m-4 shadow-2xl" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-xl font-black text-slate-800 tracking-tight">KPI's</h2>
+        <button onclick="closeKpiModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <p class="text-slate-600 text-sm mb-6">Selecione o tipo de KPI que deseja visualizar:</p>
+
+      <div class="space-y-3">
+        <button onclick="loadKpiEstrategicos()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
+          📊 KPI'S ESTRATÉGICOS
+        </button>
+        <button onclick="loadKpiSustentabilidade()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
+          🌍 KPI'S SUSTENTABILIDADE
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Adicionar SWOT -->
   <div id="swotModal" class="fixed inset-0 hidden z-[120] items-center justify-center bg-slate-900/60 backdrop-blur-sm" onclick="closeSwotModal(event)">
     <div class="glass-card w-full max-w-2xl p-8 m-4 shadow-2xl" onclick="event.stopPropagation()">
@@ -467,64 +493,69 @@
 
   <!-- Barra Superior -->
   <nav class="bg-emerald-900 text-white sticky top-0 z-50 shadow-lg">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
+    <!-- Linha 1: Título e Info -->
+    <div class="max-w-7xl mx-auto px-6 py-3 border-b border-emerald-800">
       <div class="flex items-center space-x-4">
         <div class="bg-white/10 p-2.5 rounded-2xl border border-white/10">
           <span class="material-symbols-outlined text-emerald-400 text-4xl">track_changes</span>
         </div>
         <div>
           <h1 class="text-xl font-extrabold tracking-tight leading-none">SGI <span class="text-emerald-400">Somengil</span></h1>
-          <p class="text-emerald-300/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Gestão Integrada<p></p>ISO9001 & ISO14001</p>
+          <p class="text-emerald-300/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Gestão Integrada | ISO9001 & ISO14001</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Linha 2: Menu -->
+    <div class="max-w-7xl mx-auto px-6 py-2 flex flex-wrap justify-start items-center gap-2">
+      <button onclick="openCertificationsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-black transition-all border border-emerald-700" title="Certificações e Estrutura de Processos">
+        ✓ ÂMBITO
+      </button>
+
+      <!-- Menu Desktop (hidden on mobile) -->
+      <div class="hidden md:flex bg-black/20 p-1 rounded-xl gap-1">
+        <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn active px-3 py-1 rounded-lg text-xs font-bold transition-all">DOCUMENTAÇÃO</button>
+        <button onclick="switchTab('swot')" id="tab-swot" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">ANÁLISE SWOT</button>
+        <button onclick="switchTab('ro')" id="tab-ro" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">R&O</button>
+        <button onclick="switchTab('partes')" id="tab-partes" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">PARTES INTERESSADAS</button>
+        <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
+        <button onclick="switchTab('planning')" id="tab-planning" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">PLANEAMENTO</button>
+        <button onclick="switchTab('pdca')" id="tab-pdca" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">PDCA</button>
+        <button onclick="switchTab('plano-acao')" id="tab-plano-acao" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">PAC</button>
+        <button onclick="openKpiModal()" id="tab-kpi" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">KPI'S</button>
+        <a href="dashboard-analise.html" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white">📊 ANÁLISE</a>
+      </div>
+
+      <!-- Burger Menu (visible only on mobile) -->
+      <div class="md:hidden relative ml-auto">
+        <button onclick="toggleMobileMenu()" id="burger-menu-btn" class="bg-black/20 hover:bg-black/40 text-white p-2 rounded-lg transition-all border border-white/10">
+          <svg id="burger-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          <svg id="close-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden absolute right-0 top-12 bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-50">
+          <button onclick="switchTabMobile('docs')" id="mob-tab-docs" class="mobile-tab-btn active block w-full text-left px-4 py-2 text-xs font-bold text-emerald-200 hover:bg-slate-800 rounded-t-lg">DOCUMENTAÇÃO</button>
+          <button onclick="switchTabMobile('swot')" id="mob-tab-swot" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ANÁLISE SWOT</button>
+          <button onclick="switchTabMobile('ro')" id="mob-tab-ro" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">R&O</button>
+          <button onclick="switchTabMobile('partes')" id="mob-tab-partes" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PARTES INTERESSADAS</button>
+          <button onclick="switchTabMobile('org')" id="mob-tab-org" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ORGANIGRAMA</button>
+          <button onclick="switchTabMobile('planning')" id="mob-tab-planning" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANEAMENTO</button>
+          <button onclick="switchTabMobile('pdca')" id="mob-tab-pdca" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PDCA</button>
+          <button onclick="switchTabMobile('plano-acao')" id="mob-tab-plano-acao" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANO DE AÇÃO</button>
+          <button onclick="openKpiModal()" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">KPI'S</button>
+          <a href="dashboard-analise.html" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg">📊 ANÁLISE VISUAL</a>
         </div>
       </div>
 
-      <div class="mt-4 md:mt-0 flex items-center gap-3">
-        <button onclick="openCertificationsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-black transition-all border border-emerald-700" title="Certificações e Estrutura de Processos">
-          ✓ ÂMBITO
-        </button>
-
-        <!-- Menu Desktop (hidden on mobile) -->
-        <div class="hidden md:flex bg-black/20 p-1 rounded-xl mr-4">
-          <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition-all">DOCUMENTAÇÃO</button>
-          <button onclick="switchTab('swot')" id="tab-swot" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ANÁLISE SWOT</button>
-          <button onclick="switchTab('ro')" id="tab-ro" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">R&O</button>
-          <button onclick="switchTab('partes')" id="tab-partes" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PARTES INTERESSADAS</button>
-          <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
-          <button onclick="switchTab('planning')" id="tab-planning" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PLANEAMENTO</button>
-          <button onclick="switchTab('pdca')" id="tab-pdca" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PDCA</button>
-          <button onclick="switchTab('plano-acao')" id="tab-plano-acao" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PAC</button>
-          <a href="dashboard-analise.html" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white ml-2">📊 ANÁLISE</a>
-        </div>
-
-        <!-- Burger Menu (visible only on mobile) -->
-        <div class="md:hidden relative">
-          <button onclick="toggleMobileMenu()" id="burger-menu-btn" class="bg-black/20 hover:bg-black/40 text-white p-2 rounded-lg transition-all border border-white/10">
-            <svg id="burger-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-            <svg id="close-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-          
-          <!-- Mobile Menu Dropdown -->
-          <div id="mobile-menu" class="hidden absolute right-0 top-12 bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-50">
-            <button onclick="switchTabMobile('docs')" id="mob-tab-docs" class="mobile-tab-btn active block w-full text-left px-4 py-2 text-xs font-bold text-emerald-200 hover:bg-slate-800 rounded-t-lg">DOCUMENTAÇÃO</button>
-            <button onclick="switchTabMobile('swot')" id="mob-tab-swot" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ANÁLISE SWOT</button>
-            <button onclick="switchTabMobile('ro')" id="mob-tab-ro" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">R&O</button>
-            <button onclick="switchTabMobile('partes')" id="mob-tab-partes" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PARTES INTERESSADAS</button>
-            <button onclick="switchTabMobile('org')" id="mob-tab-org" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ORGANIGRAMA</button>
-            <button onclick="switchTabMobile('planning')" id="mob-tab-planning" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANEAMENTO</button>
-            <button onclick="switchTabMobile('pdca')" id="mob-tab-pdca" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PDCA</button>
-            <button onclick="switchTabMobile('plano-acao')" id="mob-tab-plano-acao" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANO DE AÇÃO</button>
-            <a href="dashboard-analise.html" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg">📊 ANÁLISE VISUAL</a>
-          </div>
-        </div>
-
-        <div class="bg-black/20 px-3 py-1.5 rounded-full flex items-center border border-white/5">
-          <span id="status-dot" class="status-pulse pulse-emerald"></span>
-          <span id="sync-status" class="text-[10px] font-bold uppercase text-emerald-200">Ligação Ativa</span>
-        </div>
+      <!-- Status -->
+      <div class="ml-auto bg-black/20 px-3 py-1 rounded-full flex items-center border border-white/5">
+        <span id="status-dot" class="status-pulse pulse-emerald"></span>
+        <span id="sync-status" class="text-[10px] font-bold uppercase text-emerald-200">Ligação Ativa</span>
       </div>
     </div>
   </nav>
@@ -1741,6 +1772,125 @@
         </div>
       </div>
     </div>
+
+    <!-- CONTEÚDO: KPI'S DASHBOARD -->
+    <div id="view-kpi" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h2 class="text-2xl font-black text-slate-800 tracking-tight" id="kpi-title">KPI's Sustentabilidade</h2>
+          <p class="text-slate-500 text-sm" id="kpi-subtitle">Dashboard de Indicadores de Desempenho</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a
+            href="https://docs.google.com/spreadsheets/d/1-EJldsPPuWbJcC-guH_Jn42H5VNGydwXZEDD52LYUbM/edit?usp=sharing"
+            target="_blank"
+            rel="noopener"
+            class="text-[10px] font-black text-slate-600 hover:text-slate-800 uppercase tracking-widest bg-white px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all"
+            title="Abrir Google Sheets"
+          >
+            📄 DOCUMENTO ORIGINAL
+          </a>
+
+          <button onclick="reloadCurrentKpi()" class="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-widest bg-emerald-50 px-3 py-2 rounded-lg transition-all">🔄 Atualizar</button>
+        </div>
+      </div>
+
+      <!-- Resumo Estatístico -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="glass-card p-6 border-l-4 border-blue-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">KPI's Únicos</p>
+          <h3 id="kpi-stat-total" class="text-3xl font-black text-slate-800 tracking-tighter">--</h3>
+        </div>
+        <div class="glass-card p-6 border-l-4 border-emerald-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Registos</p>
+          <h3 id="kpi-stat-registos" class="text-3xl font-black text-emerald-600 tracking-tighter">--</h3>
+        </div>
+        <div class="glass-card p-6 border-l-4 border-amber-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Processos</p>
+          <h3 id="kpi-stat-processos" class="text-3xl font-black text-amber-600 tracking-tighter">--</h3>
+        </div>
+        <div class="glass-card p-6 border-l-4 border-purple-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Anos</p>
+          <h3 id="kpi-stat-anos" class="text-3xl font-black text-purple-600 tracking-tighter">--</h3>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="glass-card p-6 space-y-4">
+        <h3 class="text-sm font-black text-slate-800 uppercase">Filtros</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Filtro por Ano -->
+          <div>
+            <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Ano</label>
+            <select id="kpi-filter-ano" onchange="updateKpiDashboard()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500">
+              <option value="">Todos os Anos</option>
+            </select>
+          </div>
+
+          <!-- Filtro por Processo -->
+          <div>
+            <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Processo</label>
+            <select id="kpi-filter-processo" onchange="updateKpiDashboard()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500">
+              <option value="">Todos os Processos</option>
+            </select>
+          </div>
+
+          <!-- Filtro por KPI/Indicador -->
+          <div>
+            <label class="block text-[10px] font-black uppercase text-slate-400 mb-2">Indicador (KPI)</label>
+            <select id="kpi-filter-indicador" onchange="updateKpiDashboard()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-500">
+              <option value="">Todos os Indicadores</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Gráfico de Linha - Evolução -->
+        <div class="glass-card p-6">
+          <h3 class="text-lg font-black text-slate-800 mb-4">Evolução Temporal</h3>
+          <div class="relative h-80">
+            <canvas id="kpi-chart-line"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico de Barras - Comparação -->
+        <div class="glass-card p-6">
+          <h3 class="text-lg font-black text-slate-800 mb-4">Comparação com Objetivo</h3>
+          <div class="relative h-80">
+            <canvas id="kpi-chart-bar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Dados Filtrados -->
+      <div class="glass-card p-6">
+        <h3 class="text-lg font-black text-slate-800 mb-4">Detalhes dos Dados</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-100">
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ano</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mês</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Indicador</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Objetivo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Performance</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
+              </tr>
+            </thead>
+            <tbody id="kpi-table-body" class="divide-y divide-slate-50">
+              <tr><td colspan="9" class="px-8 py-12 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Modal: Detalhe SWOT do R&O -->
@@ -2186,6 +2336,7 @@
       document.getElementById('view-planning-audits').classList.add('hidden');
       document.getElementById('view-pdca').classList.add('hidden');
       document.getElementById('view-plano-acao').classList.add('hidden');
+      document.getElementById('view-kpi').classList.add('hidden');
       document.getElementById('tab-docs').classList.remove('active');
       document.getElementById('tab-swot').classList.remove('active');
       document.getElementById('tab-ro').classList.remove('active');
@@ -2194,6 +2345,7 @@
       document.getElementById('tab-planning').classList.remove('active');
       document.getElementById('tab-pdca').classList.remove('active');
       document.getElementById('tab-plano-acao').classList.remove('active');
+      document.getElementById('tab-kpi').classList.remove('active');
 
       toggleNewDocButton(tab);
 
@@ -2226,6 +2378,9 @@
         document.getElementById('view-plano-acao').classList.remove('hidden');
         document.getElementById('tab-plano-acao').classList.add('active');
         if(planoAcaoData.length === 0) fetchPlanoAcao();
+      } else if(tab === 'kpi') {
+        document.getElementById('view-kpi').classList.remove('hidden');
+        document.getElementById('tab-kpi').classList.add('active');
       }
 
       // Update mobile menu button states
@@ -4738,6 +4893,519 @@
     function closeCertificationsModal() {
       const modal = document.getElementById('certifications-modal');
       modal.classList.add('hidden');
+    }
+
+    // KPI's Functions
+    let kpiCurrentType = null;
+    let kpiEstrategicosData = [];
+    let kpiSustentabilidadeData = [];
+    let kpiChartLine = null;
+    let kpiChartBar = null;
+
+    // Parse CSV line com suporte a valores com aspas
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+          if (inQuotes && nextChar === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      
+      result.push(current);
+      return result;
+    }
+
+    function openKpiModal() {
+      const m = document.getElementById('kpiModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeKpiModal(ev) {
+      if (ev && ev.target && ev.target.id !== 'kpiModal') return;
+      const m = document.getElementById('kpiModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    async function loadKpiEstrategicos() {
+      kpiCurrentType = 'estrategicos';
+      closeKpiModal();
+      switchTab('kpi');
+      alert('KPI\'s Estratégicos ainda não estão configurados. Adicione a URL do Google Sheets.');
+    }
+
+    async function loadKpiSustentabilidade() {
+      kpiCurrentType = 'sustentabilidade';
+      closeKpiModal();
+      switchTab('kpi');
+      
+      document.getElementById('kpi-title').textContent = 'KPI\'s Sustentabilidade';
+      document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores de Sustentabilidade Ambiental';
+      
+      // Carregar dados do Google Sheets
+      fetchKpiSustentabilidade();
+    }
+
+    async function fetchKpiSustentabilidade() {
+      try {
+        showLoading('A carregar KPI\'s de Sustentabilidade...');
+        
+        // URL do Google Sheets em formato CSV
+        const sheetId = '1-EJldsPPuWbJcC-guH_Jn42H5VNGydwXZEDD52LYUbM';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+        
+        console.log('📥 Fetching CSV from:', csvUrl);
+        const response = await fetch(csvUrl);
+        
+        console.log('Response status:', response.status, response.statusText);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const csv = await response.text();
+        console.log('CSV received, length:', csv.length, 'bytes');
+        console.log('First 500 chars:', csv.substring(0, 500));
+        
+        const lines = csv.trim().split('\n');
+        console.log('Total lines:', lines.length);
+        
+        if (lines.length < 2) {
+          hideLoading();
+          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
+          return;
+        }
+        
+        // Parse CSV com o novo cabeçalho: 
+        // Col A (0): Ano
+        // Col B (1): Mês  
+        // Col C (2): Valor
+        // Col D (3): Processo
+        // Col E (4): Indicador
+        // Col F (5): Unidade
+        // Col G (6): Objetivo (descrição)
+        // Col H (7): Valor Objetivo (valor numérico para comparação)
+        // Col I (8): Responsável
+        
+        console.log('📋 Parsing CSV lines...');
+        kpiSustentabilidadeData = [];
+        let validRows = 0;
+        let skippedRows = 0;
+        
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) {
+            skippedRows++;
+            continue; // Skip empty lines
+          }
+          
+          const cols = parseCSVLine(lines[i]);
+          
+          // Debug first and every 10th row
+          if (i <= 3 || i % 10 === 0) {
+            console.log(`Row ${i}: ${cols.length} cols, raw:`, lines[i].substring(0, 100));
+            console.log(`  Parsed:`, cols);
+          }
+          
+          if (cols.length < 9) {
+            console.warn(`Row ${i}: insufficient columns (${cols.length} < 9)`);
+            skippedRows++;
+            continue;
+          }
+          
+          const record = {
+            ano: cols[0]?.trim() || '',
+            mes: cols[1]?.trim() || '',
+            valor: parseFloat(cols[2]) || 0,
+            processo: cols[3]?.trim() || '',      // Coluna D
+            indicador: cols[4]?.trim() || '',     // Coluna E
+            unidade: cols[5]?.trim() || '',
+            objetivo: cols[6]?.trim() || '',      // Coluna G - descrição
+            valorObjetivo: parseFloat(cols[7]) || 0,  // Coluna H - valor numérico
+            responsavel: cols[8]?.trim() || ''    // Coluna I
+          };
+          
+          // Debug first few records
+          if (i <= 3) {
+            console.log(`[Row ${i}] Parsed record:`, record);
+          }
+          
+          // Validar que temos dados principais
+          if (record.indicador && record.processo) {
+            kpiSustentabilidadeData.push(record);
+            validRows++;
+          } else {
+            if (!record.indicador) console.warn(`Row ${i}: missing indicador`);
+            if (!record.processo) console.warn(`Row ${i}: missing processo`);
+            skippedRows++;
+          }
+        }
+        
+        console.log(`✅ Loaded ${validRows} KPI records. Skipped ${skippedRows} invalid rows.`);
+        if (kpiSustentabilidadeData.length > 0) {
+          console.log('First record:', kpiSustentabilidadeData[0]);
+          const withObj = kpiSustentabilidadeData.filter(r => r.valorObjetivo > 0);
+          console.log(`Records with valorObjetivo > 0: ${withObj.length}`);
+          if (withObj.length > 0) {
+            console.log('Sample:', withObj.slice(0, 3));
+          }
+        } else {
+          throw new Error('Nenhum registro válido foi carregado do CSV');
+        }
+        
+        // Preencher os filtros
+        populateKpiFilters();
+        
+        // Atualizar dashboard
+        updateKpiDashboard();
+        hideLoading();
+      } catch (error) {
+        console.error('Erro ao carregar KPI:', error);
+        console.error('Stack:', error.stack);
+        hideLoading();
+        alert(`Erro ao carregar dados:\n${error.message}`);
+        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="9" class="px-8 py-12 text-center text-red-500">Erro ao carregar dados: ${error.message}</td></tr>`;
+      }
+    }
+
+    function populateKpiFilters() {
+      // Extrair valores únicos para filtros
+      const anos = [...new Set(kpiSustentabilidadeData.map(d => d.ano))].sort((a, b) => a - b);
+      const processos = [...new Set(kpiSustentabilidadeData.map(d => d.processo))].sort();
+      const indicadores = [...new Set(kpiSustentabilidadeData.map(d => d.indicador))].sort();
+      
+      // Preencher select de anos
+      const anoSelect = document.getElementById('kpi-filter-ano');
+      anoSelect.innerHTML = '<option value="">Todos os Anos</option>' + 
+        anos.map(a => `<option value="${a}">${a}</option>`).join('');
+      
+      // Preencher select de processos
+      const processoSelect = document.getElementById('kpi-filter-processo');
+      processoSelect.innerHTML = '<option value="">Todos os Processos</option>' + 
+        processos.map(p => `<option value="${p}">${p}</option>`).join('');
+      
+      // Preencher select de indicadores
+      const indicadorSelect = document.getElementById('kpi-filter-indicador');
+      indicadorSelect.innerHTML = '<option value="">Todos os Indicadores</option>' + 
+        indicadores.map(ind => `<option value="${ind}">${ind}</option>`).join('');
+    }
+
+    function updateKpiDashboard() {
+      // Obter valores de filtro
+      const anoFilter = document.getElementById('kpi-filter-ano').value;
+      const processoFilter = document.getElementById('kpi-filter-processo').value;
+      const indicadorFilter = document.getElementById('kpi-filter-indicador').value;
+      
+      // Filtrar dados
+      let filteredData = kpiSustentabilidadeData;
+      
+      if (anoFilter) {
+        filteredData = filteredData.filter(d => d.ano === anoFilter);
+      }
+      if (processoFilter) {
+        filteredData = filteredData.filter(d => d.processo === processoFilter);
+      }
+      if (indicadorFilter) {
+        filteredData = filteredData.filter(d => d.indicador === indicadorFilter);
+      }
+      
+      // Atualizar estatísticas
+      updateKpiStats(filteredData);
+      
+      // Atualizar tabela
+      displayKpiTable(filteredData);
+      
+      // Atualizar gráficos
+      updateKpiCharts(filteredData);
+    }
+
+    function updateKpiStats(data) {
+      const uniqueKpis = new Set(data.map(d => d.indicador)).size;
+      const uniqueProcessos = new Set(data.map(d => d.processo)).size;
+      const uniqueAnos = new Set(data.map(d => d.ano)).size;
+      
+      document.getElementById('kpi-stat-total').textContent = uniqueKpis;
+      document.getElementById('kpi-stat-registos').textContent = data.length;
+      document.getElementById('kpi-stat-processos').textContent = uniqueProcessos;
+      document.getElementById('kpi-stat-anos').textContent = uniqueAnos;
+    }
+
+    function displayKpiTable(data) {
+      const tbody = document.getElementById('kpi-table-body');
+      
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível com estes filtros.</td></tr>';
+        return;
+      }
+      
+      // Ordenar por ano, mês
+      data.sort((a, b) => {
+        if (a.ano !== b.ano) return b.ano - a.ano;
+        return a.mes.localeCompare(b.mes);
+      });
+      
+      tbody.innerHTML = data.map(d => {
+        const performance = d.valorObjetivo > 0 ? ((d.valor / d.valorObjetivo) * 100).toFixed(0) : 'N/A';
+        let statusClass = 'bg-slate-100 text-slate-600';
+        
+        if (performance !== 'N/A') {
+          const perf = parseFloat(performance);
+          if (perf >= 90) statusClass = 'bg-emerald-100 text-emerald-700';
+          else if (perf >= 70) statusClass = 'bg-amber-100 text-amber-700';
+          else statusClass = 'bg-red-100 text-red-700';
+        }
+        
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-4 py-3 text-sm font-semibold text-slate-800">${d.ano}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${d.mes}</td>
+            <td class="px-4 py-3 text-sm text-slate-700"><strong>${d.indicador}</strong></td>
+            <td class="px-4 py-3 text-sm text-slate-700">${d.processo}</td>
+            <td class="px-4 py-3 text-sm font-bold text-blue-600">${d.valor} ${d.unidade}</td>
+            <td class="px-4 py-3 text-sm text-slate-600">${d.valorObjetivo} ${d.unidade}</td>
+            <td class="px-4 py-3 text-sm text-slate-600"><span class="px-2 py-1 rounded text-xs font-bold ${statusClass}">${performance}%</span></td>
+            <td class="px-4 py-3 text-sm text-slate-600">${d.objetivo}</td>
+            <td class="px-4 py-3 text-sm text-slate-600">${d.responsavel}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateKpiCharts(data) {
+      // Meses em português
+      const monthNames = {
+        '1': 'Janeiro', '2': 'Fevereiro', '3': 'Março', '4': 'Abril',
+        '5': 'Maio', '6': 'Junho', '7': 'Julho', '8': 'Agosto',
+        '9': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
+      };
+      
+      // Mapping para número do mês
+      const monthToNumber = {
+        'janeiro': 1, 'fevereiro': 2, 'março': 3, 'abril': 4,
+        'maio': 5, 'junho': 6, 'julho': 7, 'agosto': 8,
+        'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12
+      };
+      
+      // Preparar dados para gráfico de linha (evolução temporal - por mês)
+      const timeSeriesData = {};
+      
+      // Inicializar com todos os 12 meses (se houver filtro de ano)
+      const anoFilter = document.getElementById('kpi-filter-ano').value;
+      
+      // Se não há filtro de ano, mostrar todos os meses encontrados nos dados
+      // Se há filtro de ano, mostrar todos os 12 meses
+      const dataYears = [...new Set(data.map(d => d.ano))];
+      const shouldShowAllMonths = anoFilter !== '';
+      
+      if (shouldShowAllMonths) {
+        // Preencher todos os 12 meses
+        for (let i = 1; i <= 12; i++) {
+          timeSeriesData[i] = { valor: 0, count: 0, valorObjetivo: 0 };
+        }
+      }
+      
+      // Processar dados
+      data.forEach(d => {
+        // Converter mês para número (se for texto)
+        let monthNum = parseInt(d.mes);
+        if (isNaN(monthNum)) {
+          monthNum = monthToNumber[d.mes.toLowerCase()] || 0;
+        }
+        
+        if (monthNum > 0 && monthNum <= 12) {
+          if (!timeSeriesData[monthNum]) {
+            timeSeriesData[monthNum] = { valor: 0, count: 0, valorObjetivo: 0 };
+          }
+          timeSeriesData[monthNum].valor += d.valor;
+          timeSeriesData[monthNum].valorObjetivo += d.valorObjetivo;
+          timeSeriesData[monthNum].count += 1;
+        }
+      });
+      
+      // Ordenar por número do mês
+      const timeLabels = Object.keys(timeSeriesData)
+        .map(k => parseInt(k))
+        .sort((a, b) => a - b)
+        .map(k => monthNames[k.toString()] || `Mês ${k}`);
+      
+      const sortedKeys = Object.keys(timeSeriesData)
+        .map(k => parseInt(k))
+        .sort((a, b) => a - b);
+      
+      const timeValues = sortedKeys.map(k => {
+        const data = timeSeriesData[k];
+        return data.count > 0 ? parseFloat((data.valor / data.count).toFixed(2)) : null;
+      });
+      
+      let timeObjectives = sortedKeys.map(k => {
+        const d = timeSeriesData[k];
+        return d.count > 0 ? parseFloat((d.valorObjetivo / d.count).toFixed(2)) : null;
+      });
+      
+      console.log('=== TEMPORAL EVOLUTION DEBUG ===');
+      console.log('timeLabels:', timeLabels);
+      console.log('timeValues:', timeValues);
+      console.log('timeObjectives:', timeObjectives);
+      console.log('Data entries count:', data.length);
+      console.log('sortedKeys:', sortedKeys);
+      console.log('timeSeriesData:', timeSeriesData);
+      
+      // Gráfico de Linha
+      if (kpiChartLine) {
+        kpiChartLine.destroy();
+      }
+      
+      const ctxLine = document.getElementById('kpi-chart-line').getContext('2d');
+      kpiChartLine = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+          labels: timeLabels,
+          datasets: [
+            {
+              label: 'Valor Médio',
+              data: timeValues,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 3,
+              pointRadius: 5,
+              pointBackgroundColor: '#10b981',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              tension: 0.4,
+              fill: true,
+              spanGaps: true
+            },
+            {
+              label: 'Valor Objetivo',
+              data: timeObjectives,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0)',
+              borderWidth: 3,
+              pointRadius: 5,
+              pointBackgroundColor: '#f59e0b',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              borderDash: [5, 5],
+              tension: 0.4,
+              fill: false,
+              spanGaps: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { 
+              display: true, 
+              position: 'top',
+              labels: {
+                boxWidth: 15,
+                padding: 15,
+                font: { weight: 'bold', size: 12 }
+              }
+            },
+            tooltip: { 
+              mode: 'index', 
+              intersect: false,
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              boxPadding: 8
+            }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true,
+              ticks: { font: { size: 11 } }
+            },
+            x: {
+              ticks: { font: { size: 11 } }
+            }
+          }
+        }
+      });
+      
+      // Preparar dados para gráfico de barras (comparação por KPI)
+      const kpiComparison = {};
+      
+      data.forEach(d => {
+        if (!kpiComparison[d.indicador]) {
+          kpiComparison[d.indicador] = { valor: 0, valorObjetivo: 0, count: 0 };
+        }
+        kpiComparison[d.indicador].valor += d.valor;
+        kpiComparison[d.indicador].valorObjetivo += d.valorObjetivo;
+        kpiComparison[d.indicador].count += 1;
+      });
+      
+      const kpiLabels = Object.keys(kpiComparison);
+      const kpiValues = kpiLabels.map(k => (kpiComparison[k].valor / kpiComparison[k].count).toFixed(2));
+      const kpiObjectives = kpiLabels.map(k => (kpiComparison[k].valorObjetivo / kpiComparison[k].count).toFixed(2));
+      
+      // Gráfico de Barras
+      if (kpiChartBar) {
+        kpiChartBar.destroy();
+      }
+      
+      const ctxBar = document.getElementById('kpi-chart-bar').getContext('2d');
+      kpiChartBar = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: kpiLabels,
+          datasets: [
+            {
+              label: 'Valor Médio',
+              data: kpiValues,
+              backgroundColor: '#10b981'
+            },
+            {
+              label: 'Objetivo',
+              data: kpiObjectives,
+              backgroundColor: '#f59e0b'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' }
+          },
+          scales: {
+            y: { beginAtZero: true },
+            x: {
+              ticks: {
+                maxRotation: 90,
+                minRotation: 90,
+                font: { size: 11 },
+                autoSkip: false,
+                autoSkipPadding: 20
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function reloadCurrentKpi() {
+      if (kpiCurrentType === 'sustentabilidade') {
+        fetchKpiSustentabilidade();
+      } else if (kpiCurrentType === 'estrategicos') {
+        alert('KPI\'s Estratégicos ainda não estão configurados.');
+      }
     }
 
     // ⚠️ NOTA: addDocumentToSheet não estava no snippet original (mantém a tua função anterior)
