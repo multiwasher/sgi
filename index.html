@@ -5398,23 +5398,10 @@
       
       // Se é KPI Estratégicos, ordenar conforme as listas de validação
       if (kpiCurrentType === 'estrategicos') {
-        // Ordenar processos conforme VALID_PROCESSOS
-        processos = processos.sort((a, b) => {
-          const indexA = VALID_PROCESSOS.indexOf(a);
-          const indexB = VALID_PROCESSOS.indexOf(b);
-          if (indexA === -1) return 1; // Inválidos vão para o fim
-          if (indexB === -1) return -1;
-          return indexA - indexB;
-        });
-        
-        // Ordenar indicadores conforme VALID_INDICADORES
-        indicadores = indicadores.sort((a, b) => {
-          const indexA = VALID_INDICADORES.indexOf(a);
-          const indexB = VALID_INDICADORES.indexOf(b);
-          if (indexA === -1) return 1; // Inválidos vão para o fim
-          if (indexB === -1) return -1;
-          return indexA - indexB;
-        });
+        // Para Estratégicos, usar a lista COMPLETA de processos/indicadores válidos
+        // (aparecem todos, mesmo que alguns não tenham dados no CSV)
+        processos = VALID_PROCESSOS.slice(); // Cópia da lista completa
+        indicadores = VALID_INDICADORES.slice(); // Cópia da lista completa
       } else {
         // Para Sustentabilidade, ordenar alfabeticamente
         processos = processos.sort();
