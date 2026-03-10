@@ -1,0 +1,116 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║           IMPLEMENTAÇÃO: Módulo "Plano de Ação" - Portal SGI               ║
+║                   Atualizado: Folha "Plano de Intervenção"                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+🎯 OBJETIVO
+──────────────────────────────────────────────────────────────────────────────
+  ✅ Adicionar opção "Plano de Ação" no menu
+  ✅ Ler dados da folha "Plano de Intervenção" (Google Sheets)
+  ✅ Link para abrir o documento original
+
+📊 O QUE FOI IMPLEMENTADO
+──────────────────────────────────────────────────────────────────────────────
+
+1. MENU
+   • Botão "PLANO DE AÇÃO" no menu desktop
+   • Botão "PLANO DE AÇÃO" no menu mobile
+   • Integrado com sistema de navegação existente
+
+2. INTERFACE
+   ┌─ Cabeçalho ──────────────────────────────────┐
+   │ • Link: "DOCUMENTO ORIGINAL" → Planilha      │
+   │ • Botão: "Atualizar Dados" → Sincronizar    │
+   └──────────────────────────────────────────────┘
+
+   ┌─ Filtros ─────────────────────────────────────┐
+   │ • Pesquisa por palavra-chave                  │
+   │ • Filtro por Status (dinâmico)               │
+   └──────────────────────────────────────────────┘
+
+   ┌─ Tabela ──────────────────────────────────────┐
+   │ Código | Descrição | Origem | Responsável    │
+   │ Data Início | Data Fim Prevista | Data Real  │
+   │ Status | % Realização | Observações          │
+   └──────────────────────────────────────────────┘
+
+   ┌─ Estatísticas ────────────────────────────────┐
+   │ 🔵 Total | 🟢 Realizadas | 🟡 Em Progresso  │
+   │ 🔴 Por Realizar                              │
+   └──────────────────────────────────────────────┘
+
+3. FUNCIONALIDADES
+   ✓ Carregamento automático dos dados
+   ✓ Pesquisa em tempo real
+   ✓ Filtro dinâmico por status
+   ✓ Atualização manual de dados
+   ✓ Link ao documento original
+   ✓ Responsive design (mobile/desktop)
+
+📁 ARQUIVOS ALTERADOS/CRIADOS
+──────────────────────────────────────────────────────────────────────────────
+
+MODIFICADOS:
+  • index.html
+    - Menu desktop e mobile (+1 botão cada)
+    - Função switchTab() atualizada
+    - Nova view HTML (plano-acao)
+    - Variáveis JavaScript (PLANO_ACAO_APPS_SCRIPT_URL, planoAcaoData)
+    - 5 funções JavaScript novas
+
+CRIADOS:
+  • plano-acao.gs
+    Google Apps Script para ler a folha "Plano de Intervenção"
+    Planilha: https://docs.google.com/spreadsheets/d/1D_lN4o_bRWBNMDQwOue7TdkrZZQ6z5hQjl48A3EH_jc
+    
+  • PLANO_ACAO_SETUP.md
+    Instruções detalhadas de configuração
+    
+  • PLANO_ACAO_IMPLEMENTACAO.md
+    Documentação técnica e detalhes
+    
+  • PLANO_ACAO_RAPIDO.md
+    Guia rápido (3 passos)
+
+🚀 PRÓXIMOS PASSOS (3 PASSOS SIMPLES)
+──────────────────────────────────────────────────────────────────────────────
+
+PASSO 1: Criar o Leitor de Dados
+  1. Abra: https://docs.google.com/spreadsheets/d/1D_lN4o_bRWBNMDQwOue7TdkrZZQ6z5hQjl48A3EH_jc
+  2. Extensões → Apps Script
+  3. Cole o código de: plano-acao.gs
+  4. Guarde
+
+PASSO 2: Publicar como Web App
+  1. Deploy → New deployment
+  2. Tipo: Web app
+  3. Execute as: seu email
+  4. Who has access: Anyone
+  5. Deploy
+  6. Autorize
+  7. COPIE A URL
+
+PASSO 3: Atualizar index.html
+  1. Procure: PLANO_ACAO_APPS_SCRIPT_URL
+  2. Substitua: SUBSTITUIR_COM_URL_REAL
+  3. Cole a URL do Passo 2
+  4. Guarde
+
+✅ PRONTO!
+
+  Recarregue o portal e clique em "PLANO DE AÇÃO" ✨
+
+📞 SUPORTE
+──────────────────────────────────────────────────────────────────────────────
+
+Consulte os seguintes documentos para mais informações:
+  • PLANO_ACAO_RAPIDO.md - Instruções rápidas (3 passos)
+  • PLANO_ACAO_SETUP.md - Configuração detalhada com screenshots
+  • PLANO_ACAO_IMPLEMENTACAO.md - Documentação técnica
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                        Implementação Concluída! 🎉
+                             Março 2026
+
+═══════════════════════════════════════════════════════════════════════════════

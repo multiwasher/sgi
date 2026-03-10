@@ -492,6 +492,7 @@
           <button onclick="switchTab('org')" id="tab-org" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">ORGANIGRAMA</button>
           <button onclick="switchTab('planning')" id="tab-planning" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PLANEAMENTO</button>
           <button onclick="switchTab('pdca')" id="tab-pdca" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PDCA</button>
+          <button onclick="switchTab('plano-acao')" id="tab-plano-acao" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all">PLANO DE AÇÃO</button>
           <a href="dashboard-analise.html" class="tab-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white ml-2">📊 ANÁLISE</a>
         </div>
 
@@ -515,6 +516,7 @@
             <button onclick="switchTabMobile('org')" id="mob-tab-org" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">ORGANIGRAMA</button>
             <button onclick="switchTabMobile('planning')" id="mob-tab-planning" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANEAMENTO</button>
             <button onclick="switchTabMobile('pdca')" id="mob-tab-pdca" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PDCA</button>
+            <button onclick="switchTabMobile('plano-acao')" id="mob-tab-plano-acao" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANO DE AÇÃO</button>
             <a href="dashboard-analise.html" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg">📊 ANÁLISE VISUAL</a>
           </div>
         </div>
@@ -1648,6 +1650,97 @@
         </div>
       </div>
     </div>
+
+    <!-- CONTEÚDO: PLANO DE AÇÃO -->
+    <div id="view-plano-acao" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h2 class="text-2xl font-black text-slate-800 tracking-tight">Plano de Ação</h2>
+          <p class="text-slate-500 text-sm">Plano de ações corretivas e de melhoria</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a
+            href="https://docs.google.com/spreadsheets/d/1D_lN4o_bRWBNMDQwOue7TdkrZZQ6z5hQjl48A3EH_jc/edit?usp=sharing"
+            target="_blank"
+            rel="noopener"
+            class="text-[10px] font-black text-slate-600 hover:text-slate-800 uppercase tracking-widest bg-white px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-all"
+            title="Abrir Google Sheets (origem dos dados)"
+          >
+            📄 DOCUMENTO ORIGINAL
+          </a>
+
+          <button onclick="fetchPlanoAcao()" class="text-[10px] font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-widest bg-emerald-50 px-3 py-2 rounded-lg transition-all">Atualizar Dados</button>
+        </div>
+      </div>
+
+      <!-- Barra de Filtros Plano de Ação -->
+      <div class="glass-card p-4 space-y-4">
+        <div class="relative w-full">
+          <input type="text" id="searchPlanoAcao" onkeyup="filterPlanoAcao()" placeholder="Filtrar por palavra-chave..." class="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-2 rounded-xl text-xs outline-none focus:border-emerald-500">
+          <svg class="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+
+        <!-- Filtros de Ano -->
+        <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+          <span class="mr-2 whitespace-nowrap">Ano:</span>
+          <button onclick="togglePlanoAcaoYearFilter('TODOS')" id="filter-pa-year-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+          <div id="pa-year-filters" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Filtros de Status -->
+        <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+          <span class="mr-2 whitespace-nowrap">Status:</span>
+          <div id="pa-status-filters" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <!-- Tabela Plano de Ação -->
+      <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-100">
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data de Registo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Origem da Ação</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ação a ser Realizada</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prazo/Monitorização</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data de Conclusão</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status das Ações</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Análise da Eficácia</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</th>
+              </tr>
+            </thead>
+            <tbody id="planoAcaoTableBody" class="divide-y divide-slate-50">
+              <tr><td colspan="11" class="px-8 py-20 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Estatísticas Plano de Ação -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="glass-card p-6 border-l-4 border-blue-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Total de Ações</p>
+          <h3 id="pa-total" class="text-3xl font-black text-slate-800 tracking-tighter">--</h3>
+        </div>
+        <div class="glass-card p-6 border-l-4 border-emerald-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Realizadas</p>
+          <h3 id="pa-realizadas" class="text-3xl font-black text-emerald-600 tracking-tighter">--</h3>
+        </div>
+        <div class="glass-card p-6 border-l-4 border-amber-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Em Progresso</p>
+          <h3 id="pa-em-progresso" class="text-3xl font-black text-amber-600 tracking-tighter">--</h3>
+        </div>
+        <div class="glass-card p-6 border-l-4 border-red-500">
+          <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Por Realizar</p>
+          <h3 id="pa-por-realizar" class="text-3xl font-black text-red-600 tracking-tighter">--</h3>
+        </div>
+      </div>
+    </div>
   </main>
 
   <!-- Modal: Detalhe SWOT do R&O -->
@@ -1756,17 +1849,19 @@
 
   <script>
     const MAIN_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdEqBsG1Fbt_KJNnyXtbZQPRvTLKwdzn1SFZcJm6Lw3HSctLGQmp2h9sBgxR6fiUPgBw/exec';
-    const SWOT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
+    const SWOT_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrmpfCzyeE2i3OLaJxsDQHT5gqM7ZmMfAhDM7o5-Ra9saCVT7e87DFf1hWf0CHnBRJ/exec';
     const SWOT_WRITE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQNDfWCVPYPz84y7CU2BUYWbN-Orh0hq7CLzmjuCu1vrDnKRe7WgskN6ZXjsSQDSHJ/exec';
-    const RO_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWndlm0j_tgScKnzmKoHxNGqlLmccRNi0LfFI50K5fWipMRsEW3PnsNA9MgeKJMmvz/exec';
-    const PARTES_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySf0L0PneuiBKavciBvnj-9mHGfKMImtYhhrRIVsLG27_q47l3LNCG74pPa2wKOhKC1A/exec';
+    const RO_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrmpfCzyeE2i3OLaJxsDQHT5gqM7ZmMfAhDM7o5-Ra9saCVT7e87DFf1hWf0CHnBRJ/exec';
+    const PARTES_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwrmpfCzyeE2i3OLaJxsDQHT5gqM7ZmMfAhDM7o5-Ra9saCVT7e87DFf1hWf0CHnBRJ/exec';
     const PDCA_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyyfL60bEV1FylAgXUvGn_QemQQXlyvBF5s5F4DxBCWmGxcPsdn8bDP7JOtmRy8AZa_/exec';
+    const PLANO_ACAO_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVI_POGHFRI4tJ5jRUKGxaRa-2TUHcocLSkO_6dvq3iX_GDP86OzTsr_floXlvHI8o/exec';
 
     let allDocuments = [];
     let swotData = [];
     let roData = [];
     let partesData = [];
     let pdcaData = [];
+    let planoAcaoData = [];
     let currentPdcaFilters = {
       ano: [],
       processo: [],
@@ -2090,6 +2185,7 @@
       document.getElementById('view-planning-meetings').classList.add('hidden');
       document.getElementById('view-planning-audits').classList.add('hidden');
       document.getElementById('view-pdca').classList.add('hidden');
+      document.getElementById('view-plano-acao').classList.add('hidden');
       document.getElementById('tab-docs').classList.remove('active');
       document.getElementById('tab-swot').classList.remove('active');
       document.getElementById('tab-ro').classList.remove('active');
@@ -2097,6 +2193,7 @@
       document.getElementById('tab-org').classList.remove('active');
       document.getElementById('tab-planning').classList.remove('active');
       document.getElementById('tab-pdca').classList.remove('active');
+      document.getElementById('tab-plano-acao').classList.remove('active');
 
       toggleNewDocButton(tab);
 
@@ -2125,6 +2222,10 @@
         document.getElementById('view-pdca').classList.remove('hidden');
         document.getElementById('tab-pdca').classList.add('active');
         if(pdcaData.length === 0) fetchPdca();
+      } else if(tab === 'plano-acao') {
+        document.getElementById('view-plano-acao').classList.remove('hidden');
+        document.getElementById('tab-plano-acao').classList.add('active');
+        if(planoAcaoData.length === 0) fetchPlanoAcao();
       }
 
       // Update mobile menu button states
@@ -2475,6 +2576,238 @@
       };
       document.body.appendChild(script);
     }
+
+    // =========
+    // Plano de Ação
+    // =========
+    function fetchPlanoAcao() {
+      showLoading('A carregar Plano de Ação...');
+      document.getElementById('planoAcaoTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>';
+
+      const callbackName = `cb_plano_acao_${Date.now()}`;
+      window[callbackName] = (data) => {
+        if (data && data.ok === false) {
+          const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro Plano de Ação: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          document.getElementById('planoAcaoTableBody').innerHTML = msg;
+          hideLoading();
+          delete window[callbackName];
+          return;
+        }
+
+        planoAcaoData = Array.isArray(data) ? data : (data?.data || []);
+        buildPlanoAcaoFilters();
+        filterPlanoAcao();
+        hideLoading();
+        delete window[callbackName];
+      };
+
+      const script = document.createElement('script');
+      script.src = `${PLANO_ACAO_APPS_SCRIPT_URL}?sheet=Plano%20de%20Interven%C3%A7%C3%A3o&callback=${callbackName}&t=${Date.now()}`;
+      script.onload = () => script.remove();
+      script.onerror = () => {
+        const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script Plano de Ação.</td></tr>`;
+        document.getElementById('planoAcaoTableBody').innerHTML = msg;
+        hideLoading();
+        script.remove();
+        delete window[callbackName];
+      };
+      document.body.appendChild(script);
+    }
+
+    function buildPlanoAcaoFilters() {
+      const years = [...new Set(planoAcaoData.map(item => {
+        const dateStr = String(item['Data de Registo'] || '');
+        const match = dateStr.match(/(\d{4})/);
+        return match ? match[1] : null;
+      }).filter(y => y))].sort().reverse();
+
+      const statuses = [...new Set(planoAcaoData.map(item => String(item['Status das Ações'] || '').trim()).filter(s => s))];
+      
+      // Build year filters
+      const yearContainer = document.getElementById('pa-year-filters');
+      if (yearContainer) {
+        yearContainer.innerHTML = '';
+        years.forEach(year => {
+          const btn = document.createElement('button');
+          btn.className = 'pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]';
+          btn.id = `filter-pa-year-${year}`;
+          btn.textContent = year;
+          btn.onclick = () => togglePlanoAcaoYearFilter(year);
+          yearContainer.appendChild(btn);
+        });
+      }
+
+      // Build status filters
+      const statusContainer = document.getElementById('pa-status-filters');
+      if (statusContainer) {
+        statusContainer.innerHTML = '';
+        statuses.forEach(status => {
+          const btn = document.createElement('button');
+          btn.className = 'pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]';
+          btn.id = `filter-pa-status-${escapeHtml(status).replace(/\s+/g, '-')}`;
+          btn.textContent = status;
+          btn.onclick = () => togglePlanoAcaoStatusFilter(status);
+          statusContainer.appendChild(btn);
+        });
+      }
+    }
+
+    function togglePlanoAcaoYearFilter(year) {
+      if (year === 'TODOS') {
+        // Limpar todos os anos
+        currentPlanoAcaoFilters.years = [];
+        document.querySelectorAll('[id^="filter-pa-year-"]').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('filter-pa-year-TODOS').classList.add('active');
+      } else {
+        const btn = document.getElementById(`filter-pa-year-${year}`);
+        if (!btn) return;
+
+        // Remove TODOS se estava ativo
+        const todosBtn = document.getElementById('filter-pa-year-TODOS');
+        if (todosBtn && todosBtn.classList.contains('active')) {
+          todosBtn.classList.remove('active');
+        }
+
+        if (btn.classList.contains('active')) {
+          btn.classList.remove('active');
+          currentPlanoAcaoFilters.years = currentPlanoAcaoFilters.years.filter(y => y !== year);
+        } else {
+          btn.classList.add('active');
+          currentPlanoAcaoFilters.years.push(year);
+        }
+
+        // Se não há anos selecionados, reativar TODOS
+        if (currentPlanoAcaoFilters.years.length === 0) {
+          todosBtn.classList.add('active');
+        }
+      }
+
+      filterPlanoAcao();
+    }
+
+    function togglePlanoAcaoStatusFilter(status) {
+      const btn = document.getElementById(`filter-pa-status-${escapeHtml(status).replace(/\s+/g, '-')}`);
+      if (!btn) return;
+
+      if (btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        currentPlanoAcaoFilters.statuses = currentPlanoAcaoFilters.statuses.filter(s => s !== status);
+      } else {
+        btn.classList.add('active');
+        currentPlanoAcaoFilters.statuses.push(status);
+      }
+
+      filterPlanoAcao();
+    }
+
+    function filterPlanoAcao() {
+      let filtered = [...planoAcaoData];
+      const searchText = normalizeText(document.getElementById('searchPlanoAcao')?.value || '');
+
+      filtered = filtered.filter(item => {
+        // Filtro de anos (acumulativo)
+        if (currentPlanoAcaoFilters.years && currentPlanoAcaoFilters.years.length > 0) {
+          const dateStr = String(item['Data de Registo'] || '');
+          const match = dateStr.match(/(\d{4})/);
+          const year = match ? match[1] : null;
+          if (!year || !currentPlanoAcaoFilters.years.includes(year)) {
+            return false;
+          }
+        }
+
+        // Filtro de status (acumulativo)
+        if (currentPlanoAcaoFilters.statuses && currentPlanoAcaoFilters.statuses.length > 0) {
+          const itemStatus = String(item['Status das Ações'] || '').trim();
+          if (!currentPlanoAcaoFilters.statuses.some(s => normalizeText(s) === normalizeText(itemStatus))) {
+            return false;
+          }
+        }
+        
+        // Filtro de busca
+        if (searchText) {
+          const searchableText = [
+            item['#'] || '',
+            item['Ação a ser Realizada'] || '',
+            item['Origem da Ação'] || '',
+            item['Responsável'] || '',
+            item['Processo'] || '',
+            item['Observações'] || ''
+          ].join(' ');
+          
+          if (!normalizeText(searchableText).includes(searchText)) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+
+      renderPlanoAcao(filtered);
+      updatePlanoAcaoStats();
+    }
+
+    function renderPlanoAcao(data) {
+      const body = document.getElementById('planoAcaoTableBody');
+      if (!data || data.length === 0) {
+        body.innerHTML = '<tr><td colspan="11" class="px-8 py-4 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados</td></tr>';
+        return;
+      }
+
+      body.innerHTML = data.map((item, idx) => {
+        const status = String(item['Status das Ações'] || '');
+        const statusClass = status.toLowerCase().includes('realizada') || status.toLowerCase().includes('concluído') || status.toLowerCase().includes('cumprida') ? 'status-concluido' : 
+                           status.toLowerCase().includes('em') ? 'status-em-curso' :
+                           status.toLowerCase().includes('não') || status.toLowerCase().includes('aberto') || status.toLowerCase().includes('pendente') ? 'status-aberto' : 'status-indefinido';
+        
+        const eficacia = String(item['Análise da Eficácia'] || '');
+        const eficaciaClass = eficacia.toLowerCase().includes('eficaz') ? 'eficacia-eficaz' :
+                             eficacia.toLowerCase().includes('não') || eficacia.toLowerCase().includes('ineficaz') ? 'eficacia-nao-eficaz' : 'status-indefinido';
+        
+        // Formata datas robustamente
+        const dataRegisto = formatDate(item['Data de Registo'] || '-');
+        const dataConclusao = formatDate(item['Data de Conclusão'] || '-');
+        
+        return `<tr class="hover:bg-slate-50">
+          <td class="px-4 py-3 text-xs font-semibold text-slate-700">${escapeHtml(item['#'] || '-')}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${escapeHtml(dataRegisto)}</td>
+          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(item['Origem da Ação'] || '-')}</td>
+          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(item['Processo'] || '-')}</td>
+          <td class="px-4 py-3 text-xs text-slate-600">${escapeHtml(item['Ação a ser Realizada'] || '-')}</td>
+          <td class="px-4 py-3 text-xs text-slate-600 font-semibold">${escapeHtml(item['Responsável'] || '-')}</td>
+          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(item['Prazo/Monitorização'] || '-')}</td>
+          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(dataConclusao)}</td>
+          <td class="px-4 py-3"><span class="${statusClass} px-2 py-1 rounded text-[9px] font-bold uppercase">${escapeHtml(status)}</span></td>
+          <td class="px-4 py-3"><span class="${eficaciaClass} px-2 py-1 rounded text-[9px] font-bold uppercase">${escapeHtml(eficacia || '-')}</span></td>
+          <td class="px-4 py-3 text-xs text-slate-500 max-w-xs truncate" title="${escapeHtml(item['Observações'] || '')}">${escapeHtml(item['Observações'] || '-')}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function updatePlanoAcaoStats() {
+      const total = planoAcaoData.length;
+      const realizadas = planoAcaoData.filter(item => {
+        const status = String(item['Status das Ações'] || '').toLowerCase();
+        return status.includes('realizada') || status.includes('concluído') || status.includes('cumprida');
+      }).length;
+      const emProgresso = planoAcaoData.filter(item => {
+        const status = String(item['Status das Ações'] || '').toLowerCase();
+        return status.includes('em');
+      }).length;
+      const porRealizar = planoAcaoData.filter(item => {
+        const status = String(item['Status das Ações'] || '').toLowerCase();
+        return status.includes('não') || status.includes('aberto') || status.includes('pendente');
+      }).length;
+
+      document.getElementById('pa-total').textContent = total || '0';
+      document.getElementById('pa-realizadas').textContent = realizadas || '0';
+      document.getElementById('pa-em-progresso').textContent = emProgresso || '0';
+      document.getElementById('pa-por-realizar').textContent = porRealizar || '0';
+    }
+
+    let currentPlanoAcaoFilters = {
+      years: [],
+      statuses: []
+    };
 
     // =========
     // Docs
