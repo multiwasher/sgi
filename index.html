@@ -5021,9 +5021,9 @@
       try {
         showLoading('A carregar KPI\'s Estratégicos...');
         
-        // URL do Google Sheets em formato CSV (A1:O)
+        // URL do Google Sheets em formato CSV (separador "base_dados")
         const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1722482891`;
         
         console.log('📥 Fetching Estratégicos CSV from:', csvUrl);
         const response = await fetch(csvUrl);
