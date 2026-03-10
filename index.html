@@ -1874,18 +1874,19 @@
             <thead>
               <tr class="bg-slate-50 border-b border-slate-100">
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ano</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mês</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Indicador</th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Objetivo</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Performance</th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Risco</th>
+                <th class="px-4 py-3 text[10px] font-black text-slate-400 uppercase tracking-widest">Responsável Processo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome do Indicador</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fórmula de Controlo</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequência de Análise</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Meta</th>
+                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Real</th>
               </tr>
             </thead>
             <tbody id="kpi-table-body" class="divide-y divide-slate-50">
-              <tr><td colspan="9" class="px-8 py-12 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
+              <tr><td colspan="10" class="px-8 py-12 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -5036,7 +5037,7 @@
         
         if (lines.length < 2) {
           hideLoading();
-          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
+          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="10" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
           return;
         }
         
@@ -5067,9 +5068,13 @@
           
           const ano = cols[1]?.trim() || '';
           const processo = cols[2]?.trim() || '';
+          const objetivo = cols[3]?.trim() || '';
+          const risco = cols[4]?.trim() || '';
+          const responsavelProcesso = cols[6]?.trim() || '';
           const indicador = cols[8]?.trim() || '';
+          const formula = cols[9]?.trim() || '';
+          const frequencia = cols[10]?.trim() || '';
           const unidade = cols[11]?.trim() || '';
-          const goal = cols[12]?.trim() || '';
           const meta = parseFloat(cols[13]) || 0;
           const real = parseFloat(cols[14]) || 0;
           
@@ -5080,19 +5085,17 @@
           }
           
           kpiEstrategicosData.push({
-            id: cols[0]?.trim() || '',
             ano: ano,
             processo: processo,
-            objetivo: cols[3]?.trim() || '',
+            objetivo: objetivo,
+            risco: risco,
+            responsavelProcesso: responsavelProcesso,
             indicador: indicador,
+            formula: formula,
+            frequencia: frequencia,
             unidade: unidade,
             meta: meta,
-            real: real,
-            goal: goal,
-            formula: cols[9]?.trim() || '',
-            frequencia: cols[10]?.trim() || '',
-            responsavelProcesso: cols[6]?.trim() || '',
-            responsavelMonitorizacao: cols[7]?.trim() || ''
+            real: real
           });
           
           validRows++;
@@ -5110,7 +5113,7 @@
         console.error('Erro ao carregar KPI Estratégicos:', error);
         hideLoading();
         alert(`Erro ao carregar dados:\n${error.message}`);
-        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="9" class="px-8 py-12 text-center text-red-500">Erro: ${error.message}</td></tr>`;
+        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="10" class="px-8 py-12 text-center text-red-500">Erro: ${error.message}</td></tr>`;
       }
     }
 
@@ -5151,7 +5154,7 @@
         
         if (lines.length < 2) {
           hideLoading();
-          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
+          document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="10" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível.</td></tr>';
           return;
         }
         
@@ -5243,7 +5246,7 @@
         console.error('Stack:', error.stack);
         hideLoading();
         alert(`Erro ao carregar dados:\n${error.message}`);
-        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="9" class="px-8 py-12 text-center text-red-500">Erro ao carregar dados: ${error.message}</td></tr>`;
+        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="10" class="px-8 py-12 text-center text-red-500">Erro ao carregar dados: ${error.message}</td></tr>`;
       }
     }
 
@@ -5344,45 +5347,29 @@
       const tbody = document.getElementById('kpi-table-body');
       
       if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível com estes filtros.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível com estes filtros.</td></tr>';
         return;
       }
       
-      // Ordenar por ano, mês (ou ano para Estratégicos)
+      // Ordenar por ano
       data.sort((a, b) => {
         if (a.ano !== b.ano) return b.ano - a.ano;
-        if (a.mes && b.mes) return a.mes.localeCompare(b.mes);
         return 0;
       });
       
       tbody.innerHTML = data.map(d => {
-        // Usar estrutura diferente para Estratégicos vs Sustentabilidade
-        const valor = d.valor !== undefined ? d.valor : d.real;
-        const objetivo = d.valorObjetivo !== undefined ? d.valorObjetivo : d.meta;
-        const mes = d.mes || 'Anual';
-        const responsavel = d.responsavel || d.responsavelMonitorizacao || '-';
-        
-        const performance = objetivo > 0 ? ((valor / objetivo) * 100).toFixed(0) : 'N/A';
-        let statusClass = 'bg-slate-100 text-slate-600';
-        
-        if (performance !== 'N/A') {
-          const perf = parseFloat(performance);
-          if (perf >= 90) statusClass = 'bg-emerald-100 text-emerald-700';
-          else if (perf >= 70) statusClass = 'bg-amber-100 text-amber-700';
-          else statusClass = 'bg-red-100 text-red-700';
-        }
-        
         return `
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="px-4 py-3 text-sm font-semibold text-slate-800">${d.ano}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">${mes}</td>
-            <td class="px-4 py-3 text-sm text-slate-700"><strong>${d.indicador}</strong></td>
             <td class="px-4 py-3 text-sm text-slate-700">${d.processo}</td>
-            <td class="px-4 py-3 text-sm font-bold text-blue-600">${valor} ${d.unidade}</td>
-            <td class="px-4 py-3 text-sm text-slate-600">${objetivo} ${d.unidade}</td>
-            <td class="px-4 py-3 text-sm text-slate-600"><span class="px-2 py-1 rounded text-xs font-bold ${statusClass}">${performance}%</span></td>
-            <td class="px-4 py-3 text-sm text-slate-600">${d.objetivo}</td>
-            <td class="px-4 py-3 text-sm text-slate-600">${responsavel}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${d.objetivo}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${d.risco}</td>
+            <td class="px-4 py-3 text-sm text-slate-700">${d.responsavelProcesso}</td>
+            <td class="px-4 py-3 text-sm text-slate-700"><strong>${d.indicador}</strong></td>
+            <td class="px-4 py-3 text-sm text-slate-600">${d.formula}</td>
+            <td class="px-4 py-3 text-sm text-slate-600">${d.frequencia}</td>
+            <td class="px-4 py-3 text-sm font-bold text-amber-600">${d.meta}</td>
+            <td class="px-4 py-3 text-sm font-bold text-blue-600">${d.real}</td>
           </tr>
         `;
       }).join('');
