@@ -4986,16 +4986,23 @@
           return;
         }
         
-        // Parse CSV com o mesmo formato: 
-        // Col A (0): Ano
-        // Col B (1): Mês  
-        // Col C (2): Valor
-        // Col D (3): Processo
-        // Col E (4): Indicador
-        // Col F (5): Unidade
-        // Col G (6): Objetivo (descrição)
-        // Col H (7): Valor Objetivo (valor numérico para comparação)
-        // Col I (8): Responsável
+        // Parse CSV com estrutura ESTRATÉGICOS:
+        // Col A (0): ID
+        // Col B (1): ano
+        // Col C (2): Processo
+        // Col D (3): Objetivo (descrição)
+        // Col E (4): Risco
+        // Col F (5): Recursos
+        // Col G (6): Responsável Processo
+        // Col H (7): Responsável Monitorização
+        // Col I (8): Nome do Indicador ← INDICADOR
+        // Col J (9): Fórmula de Controlo
+        // Col K (10): Frequência de Análise
+        // Col L (11): Un. (Unidade) ← UNIDADE
+        // Col M (12): Goal (sinal matemático)
+        // Col N (13): Meta ← VALOR OBJETIVO
+        // Col O (14): Real ← VALOR
+        // Cols P+ : valores mensais (Jan, Fev, etc.)
         
         console.log('📋 Parsing Estratégicos CSV lines...');
         kpiEstrategicosData = [];
@@ -5012,26 +5019,32 @@
           
           // Debug first and every 10th row
           if (i <= 3 || i % 10 === 0) {
-            console.log(`Row ${i}: ${cols.length} cols, raw:`, lines[i].substring(0, 100));
-            console.log(`  Parsed:`, cols);
+            console.log(`Row ${i}: ${cols.length} cols`);
+            console.log(`  ID: ${cols[0]}, Ano: ${cols[1]}, Indicador: ${cols[8]}, Nome Processo: ${cols[2]}`);
           }
           
-          if (cols.length < 9) {
-            console.warn(`Row ${i}: insufficient columns (${cols.length} < 9)`);
+          if (cols.length < 15) {
+            console.warn(`Row ${i}: insufficient columns (${cols.length} < 15)`);
             skippedRows++;
             continue;
           }
           
           const record = {
-            ano: cols[0]?.trim() || '',
-            mes: cols[1]?.trim() || '',
-            valor: parseFloat(cols[2]) || 0,
-            processo: cols[3]?.trim() || '',      // Coluna D
-            indicador: cols[4]?.trim() || '',     // Coluna E
-            unidade: cols[5]?.trim() || '',
-            objetivo: cols[6]?.trim() || '',      // Coluna G - descrição
-            valorObjetivo: parseFloat(cols[7]) || 0,  // Coluna H - valor numérico
-            responsavel: cols[8]?.trim() || ''    // Coluna I
+            ano: cols[1]?.trim() || '',
+            mes: 'Anual', // Estratégicos são anuais (não mensais como Sustentabilidade)
+            valor: parseFloat(cols[14]) || 0,         // Col O: Real
+            processo: cols[2]?.trim() || '',           // Col C: Processo
+            indicador: cols[8]?.trim() || '',          // Col I: Nome do Indicador
+            unidade: cols[11]?.trim() || '',           // Col L: Un.
+            objetivo: cols[3]?.trim() || '',           // Col D: Objetivo descrição
+            valorObjetivo: parseFloat(cols[13]) || 0,  // Col N: Meta
+            responsavel: cols[7]?.trim() || '',        // Col H: Responsável Monitorização
+            // Campos extras específicos de Estratégicos
+            id: cols[0]?.trim() || '',                 // Col A: ID
+            goal: cols[12]?.trim() || '',              // Col M: Goal (sinal matemático)
+            formula: cols[9]?.trim() || '',            // Col J: Fórmula de Controlo
+            frequencia: cols[10]?.trim() || '',        // Col K: Frequência de Análise
+            responsavelProcesso: cols[6]?.trim() || '' // Col G: Responsável Processo
           };
           
           // Debug first few records
@@ -5044,8 +5057,8 @@
             kpiEstrategicosData.push(record);
             validRows++;
           } else {
-            if (!record.indicador) console.warn(`Row ${i}: missing indicador`);
-            if (!record.processo) console.warn(`Row ${i}: missing processo`);
+            if (!record.indicador) console.warn(`Row ${i}: missing indicador (col I)`);
+            if (!record.processo) console.warn(`Row ${i}: missing processo (col C)`);
             skippedRows++;
           }
         }
