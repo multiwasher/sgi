@@ -4902,6 +4902,53 @@
     let kpiChartLine = null;
     let kpiChartBar = null;
 
+    // Listas de validação para KPI's Estratégicos
+    const VALID_PROCESSOS = [
+      'Engenharia',
+      'Gestão da Qualidade',
+      'Gestão da Qualidade e Ambiente',
+      'Gestão de Compras',
+      'Gestão de Negócio',
+      'Gestão de Recursos',
+      'Marketing',
+      'Pós Venda'
+    ];
+
+    const VALID_INDICADORES = [
+      'digital',
+      'EBITDA',
+      'Eficácia das Formações',
+      'Evolução Custo Médio por Modelo - MWS300',
+      'Evolução Custo Médio por Modelo - MWS500',
+      'Evolução Custo Médio por Modelo - MWS700',
+      'Evolução Custo Médio por Modelo - MWS715',
+      'Faturado',
+      'Índice de Rotatividade',
+      'Lead Time de Instalação',
+      'MARGEM',
+      'MKT digital',
+      'N.º de Novas Propostas',
+      'N.º de RNC\'s',
+      'N.º de RNC\'s Vs. Σ Equipamentos Produzidos',
+      'N.º Máximo de RNC\'s em Aberto',
+      'N.º Novas Máquinas Vendidas',
+      'N.º Novas Oportunidades de Negócio',
+      'N.º Total de Intervenções em Aberto',
+      'N.º Total de Pedidos criados',
+      'Nível de Entregas - Prazo',
+      'Nível de Entregas - Qualidade',
+      'Projetos SIFIDE - Apoio Despesas',
+      'Projetos SIFIDE - Vendas',
+      'Satisfação do cliente - IOT',
+      'Satisfação do Cliente - IOT [Assistência técnica prestada (interna/externa)]',
+      'Satisfação do Cliente - IOT [Instalação]',
+      'Satisfação do Cliente - IOT [Satisfação Equipamento]',
+      'Satisfação do cliente - IOT [Serviço Técnico Prestado]',
+      'Tempo de Resolução Médio',
+      'Vendido',
+      'VOLUME DE NEGÓCIOS'
+    ];
+
     // Parse CSV line com suporte a valores com aspas
     function parseCSVLine(line) {
       const result = [];
@@ -5064,8 +5111,34 @@
         }
         
         console.log(`✅ Loaded ${validRows} Estratégicos records. Skipped ${skippedRows} invalid rows.`);
+        
+        // Validar contra listas conhecidas
+        const uniqueProcessos = [...new Set(kpiEstrategicosData.map(r => r.processo))];
+        const uniqueIndicadores = [...new Set(kpiEstrategicosData.map(r => r.indicador))];
+        
+        console.log('\n📊 VALIDAÇÃO DE DADOS:');
+        console.log('Processos únicos encontrados:', uniqueProcessos);
+        console.log('Processos válidos:', VALID_PROCESSOS);
+        
+        const processosInvalidos = uniqueProcessos.filter(p => !VALID_PROCESSOS.includes(p));
+        if (processosInvalidos.length > 0) {
+          console.warn('⚠️ PROCESSOS INVÁLIDOS ENCONTRADOS:', processosInvalidos);
+        } else {
+          console.log('✅ Todos os processos são válidos!');
+        }
+        
+        console.log('\nIndicadores únicos encontrados:', uniqueIndicadores);
+        console.log('Indicadores válidos:', VALID_INDICADORES);
+        
+        const indicadoresInvalidos = uniqueIndicadores.filter(ind => !VALID_INDICADORES.includes(ind));
+        if (indicadoresInvalidos.length > 0) {
+          console.warn('⚠️ INDICADORES INVÁLIDOS ENCONTRADOS:', indicadoresInvalidos);
+        } else {
+          console.log('✅ Todos os indicadores são válidos!');
+        }
+        
         if (kpiEstrategicosData.length > 0) {
-          console.log('First record:', kpiEstrategicosData[0]);
+          console.log('\nFirst record:', kpiEstrategicosData[0]);
           const withObj = kpiEstrategicosData.filter(r => r.valorObjetivo > 0);
           console.log(`Records with valorObjetivo > 0: ${withObj.length}`);
           if (withObj.length > 0) {
@@ -5228,8 +5301,33 @@
       
       // Extrair valores únicos para filtros
       const anos = [...new Set(currentData.map(d => d.ano))].sort((a, b) => a - b);
-      const processos = [...new Set(currentData.map(d => d.processo))].sort();
-      const indicadores = [...new Set(currentData.map(d => d.indicador))].sort();
+      let processos = [...new Set(currentData.map(d => d.processo))];
+      let indicadores = [...new Set(currentData.map(d => d.indicador))];
+      
+      // Se é KPI Estratégicos, ordenar conforme as listas de validação
+      if (kpiCurrentType === 'estrategicos') {
+        // Ordenar processos conforme VALID_PROCESSOS
+        processos = processos.sort((a, b) => {
+          const indexA = VALID_PROCESSOS.indexOf(a);
+          const indexB = VALID_PROCESSOS.indexOf(b);
+          if (indexA === -1) return 1; // Inválidos vão para o fim
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
+        
+        // Ordenar indicadores conforme VALID_INDICADORES
+        indicadores = indicadores.sort((a, b) => {
+          const indexA = VALID_INDICADORES.indexOf(a);
+          const indexB = VALID_INDICADORES.indexOf(b);
+          if (indexA === -1) return 1; // Inválidos vão para o fim
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
+      } else {
+        // Para Sustentabilidade, ordenar alfabeticamente
+        processos = processos.sort();
+        indicadores = indicadores.sort();
+      }
       
       // Preencher select de anos (multi-select, sem "Todos")
       const anoSelect = document.getElementById('kpi-filter-ano');
