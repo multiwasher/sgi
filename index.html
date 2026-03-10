@@ -5058,7 +5058,8 @@
             continue;
           }
           
-          const cols = lines[i].split(',').map(c => c.trim());
+          // Parser CSV robusto para lidar com valores entre aspas
+          const cols = parseCSVLine(lines[i]);
           
           // Validar colunas necessárias
           if (cols.length < 15) {
@@ -5074,7 +5075,6 @@
           const indicador = cols[8]?.trim() || '';
           const formula = cols[9]?.trim() || '';
           const frequencia = cols[10]?.trim() || '';
-          const unidade = cols[11]?.trim() || '';
           const meta = parseFloat(cols[13]) || 0;
           const real = parseFloat(cols[14]) || 0;
           
@@ -5093,7 +5093,6 @@
             indicador: indicador,
             formula: formula,
             frequencia: frequencia,
-            unidade: unidade,
             meta: meta,
             real: real
           });
@@ -5102,6 +5101,7 @@
         }
         
         console.log(`✅ Loaded ${validRows} KPI Estratégicos records. Skipped ${skippedRows}.`);
+        console.log('First record (DEBUG):', kpiEstrategicosData[0]);
         if (validRows === 0) {
           throw new Error('Nenhum registro válido foi carregado do CSV');
         }
