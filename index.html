@@ -4967,8 +4967,16 @@
         
         const headerCols = parseCSVLine(lines[0]);
         console.log('\n📍 Cabeçalhos parseados:');
+        console.log(`Total de colunas: ${headerCols.length}`);
         headerCols.forEach((col, idx) => {
-          console.log(`  Col ${idx}: "${col}"`);
+          // Converter índice para letra de coluna (0=A, 1=B, ..., 25=Z, 26=AA, 27=AB, etc.)
+          let colLetter = '';
+          let temp = idx;
+          while (temp >= 0) {
+            colLetter = String.fromCharCode(65 + (temp % 26)) + colLetter;
+            temp = Math.floor(temp / 26) - 1;
+          }
+          console.log(`  Col ${idx} (${colLetter}): "${col}"`);
         });
         
         console.log('\n📝 PRIMEIRAS 5 LINHAS DE DADOS:');
@@ -5135,8 +5143,9 @@
             console.log(`  Col 8 (Indicador): "${indicador}" ${!indicador ? '❌ VAZIO' : '✅'}`);
           }
           
+          // Necessário até coluna O (índice 14). Sheet vai até AB (28 colunas)
           if (cols.length < 15) {
-            console.warn(`Row ${i}: insufficient columns (${cols.length} < 15)`);
+            console.warn(`Row ${i}: insufficient columns (${cols.length} < 15, precisa até coluna O)`);
             skippedRows++;
             continue;
           }
@@ -5319,8 +5328,9 @@
             console.log(`  Parsed:`, cols);
           }
           
+          // Necessário até coluna I (índice 8). Aceita colunas adicionais
           if (cols.length < 9) {
-            console.warn(`Row ${i}: insufficient columns (${cols.length} < 9)`);
+            console.warn(`Row ${i}: insufficient columns (${cols.length} < 9, precisa até coluna I)`);
             skippedRows++;
             continue;
           }
