@@ -32,6 +32,13 @@
       cursor: pointer;
       position: relative;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 32px;
+      min-width: 40px;
+      font-weight: 600;
     }
     .kpi-year-btn::before {
       content: '';
@@ -344,7 +351,15 @@
       border-color: #065f46;
     }
 
-    .pdca-filter-btn { transition: all 0.2s; }
+    .pdca-filter-btn {
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 30px;
+      font-weight: 600;
+    }
     .pdca-filter-btn.active {
       background-color: #065f46;
       color: white;
@@ -5744,15 +5759,13 @@
         
         // Seção: Alertas
         if (failingKpis.length > 0) {
-          html += '<div class="border border-orange-200 rounded-lg p-4 bg-orange-50">';
-          html += '<h4 class="font-bold text-orange-800 text-sm mb-2">⚠️ Alertas - Fora do Alvo</h4>';
-          failingKpis.slice(0, 3).forEach(kpi => {
-            html += `<div class="text-xs text-orange-700 mb-1"><strong>${kpi.indicador}</strong><br/><span class="text-orange-600">${kpi.real} ${kpi.goal} ${kpi.meta}</span></div>`;
+          html += '<div class="border border-orange-200 rounded-lg p-4 bg-orange-50 md:col-span-2">';
+          html += '<h4 class="font-bold text-orange-800 text-sm mb-4">⚠️ Alertas - Fora do Alvo</h4>';
+          html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">';
+          failingKpis.forEach(kpi => {
+            html += `<div class="bg-white border border-orange-300 rounded p-2"><strong class="text-orange-800 text-xs block mb-1">${kpi.indicador}</strong><span class="text-orange-700 text-xs">${kpi.real} ${kpi.goal} ${kpi.meta}</span></div>`;
           });
-          if (failingKpis.length > 3) {
-            html += `<div class="text-xs text-orange-600 mt-1">+ ${failingKpis.length - 3} mais...</div>`;
-          }
-          html += '</div>';
+          html += '</div></div>';
         }
         
         // Seção: Análise por Processo (se houver dados)
@@ -6499,6 +6512,15 @@
           }
         }
       });
+
+      // ✅ Initialize data on page load
+      // Pre-load Plano de Ação data so year filters are ready
+      if (planoAcaoData.length === 0) {
+        // Delay slightly to ensure DOM is ready
+        setTimeout(() => {
+          fetchPlanoAcao();
+        }, 500);
+      }
     };
   </script>
 </body>
