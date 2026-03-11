@@ -1879,7 +1879,7 @@
           <table class="w-full text-left text-sm">
             <thead>
               <tr class="bg-slate-50 border-b border-slate-100">
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ano</th>
+                <th onclick="toggleKpiYearSort()" class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition-colors" title="Clique para ordenar">Ano <span id="kpi-year-sort-indicator">↓</span></th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo</th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Risco</th>
@@ -4908,6 +4908,7 @@
     let kpiCurrentType = 'sustentabilidade'; // Rastreia qual dashboard está activo
     let kpiChartLine = null;
     let kpiChartBar = null;
+    let kpiYearSortOrder = 'desc'; // 'asc' = menor para maior, 'desc' = maior para menor
 
     // Função de diagnóstico - fetch direto do CSV
     async function diagnoseCsvData() {
@@ -5407,9 +5408,15 @@
         return;
       }
       
-      // Ordenar por ano
+      // Ordenar por ano de acordo com kpiYearSortOrder
       data.sort((a, b) => {
-        if (a.ano !== b.ano) return b.ano - a.ano;
+        if (a.ano !== b.ano) {
+          if (kpiYearSortOrder === 'asc') {
+            return a.ano - b.ano; // Menor para maior
+          } else {
+            return b.ano - a.ano; // Maior para menor
+          }
+        }
         return 0;
       });
       
@@ -5494,6 +5501,23 @@
       // Update table and charts with filtered data
       displayKpiTable(filteredData);
       updateKpiCharts(filteredData);
+    }
+
+    // 🔄 Toggle year sort order
+    function toggleKpiYearSort() {
+      // Alternar entre 'asc' e 'desc'
+      kpiYearSortOrder = kpiYearSortOrder === 'asc' ? 'desc' : 'asc';
+      
+      // Atualizar indicador visual
+      const indicator = document.getElementById('kpi-year-sort-indicator');
+      indicator.textContent = kpiYearSortOrder === 'asc' ? '↑' : '↓';
+      
+      // Re-exibir tabela com nova ordem
+      if (kpiCurrentType === 'estrategicos') {
+        applyKpiFilters();
+      } else if (kpiCurrentType === 'sustentabilidade') {
+        applyKpiSustentabilidadeFilters();
+      }
     }
 
     // 🧹 Clear all filters
