@@ -372,6 +372,18 @@
       color: #1e293b;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
+
+    .toggle-alerts-btn {
+      transition: transform 0.2s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .toggle-alerts-btn:hover {
+      transform: scale(1.2);
+    }
   </style>
 </head>
 
@@ -5759,13 +5771,18 @@
         
         // Seção: Alertas
         if (failingKpis.length > 0) {
+          const alertsId = `alerts-${Date.now()}`;
           html += '<div class="border border-orange-200 rounded-lg p-4 bg-orange-50 md:col-span-2">';
-          html += '<h4 class="font-bold text-orange-800 text-sm mb-4">⚠️ Alertas - Fora do Alvo</h4>';
+          html += `<div class="flex items-center justify-between cursor-pointer" onclick="toggleAlertsSection('${alertsId}')">`;
+          html += `<h4 class="font-bold text-orange-800 text-sm">⚠️ Alertas - Fora do Alvo <span class="text-orange-600 font-normal text-xs ml-2">(${failingKpis.length} itens)</span></h4>`;
+          html += `<button class="toggle-alerts-btn text-orange-800 font-bold text-lg" data-alerts-id="${alertsId}">▼</button>`;
+          html += '</div>';
+          html += `<div id="${alertsId}" class="alerts-content hidden mt-4">`;
           html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">';
           failingKpis.forEach(kpi => {
             html += `<div class="bg-white border border-orange-300 rounded p-2"><strong class="text-orange-800 text-xs block mb-1">${kpi.indicador}</strong><span class="text-orange-700 text-xs">${kpi.real} ${kpi.goal} ${kpi.meta}</span></div>`;
           });
-          html += '</div></div>';
+          html += '</div></div></div>';
         }
         
         // Seção: Análise por Processo (se houver dados)
@@ -6005,6 +6022,16 @@
       // Display all data
       displayKpiTable(kpiEstrategicosData);
       updateKpiCharts(kpiEstrategicosData);
+    }
+
+    function toggleAlertsSection(alertsId) {
+      const content = document.getElementById(alertsId);
+      const btn = document.querySelector(`[data-alerts-id="${alertsId}"]`);
+      
+      if (content && btn) {
+        content.classList.toggle('hidden');
+        btn.textContent = content.classList.contains('hidden') ? '▶' : '▼';
+      }
     }
 
     function updateKpiCharts(data) {
