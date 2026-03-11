@@ -5541,64 +5541,140 @@
       }
     }
 
-    function updateKpiChartsEstrategicos(data) {
-      // Para Estratégicos: Gráficos simples de Real vs Meta por indicador
+    // 📈 Função para calcular regressão linear (linha de tendência)
+    function calculateLinearTrend(dataPoints) {
+      if (dataPoints.length < 2) return dataPoints;
       
-      // Gráfico de Barras (Real vs Meta)
-      const comparison = {};
-      data.forEach(d => {
-        const key = d.indicador;
-        if (!comparison[key]) {
-          comparison[key] = { real: 0, meta: 0, count: 0 };
+      const n = dataPoints.length;
+      let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+      
+      dataPoints.forEach((y, x) => {
+        if (y !== null && y !== undefined) {
+          sumX += x;
+          sumY += y;
+          sumXY += x * y;
+          sumX2 += x * x;
         }
-        comparison[key].real += d.real;
-        comparison[key].meta += d.meta;
-        comparison[key].count += 1;
       });
       
-      const labels = Object.keys(comparison);
-      const realValues = labels.map(k => (comparison[k].real / comparison[k].count).toFixed(2));
-      const metaValues = labels.map(k => (comparison[k].meta / comparison[k].count).toFixed(2));
+      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+      
+      return dataPoints.map((_, x) => parseFloat((slope * x + intercept).toFixed(2)));
+    }
+
+    function updateKpiChartsEstrategicos(data) {
+      // Verificar se há múltiplos anos (para mostrar tendência por ano)
+      const uniqueYears = [...new Set(data.map(d => d.ano).filter(Boolean))].map(y => parseInt(y)).sort((a, b) => a - b);
+      const hasMultipleYears = uniqueYears.length > 1;
+      
+      let labels, realValues, metaValues, trendValues;
+      
+      if (hasMultipleYears) {
+        // Modo: Evolução Temporal por ANO (com Tendência)
+        console.log('📊 Modo Evolução Temporal por Ano:', uniqueYears);
+        
+        const yearlyData = {};
+        uniqueYears.forEach(year => {
+          yearlyData[year] = { real: 0, meta: 0, count: 0 };
+        });
+        
+        data.forEach(d => {
+          const year = parseInt(d.ano);
+          if (yearlyData[year]) {
+            yearlyData[year].real += d.real;
+            yearlyData[year].meta += d.meta;
+            yearlyData[year].count += 1;
+          }
+        });
+        
+        labels = uniqueYears.map(y => y.toString());
+        realValues = uniqueYears.map(y => parseFloat((yearlyData[y].real / yearlyData[y].count).toFixed(2)));
+        metaValues = uniqueYears.map(y => parseFloat((yearlyData[y].meta / yearlyData[y].count).toFixed(2)));
+        trendValues = calculateLinearTrend(realValues);
+        
+      } else {
+        // Modo: Comparação por INDICADOR (padrão)
+        console.log('📊 Modo Comparação por Indicador');
+        
+        const comparison = {};
+        data.forEach(d => {
+          const key = d.indicador;
+          if (!comparison[key]) {
+            comparison[key] = { real: 0, meta: 0, count: 0 };
+          }
+          comparison[key].real += d.real;
+          comparison[key].meta += d.meta;
+          comparison[key].count += 1;
+        });
+        
+        labels = Object.keys(comparison);
+        realValues = labels.map(k => parseFloat((comparison[k].real / comparison[k].count).toFixed(2)));
+        metaValues = labels.map(k => parseFloat((comparison[k].meta / comparison[k].count).toFixed(2)));
+      }
       
       // Gráfico de Linha
       if (kpiChartLine) kpiChartLine.destroy();
       
       const ctxLine = document.getElementById('kpi-chart-line').getContext('2d');
+      
+      const datasets = [
+        {
+          label: 'Valor Real',
+          data: realValues,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 3,
+          pointRadius: 5,
+          pointBackgroundColor: '#10b981',
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Meta',
+          data: metaValues,
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0)',
+          borderWidth: 3,
+          pointRadius: 5,
+          pointBackgroundColor: '#f59e0b',
+          borderDash: [5, 5],
+          tension: 0.4,
+          fill: false
+        }
+      ];
+      
+      // Adicionar linha de tendência se há múltiplos anos
+      if (hasMultipleYears && trendValues) {
+        datasets.push({
+          label: 'Tendência',
+          data: trendValues,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0)',
+          borderWidth: 2,
+          pointRadius: 0,
+          borderDash: [10, 5],
+          tension: 0,
+          fill: false,
+          pointHitRadius: 10
+        });
+      }
+      
       kpiChartLine = new Chart(ctxLine, {
         type: 'line',
         data: {
           labels: labels,
-          datasets: [
-            {
-              label: 'Valor Real',
-              data: realValues,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              borderWidth: 3,
-              pointRadius: 5,
-              pointBackgroundColor: '#10b981',
-              tension: 0.4,
-              fill: true
-            },
-            {
-              label: 'Meta',
-              data: metaValues,
-              borderColor: '#f59e0b',
-              backgroundColor: 'rgba(245, 158, 11, 0)',
-              borderWidth: 3,
-              pointRadius: 5,
-              pointBackgroundColor: '#f59e0b',
-              borderDash: [5, 5],
-              tension: 0.4,
-              fill: false
-            }
-          ]
+          datasets: datasets
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: true, position: 'top' }
+            legend: { display: true, position: 'top' },
+            title: {
+              display: hasMultipleYears,
+              text: '📈 Evolução Temporal com Tendência de Regressão Linear'
+            }
           },
           scales: {
             y: { beginAtZero: true },
