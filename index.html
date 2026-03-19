@@ -5906,8 +5906,10 @@
           indicador.impactScore = calculateImpactScore(indicador);
           indicadoresDetalhes.push(indicador);
           
-          // Classificar por risco
-          riscoNiveis[riskClass.nível].push(indicador);
+          // Classificar por risco APENAS se não cumpre o goal
+          if (!cumpre) {
+            riscoNiveis[riskClass.nível].push(indicador);
+          }
           
           // Estatísticas
           if (cumpre) emAlvo++;
