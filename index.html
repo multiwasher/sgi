@@ -5939,23 +5939,25 @@
         const emAlvoIndicadores = indicadoresDetalhes.filter(i => i.cumpre);
         if (emAlvoIndicadores.length > 0) {
           html += `<div class="p-3 border-l-4 border-green-500 bg-green-50 rounded mb-4">`;
-          html += `<div class="font-bold text-green-800 mb-2">✅ INDICADORES NO ALVO (${emAlvoIndicadores.length})</div>`;
-          html += `<div class="space-y-1 text-xs">`;
+          html += `<div class="font-bold text-green-800 mb-3">✅ INDICADORES NO ALVO (${emAlvoIndicadores.length})</div>`;
+          html += `<div class="space-y-2 text-xs">`;
           
-          emAlvoIndicadores.slice(0, 3).forEach(ind => {
-            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-green-200">`;
-            html += `<div>`;
-            html += `<div class="font-bold text-green-700">${ind.nome}</div>`;
-            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta}</div>`;
+          emAlvoIndicadores.slice(0, 5).forEach(ind => {
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-green-400">`;
+            html += `<div class="flex-1">`;
+            html += `<div class="font-bold text-green-700">📌 ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Responsável: ${ind.responsavel || 'N/D'}</div>`;
+            html += `<div class="text-slate-600 text-xs mt-1">Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta} ${ind.percentualDesvio <= 5 ? '(Perfeito!)' : `(${ind.percentualDesvio}% desvio)`}</div>`;
+            html += `<div class="mt-1 text-xs bg-green-100 rounded p-1">✅ <strong>Status:</strong> Objetivo atingido com sucesso</div>`;
             html += `</div>`;
-            html += `<div class="text-right">`;
+            html += `<div class="text-right ml-2">`;
             html += `<div class="font-black text-lg text-green-600">${ind.impactScore}</div>`;
             html += `<div class="text-slate-500 text-xs">Impacto</div>`;
             html += `</div></div>`;
           });
           
-          if (emAlvoIndicadores.length > 3) {
-            html += `<div class="text-green-600 italic text-xs mt-1 font-semibold">... + ${emAlvoIndicadores.length - 3} outros em alvo</div>`;
+          if (emAlvoIndicadores.length > 5) {
+            html += `<div class="text-green-600 italic text-xs mt-2 font-semibold">✅ ... e ${emAlvoIndicadores.length - 5} outros indicadores no alvo</div>`;
           }
           
           html += `</div></div>`;
@@ -5965,21 +5967,26 @@
         const emRisco = riscoNiveis.moderado.concat(riscoNiveis.alto);
         if (emRisco.length > 0) {
           html += `<div class="p-3 border-l-4 border-amber-500 bg-amber-50 rounded mb-4">`;
-          html += `<div class="font-bold text-amber-800 mb-2">⚠️ INDICADORES EM RISCO (${emRisco.length})</div>`;
-          html += `<div class="space-y-1 text-xs">`;
+          html += `<div class="font-bold text-amber-800 mb-3">⚠️ INDICADORES EM RISCO (${emRisco.length})</div>`;
+          html += `<div class="space-y-2 text-xs">`;
           
-          emRisco.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).slice(0, 3).forEach(ind => {
+          emRisco.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).slice(0, 5).forEach(ind => {
             html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-amber-400">`;
-            html += `<div>`;
-            html += `<div class="font-bold text-amber-700">${ind.riskClass.icon} ${ind.nome}</div>`;
-            html += `<div class="text-slate-600 text-xs">Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta} (${ind.percentualDesvio}% desvio)</div>`;
-            html += `<div class="text-amber-700 font-semibold text-xs">Responsável: ${ind.responsavel || 'N/D'}</div>`;
-            html += `<div class="mt-1 text-xs bg-amber-100 rounded p-1">💡 <strong>Sugestão:</strong> Revisar estratégia. Gap de ${ind.desvio}. Realizar revisão com ${ind.responsavel || 'responsável'}.</div>`;
+            html += `<div class="flex-1">`;
+            html += `<div class="font-bold text-amber-700">📊 ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Responsável: ${ind.responsavel || 'N/D'}</div>`;
+            html += `<div class="text-slate-600 text-xs mt-1">Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta} (${ind.percentualDesvio}% de desvio)</div>`;
+            html += `<div class="text-amber-700 font-semibold text-xs">${ind.riskClass.icon} ${ind.riskClass.desc}: Gap de ${ind.desvio}</div>`;
+            html += `<div class="mt-1 text-xs bg-amber-100 rounded p-1">💡 <strong>Ação:</strong> Revisar estratégia e recursos. Implementar ajustes com ${ind.responsavel || 'responsável'}</div>`;
+            html += `</div>`;
+            html += `<div class="text-right ml-2">`;
+            html += `<div class="font-black text-lg text-amber-600">${ind.impactScore}</div>`;
+            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
             html += `</div></div>`;
           });
           
-          if (emRisco.length > 3) {
-            html += `<div class="text-amber-600 italic text-xs mt-1 font-semibold">⚠️ ... e ${emRisco.length - 3} outros indicadores em risco</div>`;
+          if (emRisco.length > 5) {
+            html += `<div class="text-amber-600 italic text-xs mt-2 font-semibold">⚠️ ... e ${emRisco.length - 5} outros indicadores em risco</div>`;
           }
           
           html += `</div></div>`;
@@ -5988,36 +5995,41 @@
         // === INDICADORES CRÍTICOS ===
         if (riscoNiveis.crítico.length > 0) {
           const baseId = 'critico-' + Date.now();
-          const shouldCollapse = riscoNiveis.crítico.length > 3;
+          const shouldCollapse = riscoNiveis.crítico.length > 5;
           
           html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
-          html += `<div class="flex items-center justify-between mb-2">`;
-          html += `<div class="font-bold text-red-800">🔴 INDICADORES CRÍTICOS (${riscoNiveis.crítico.length})</div>`;
+          html += `<div class="flex items-center justify-between mb-3">`;
+          html += `<div class="font-bold text-red-800">🚨 INDICADORES CRÍTICOS (${riscoNiveis.crítico.length}) - ATENÇÃO!</div>`;
           
           if (shouldCollapse) {
             html += `<button onclick="toggleElement('${baseId}')" class="text-xs bg-red-300 hover:bg-red-400 text-red-900 px-2 py-1 rounded transition-colors font-semibold">📂 Ver Todos</button>`;
           }
           
           html += `</div>`;
-          html += `<div class="space-y-1 text-xs">`;
+          html += `<div class="space-y-2 text-xs">`;
           
           riscoNiveis.crítico.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).forEach((ind, idx) => {
-            const isHidden = shouldCollapse && idx >= 2;
+            const isHidden = shouldCollapse && idx >= 3;
             const displayClass = isHidden ? ` hidden` : ``;
             const itemId = `${baseId}-item-${idx}`;
             
             html += `<div id="${itemId}" class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-red-500${displayClass}">`;
             html += `<div class="flex-1">`;
-            html += `<div class="font-bold text-red-700">🔴 ${ind.nome}</div>`;
-            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta}</div>`;
-            html += `<div class="text-red-700 font-bold text-xs">${ind.percentualDesvio}% de desvio | Diferença: ${ind.desvio}</div>`;
-            html += `<div class="mt-1 text-xs bg-red-100 rounded p-1">🚨 <strong>Ação Urgente:</strong> Investigar causas de inadequação. Responsável: <strong>${ind.responsavel || 'N/D'}</strong>. Risco associado: ${ind.risco || 'N/D'}</div>`;
+            html += `<div class="font-bold text-red-700">📉 ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Responsável: ${ind.responsavel || 'N/D'}</div>`;
+            html += `<div class="text-slate-600 text-xs mt-1">Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta} | Desvio: <strong>${ind.percentualDesvio}%</strong></div>`;
+            html += `<div class="text-red-700 font-bold text-xs">🔴 Crítico: Gap de ${ind.desvio} unidades</div>`;
+            html += `<div class="mt-1 text-xs bg-red-100 rounded p-1">🚨 <strong>Ação:</strong> Investigar causa imediatamente. Revisar procedimentos com ${ind.responsavel || 'responsável'}. Risco: ${ind.risco || 'N/D'}</div>`;
             html += `</div>`;
             html += `<div class="text-right ml-2">`;
             html += `<div class="font-black text-lg text-red-600">${ind.impactScore}</div>`;
             html += `<div class="text-slate-500 text-xs">Impacto</div>`;
             html += `</div></div>`;
           });
+          
+          if (riscoNiveis.crítico.length > 5) {
+            html += `<div class="text-red-600 italic text-xs mt-2 font-semibold">🚨 ... e ${riscoNiveis.crítico.length - 5} outros indicadores críticos</div>`;
+          }
           
           html += `</div></div>`;
         }
