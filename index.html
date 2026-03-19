@@ -5574,6 +5574,37 @@
       }
     }
 
+    function toggleElement(baseId) {
+      // Encontra todos os elementos escondidos com o prefixo baseId
+      const container = document.querySelector(`#${baseId}`);
+      if (!container) return;
+      
+      const items = container.querySelectorAll(`[id^="${baseId}-item-"]`);
+      let allVisible = true;
+      
+      items.forEach((item, idx) => {
+        if (idx >= 2 && item.classList.contains('hidden')) {
+          allVisible = false;
+        }
+      });
+      
+      items.forEach((item, idx) => {
+        if (idx >= 2) {
+          if (allVisible) {
+            item.classList.add('hidden');
+          } else {
+            item.classList.remove('hidden');
+          }
+        }
+      });
+      
+      // Atualizar texto do botão
+      const btn = container.querySelector('button');
+      if (btn) {
+        btn.textContent = allVisible ? '📂 Ver Todos' : '📁 Ver Menos';
+      }
+    }
+
     function generateSmartAnalysis(data, taxaCumprimento, acimaMeta, abaixoMeta, anos) {
       try {
         const analysisContainer = document.getElementById('kpi-smart-analysis');
@@ -5772,14 +5803,13 @@
 
     function generateSmartAnalysisEstrategico(container, data, anosEmDados) {
       try {
-        // Função auxiliar para verificar se um KPI atinge o goal
+        // ============ HELPERS PARA ANÁLISE DE IMPACTO ============
         function isGoalMet(real, meta, goal) {
           const realVal = parseFloat(real);
           const metaVal = parseFloat(meta);
           if (metaVal === 0) return true;
           
-          // Extrair operador do GOAL
-          let operator = '≥'; // padrão
+          let operator = '≥';
           if (goal) {
             const goalStr = String(goal).trim();
             if (goalStr.includes('≤')) operator = '≤';
@@ -5787,20 +5817,49 @@
             else if (goalStr.includes('=')) operator = '=';
           }
           
-          // Aplicar comparação
           if (operator === '≤') return realVal <= metaVal;
           if (operator === '≥') return realVal >= metaVal;
           if (operator === '=') return realVal === metaVal;
           return false;
         }
         
-        // Análise para KPIs Estratégicos com insights
-        let html = '';
+        function classifyRisk(percentualDesvio) {
+          if (percentualDesvio <= 5) return { nível: 'baixo', icon: '✅', cor: 'green', desc: 'No Alvo' };
+          if (percentualDesvio <= 10) return { nível: 'moderado', icon: '🟡', cor: 'amber', desc: 'Atenção' };
+          if (percentualDesvio <= 20) return { nível: 'alto', icon: '🟠', cor: 'orange', desc: 'Risco' };
+          return { nível: 'crítico', icon: '🔴', cor: 'red', desc: 'Crítico' };
+        }
         
-        // Calcular métricas globais
-        let emAlvo = 0, emRisco = 0, critico = 0;
+        function calculateImpactScore(indicador) {
+          let score = 0;
+          
+          // 40% por cumprimento
+          if (indicador.cumpre) score += 40;
+          else {
+            const pct = Math.min(40, 40 * (1 - Math.min(1, indicador.percentualDesvio / 100)));
+            score += pct;
+          }
+          
+          // 30% por desvio (quanto menor o desvio, melhor)
+          if (indicador.percentualDesvio <= 5) score += 30;
+          else if (indicador.percentualDesvio <= 10) score += 25;
+          else if (indicador.percentualDesvio <= 20) score += 15;
+          else score += 5;
+          
+          // 30% por nível de risco
+          const riskClass = classifyRisk(indicador.percentualDesvio);
+          if (riskClass.nível === 'baixo') score += 30;
+          else if (riskClass.nível === 'moderado') score += 20;
+          else if (riskClass.nível === 'alto') score += 10;
+          else score += 2;
+          
+          return Math.min(100, score);
+        }
+        
+        // ============ PROCESSAMENTO DE DADOS ============
         const indicadores = {};
-        const indicadoresComProblemas = [];
+        const riscoNiveis = { baixo: [], moderado: [], alto: [], crítico: [] };
+        const indicadoresDetalhes = [];
         
         data.forEach(d => {
           if (!indicadores[d.indicador]) {
@@ -5810,126 +5869,232 @@
               real: parseFloat(d.real) || 0,
               goal: d.goal,
               risco: d.risco,
-              responsavel: d.responsavelMonitorizacao
+              responsavel: d.responsavelMonitorizacao || '',
+              formula: d.formula || '',
+              objetivo: d.objetivo || ''
             };
           }
         });
         
-        // Classificar indicadores baseado no GOAL
-        Object.entries(indicadores).forEach(([indic, stats]) => {
+        let emAlvo = 0, emMelhora = 0, emPiora = 0, critico = 0;
+        
+        Object.entries(indicadores).forEach(([nome, stats]) => {
           if (stats.meta === 0) return;
           
           const cumpre = isGoalMet(stats.real, stats.meta, stats.goal);
-          const percentualDesvio = Math.abs(((stats.real - stats.meta) / stats.meta) * 100);
+          const desvio = stats.real - stats.meta;
+          const percentualDesvio = Math.abs((desvio / stats.meta) * 100);
+          const riskClass = classifyRisk(percentualDesvio);
           
-          if (cumpre) {
-            emAlvo++;
-          } else if (percentualDesvio <= 20) {
-            // Se não cumpre mas está perto (até 20% de desvio)
-            emRisco++;
-          } else {
-            critico++;
-            indicadoresComProblemas.push({
-              indicador: indic,
-              processo: stats.processo,
-              meta: stats.meta,
-              real: stats.real,
-              goal: stats.goal,
-              desvio: (stats.real - stats.meta).toFixed(2),
-              percentualDesvio: percentualDesvio.toFixed(1),
-              risco: stats.risco,
-              responsavel: stats.responsavel
-            });
-          }
+          const indicador = {
+            nome: nome,
+            processo: stats.processo,
+            meta: stats.meta,
+            real: stats.real,
+            goal: stats.goal,
+            risco: stats.risco,
+            responsavel: stats.responsavel,
+            formula: stats.formula,
+            objetivo: stats.objetivo,
+            cumpre: cumpre,
+            desvio: desvio.toFixed(2),
+            percentualDesvio: percentualDesvio.toFixed(1),
+            riskClass: riskClass,
+            impactScore: 0 // será calculado depois
+          };
+          
+          indicador.impactScore = calculateImpactScore(indicador);
+          indicadoresDetalhes.push(indicador);
+          
+          // Classificar por risco
+          riscoNiveis[riskClass.nível].push(indicador);
+          
+          // Estatísticas
+          if (cumpre) emAlvo++;
+          else if (percentualDesvio <= 20) emMelhora++;
+          else if (percentualDesvio > 20) critico++;
         });
         
-        // === RESUMO EXECUTIVO ===
-        const total = Object.keys(indicadores).length;
+        indicadoresDetalhes.sort((a, b) => b.impactScore - a.impactScore);
+        
+        // ============ GERAÇÃO DO HTML ============
+        let html = '';
+        
+        const total = indicadoresDetalhes.length;
         const taxaGeral = total > 0 ? ((emAlvo / total) * 100).toFixed(0) : 0;
         const statusGeral = taxaGeral >= 80 ? '✅' : taxaGeral >= 60 ? '⚠️' : '🔴';
         
-        html += `<div class="p-3 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-300 rounded-lg mb-4">`;
-        html += `<div class="text-sm font-bold text-slate-800 mb-2">${statusGeral} RESUMO EXECUTIVO</div>`;
-        html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-green-600">${emAlvo}</div><div class="text-slate-600">Em Alvo ✅</div></div>`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-amber-600">${emRisco}</div><div class="text-slate-600">Em Risco ⚠️</div></div>`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-red-600">${critico}</div><div class="text-slate-600">Crítico 🔴</div></div>`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-indigo-600">${taxaGeral}%</div><div class="text-slate-600">Taxa Geral</div></div>`;
+        // === RESUMO EXECUTIVO COM IMPACTO ===
+        html += `<div class="p-3 bg-gradient-to-r from-blue-50 to-indigo-100 border-2 border-blue-400 rounded-lg mb-4 shadow-sm">`;
+        html += `<div class="text-sm font-black text-blue-900 mb-3">${statusGeral} RESUMO EXECUTIVO - INDICADORES ESTRATÉGICOS</div>`;
+        html += `<div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-green-500"><div class="font-black text-lg text-green-600">${emAlvo}</div><div class="text-slate-700 font-semibold">No Alvo ✅</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-blue-500"><div class="font-black text-lg text-blue-600">${indicadoresDetalhes.filter(i => i.impactScore >= 70).length}</div><div class="text-slate-700 font-semibold">Alto<br/>Impacto</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-amber-500"><div class="font-black text-lg text-amber-600">${riscoNiveis.moderado.length + riscoNiveis.alto.length}</div><div class="text-slate-700 font-semibold">Em<br/>Risco</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-red-500"><div class="font-black text-lg text-red-600">${riscoNiveis.crítico.length}</div><div class="text-slate-700 font-semibold">Crítico 🔴</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-slate-500"><div class="font-black text-lg text-slate-600">${taxaGeral}%</div><div class="text-slate-700 font-semibold">Taxa<br/>Geral</div></div>`;
         html += `</div></div>`;
         
-        // === ALERTAS CRÍTICOS ===
-        if (critico > 0) {
-          html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
-          html += `<div class="font-bold text-red-800 mb-2">⚠️ INDICADORES CRÍTICOS (${critico})</div>`;
+        // === INDICADORES NO ALVO ===
+        const emAlvoIndicadores = indicadoresDetalhes.filter(i => i.cumpre);
+        if (emAlvoIndicadores.length > 0) {
+          html += `<div class="p-3 border-l-4 border-green-500 bg-green-50 rounded mb-4">`;
+          html += `<div class="font-bold text-green-800 mb-2">✅ INDICADORES NO ALVO (${emAlvoIndicadores.length})</div>`;
           html += `<div class="space-y-1 text-xs">`;
           
-          indicadoresComProblemas
-            .sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio))
-            .slice(0, 3)
-            .forEach(ind => {
-              const goalDisplay = ind.goal ? (String(ind.goal).includes('≤') ? '≤' : String(ind.goal).includes('≥') ? '≥' : '=') : '≥';
-              html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-red-200">`;
-              html += `<div>`;
-              html += `<div class="font-semibold text-red-700">${ind.indicador}</div>`;
-              html += `<div class="text-slate-600">Processo: <span class="font-semibold">${ind.processo}</span></div>`;
-              html += `</div>`;
-              html += `<div class="text-right">`;
-              html += `<div class="font-bold text-red-600">${ind.percentualDesvio}% desvio</div>`;
-              html += `<div class="text-slate-500">Real: ${ind.real} | Meta: ${ind.meta} (${goalDisplay})</div>`;
-              html += `<div class="text-red-600 text-xs">Diferença: ${ind.desvio}</div>`;
-              html += `</div></div>`;
-            });
+          emAlvoIndicadores.slice(0, 3).forEach(ind => {
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-green-200">`;
+            html += `<div>`;
+            html += `<div class="font-bold text-green-700">${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta}</div>`;
+            html += `</div>`;
+            html += `<div class="text-right">`;
+            html += `<div class="font-black text-lg text-green-600">${ind.impactScore}</div>`;
+            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `</div></div>`;
+          });
           
-          if (indicadoresComProblemas.length > 3) {
-            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresComProblemas.length - 3} outros indicadores críticos</div>`;
+          if (emAlvoIndicadores.length > 3) {
+            html += `<div class="text-green-600 italic text-xs mt-1 font-semibold">... + ${emAlvoIndicadores.length - 3} outros em alvo</div>`;
           }
           
           html += `</div></div>`;
         }
         
-        // === INSIGHTS E RECOMENDAÇÕES ===
-        html += `<div class="p-3 border-l-4 border-blue-500 bg-blue-50 rounded">`;
-        html += `<div class="font-bold text-blue-800 mb-2">💡 INSIGHTS & RECOMENDAÇÕES</div>`;
+        // === INDICADORES EM RISCO ===
+        const emRisco = riscoNiveis.moderado.concat(riscoNiveis.alto);
+        if (emRisco.length > 0) {
+          html += `<div class="p-3 border-l-4 border-amber-500 bg-amber-50 rounded mb-4">`;
+          html += `<div class="font-bold text-amber-800 mb-2">⚠️ INDICADORES EM RISCO (${emRisco.length})</div>`;
+          html += `<div class="space-y-1 text-xs">`;
+          
+          emRisco.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).slice(0, 3).forEach(ind => {
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-amber-400">`;
+            html += `<div>`;
+            html += `<div class="font-bold text-amber-700">${ind.riskClass.icon} ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta} (${ind.percentualDesvio}% desvio)</div>`;
+            html += `<div class="text-amber-700 font-semibold text-xs">Responsável: ${ind.responsavel || 'N/D'}</div>`;
+            html += `<div class="mt-1 text-xs bg-amber-100 rounded p-1">💡 <strong>Sugestão:</strong> Revisar estratégia. Gap de ${ind.desvio}. Realizar revisão com ${ind.responsavel || 'responsável'}.</div>`;
+            html += `</div></div>`;
+          });
+          
+          if (emRisco.length > 3) {
+            html += `<div class="text-amber-600 italic text-xs mt-1 font-semibold">⚠️ ... e ${emRisco.length - 3} outros indicadores em risco</div>`;
+          }
+          
+          html += `</div></div>`;
+        }
+        
+        // === INDICADORES CRÍTICOS ===
+        if (riscoNiveis.crítico.length > 0) {
+          const baseId = 'critico-' + Date.now();
+          const shouldCollapse = riscoNiveis.crítico.length > 3;
+          
+          html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
+          html += `<div class="flex items-center justify-between mb-2">`;
+          html += `<div class="font-bold text-red-800">🔴 INDICADORES CRÍTICOS (${riscoNiveis.crítico.length})</div>`;
+          
+          if (shouldCollapse) {
+            html += `<button onclick="toggleElement('${baseId}')" class="text-xs bg-red-300 hover:bg-red-400 text-red-900 px-2 py-1 rounded transition-colors font-semibold">📂 Ver Todos</button>`;
+          }
+          
+          html += `</div>`;
+          html += `<div class="space-y-1 text-xs">`;
+          
+          riscoNiveis.crítico.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).forEach((ind, idx) => {
+            const isHidden = shouldCollapse && idx >= 2;
+            const displayClass = isHidden ? ` hidden` : ``;
+            const itemId = `${baseId}-item-${idx}`;
+            
+            html += `<div id="${itemId}" class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-red-500${displayClass}">`;
+            html += `<div class="flex-1">`;
+            html += `<div class="font-bold text-red-700">🔴 ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Real: <strong>${ind.real}</strong> ${ind.goal} Meta: ${ind.meta}</div>`;
+            html += `<div class="text-red-700 font-bold text-xs">${ind.percentualDesvio}% de desvio | Diferença: ${ind.desvio}</div>`;
+            html += `<div class="mt-1 text-xs bg-red-100 rounded p-1">🚨 <strong>Ação Urgente:</strong> Investigar causas de inadequação. Responsável: <strong>${ind.responsavel || 'N/D'}</strong>. Risco associado: ${ind.risco || 'N/D'}</div>`;
+            html += `</div>`;
+            html += `<div class="text-right ml-2">`;
+            html += `<div class="font-black text-lg text-red-600">${ind.impactScore}</div>`;
+            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `</div></div>`;
+          });
+          
+          html += `</div></div>`;
+        }
+        
+        // === ANÁLISE ESTRATÉGICA POR PROCESSO ===
+        const processoStats = {};
+        indicadoresDetalhes.forEach(ind => {
+          if (!processoStats[ind.processo]) {
+            processoStats[ind.processo] = { total: 0, alvo: 0, risco: 0, critico: 0, scores: [] };
+          }
+          processoStats[ind.processo].total++;
+          processoStats[ind.processo].scores.push(ind.impactScore);
+          
+          if (ind.cumpre) processoStats[ind.processo].alvo++;
+          else if (ind.percentualDesvio <= 20) processoStats[ind.processo].risco++;
+          else processoStats[ind.processo].critico++;
+        });
+        
+        html += '<div class="p-3 border-l-4 border-indigo-500 bg-indigo-50 rounded mb-4">';
+        html += '<div class="font-bold text-indigo-800 mb-2">📊 ANÁLISE POR PROCESSO</div>';
+        html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">';
+        
+        Object.entries(processoStats).sort().forEach(([processo, stats]) => {
+          const taxaCumprimento = ((stats.alvo / stats.total) * 100).toFixed(0);
+          const avgScore = (stats.scores.reduce((a, b) => a + b, 0) / stats.scores.length).toFixed(0);
+          const statusColor = taxaCumprimento >= 70 ? 'border-green-400 bg-green-50' : taxaCumprimento >= 50 ? 'border-amber-400 bg-amber-50' : 'border-red-400 bg-red-50';
+          const statusIcon = taxaCumprimento >= 70 ? '✅' : taxaCumprimento >= 50 ? '⚠️' : '🔴';
+          
+          html += `<div class="border-l-4 ${statusColor} rounded p-2">`;
+          html += `<div class="font-bold">${statusIcon} ${processo}</div>`;
+          html += `<div class="text-slate-600 mt-2 leading-tight">`;
+          html += `  <div>📌 Taxa Cumprimento: <span class="font-bold text-sm">${stats.alvo}/${stats.total}</span> (${taxaCumprimento}%)</div>`;
+          html += `  <div>⚙️ Score Impacto Médio: <span class="font-bold text-sm text-indigo-600">${avgScore}/100</span></div>`;
+          html += `</div>`;
+          html += `<div class="text-slate-500 mt-1 text-xs">Status: ${stats.alvo === stats.total ? '✅ Todos em alvo' : stats.critico > 0 ? `⚠️ ${stats.critico} crítico(s)` : '🟡 Monitorar'}</div>`;
+          html += `</div>`;
+        });
+        
+        html += '</div></div>';
+        
+        // === INSIGHTS E RECOMENDAÇÕES ESTRATÉGICAS ===
+        html += `<div class="p-3 border-l-4 border-indigo-600 bg-indigo-50 rounded">`;
+        html += `<div class="font-bold text-indigo-900 mb-2">💡 INSIGHTS & RECOMENDAÇÕES ESTRATÉGICAS</div>`;
         html += `<ul class="space-y-1 text-xs text-slate-700 list-disc list-inside">`;
         
-        if (critico > 0) {
-          html += `<li><strong>Ação Imediata:</strong> ${critico} indicador(es) crítico(s) requerem intervenção urgente</li>`;
+        if (riscoNiveis.crítico.length > 0) {
+          html += `<li><strong>🚨 Ação Urgente:</strong> ${riscoNiveis.crítico.length} indicador(es) crítico(s). Requerer explicações e planos corretivos de ${Array.from(new Set(riscoNiveis.crítico.map(i => i.responsavel).filter(Boolean))).join(', ') || 'responsáveis'}.</li>`;
         }
         
         if (taxaGeral >= 80) {
-          html += `<li><strong>Desempenho Geral:</strong> Estrutura de KPIs está alinhada com objetivos (${taxaGeral}%)</li>`;
+          html += `<li><strong>✅ Desempenho:</strong> Estrutura de KPIs está alinhada com objetivos (${taxaGeral}% em alvo)</li>`;
         } else if (taxaGeral >= 60) {
-          html += `<li><strong>Atenção:</strong> Alguns indicadores necessitam de ajustes de estratégia</li>`;
+          html += `<li><strong>⚠️ Atenção:</strong> ${100 - taxaGeral}% dos indicadores não atingem metas. Revisar estratégia e recursos.</li>`;
         } else {
-          html += `<li><strong>Crítico:</strong> Revisão completa da estratégia recomendada (${taxaGeral}% de cumprimento)</li>`;
+          html += `<li><strong>🔴 Crítico:</strong> Apenas ${taxaGeral}% em alvo. Necessária revisão completa da estratégia.</li>`;
         }
         
-        // Processos com problemas (usando a mesma lógica de GOAL)
-        const processoStats = {};
-        data.forEach(d => {
-          if (!processoStats[d.processo]) processoStats[d.processo] = { total: 0, criticos: 0 };
-          processoStats[d.processo].total++;
-          const cumpre = isGoalMet(d.real, d.meta, d.goal);
-          if (!cumpre) {
-            const percentualDesvio = Math.abs(((parseFloat(d.real) - parseFloat(d.meta)) / parseFloat(d.meta)) * 100);
-            if (percentualDesvio > 20) {
-              processoStats[d.processo].criticos++;
-            }
-          }
-        });
-        
-        const processoCom80pct = Object.entries(processoStats).filter(([p, s]) => s.total > 0 && (s.criticos / s.total) >= 0.5);
-        if (processoCom80pct.length > 0) {
-          html += `<li><strong>Processo de Risco:</strong> ${processoCom80pct.map(([p]) => p).join(', ')} com múltiplos indicadores em risco</li>`;
+        const processosComProblemas = Object.entries(processoStats).filter(([p, s]) => s.critico + s.risco > s.alvo);
+        if (processosComProblemas.length > 0) {
+          html += `<li><strong>Processos de Foco:</strong> ${processosComProblemas.map(([p]) => p).join(', ')} requerem atenção prioritária</li>`;
         }
+        
+        const processosComMelhorDesempenho = Object.entries(processoStats).filter(([p, s]) => s.total > 0 && (s.alvo / s.total) === 1);
+        if (processosComMelhorDesempenho.length > 0) {
+          html += `<li><strong>Benchmark Interno:</strong> ${processosComMelhorDesempenho.map(([p]) => p).join(', ')} estão com 100% de cumprimento - considerar como modelo</li>`;
+        }
+        
+        html += `<li><strong>Próximas Ações:</strong> ${riscoNiveis.crítico.length > 0 ? 'Reunir com responsáveis de indicadores críticos; ' : ''}Revisar metas com base em capacidade reais; Aumentar frequência de monitoramento</li>`;
         
         html += `</ul></div>`;
         
         container.innerHTML = html;
-        console.log('✅ Smart Analysis Estratégico renderizada');
+        console.log('✅ Smart Analysis Estratégico (com impacto) renderizada');
         
       } catch (error) {
         console.error('❌ Erro ao gerar análise estratégica:', error);
+        container.innerHTML = `<div class="text-red-500 text-xs p-4">❌ Erro: ${error.message}</div>`;
       }
     }
 
@@ -5937,10 +6102,62 @@
       try {
         console.log('🌱 generateSmartAnalysisSustentabilidadeContent - data:', data.length, 'registos');
         
-        // Análise para KPIs de Sustentabilidade
-        let html = '';
+        // ============ HELPERS PARA ANÁLISE DE IMPACTO ============
+        function classifyIndicatorType(name) {
+          const lower = name.toLowerCase();
+          if (lower.match(/emiss|carbono|co2|poluent|degrad|desperd|consumo|gasto|vazament|lixo|detrit/i)) 
+            return { tipo: 'redução', icon: '📉', desc: 'Redução' };
+          if (lower.match(/biodiv|ecosist|habitat|espaço|floresta|zona|natural|espécie|flora|fauna/i)) 
+            return { tipo: 'proteção', icon: '🌿', desc: 'Proteção' };
+          if (lower.match(/eficiênc|produtiv|otimiz|render|potência|watt|litro|metro|energia|água|recurso/i)) 
+            return { tipo: 'eficiência', icon: '⚡', desc: 'Eficiência' };
+          if (lower.match(/comply|conf|licença|cert|padrão|norma|iso|requisito|regulador|legal|ambiental/i)) 
+            return { tipo: 'conformidade', icon: '✅', desc: 'Conformidade' };
+          return { tipo: 'outro', icon: '📊', desc: 'Outro' };
+        }
         
-        // Agrupar dados por indicador
+        function calculateTrend(valores, unidade = '') {
+          if (valores.length < 2) return { trend: 'neutral', pct: 0, icon: '→', descrição: 'Dados insuficientes' };
+          const sorted = [...valores].sort((a, b) => a - b);
+          const first = sorted[0];
+          const last = sorted[sorted.length - 1];
+          const change = ((last - first) / Math.abs(first)) * 100;
+          
+          if (unidade.match(/redução|emiss|consumo/i)) {
+            // Para redução: mais baixo é melhor
+            if (change < -10) return { trend: 'melhora', pct: Math.abs(change), icon: '↓ Excelente', descrição: 'Redução significativa' };
+            if (change < 0) return { trend: 'melhora', pct: Math.abs(change), icon: '↘ Bom', descrição: 'Redução moderada' };
+            if (change < 10) return { trend: 'neutral', pct: Math.abs(change), icon: '→ Estável', descrição: 'Sem mudança significativa' };
+            return { trend: 'piora', pct: change, icon: '↑ Alerta', descrição: 'Aumento preocupante' };
+          } else {
+            // Para outros: mais alto é melhor
+            if (change > 10) return { trend: 'melhora', pct: change, icon: '↑ Excelente', descrição: 'Melhora significativa' };
+            if (change > 0) return { trend: 'melhora', pct: change, icon: '↗ Bom', descrição: 'Melhora moderada' };
+            if (change > -10) return { trend: 'neutral', pct: Math.abs(change), icon: '→ Estável', descrição: 'Sem mudança significativa' };
+            return { trend: 'piora', pct: Math.abs(change), icon: '↓ Alerta', descrição: 'Redução preocupante' };
+          }
+        }
+        
+        function calculateImpactScore(indicador) {
+          let score = 0;
+          if (indicador.registos >= 6) score += 30; // Monitoramento regular
+          else if (indicador.registos >= 3) score += 20;
+          else score += 10;
+          
+          const desvioObjectivo = Math.abs((indicador.valor_medio - indicador.valorObjetivo) / indicador.valorObjetivo);
+          if (desvioObjectivo <= 0.1) score += 40; // Acima de 90% do objetivo
+          else if (desvioObjectivo <= 0.2) score += 30;
+          else if (desvioObjectivo <= 0.3) score += 20;
+          else score += 10;
+          
+          if (indicador.trend.trend === 'melhora') score += 30;
+          else if (indicador.trend.trend === 'neutral') score += 15;
+          else score += 5;
+          
+          return Math.min(100, score);
+        }
+        
+        // ============ PROCESSAMENTO DE DADOS ============
         const indicadores = {};
         const processos = new Set();
         
@@ -5951,7 +6168,10 @@
               objetivo: d.objetivo || '',
               valores: [],
               meses: [],
-              anos: []
+              anos: [],
+              unidade: d.unidade || '',
+              valorObjetivo: parseFloat(d.valorObjetivo) || 0,
+              responsavel: d.responsavel || ''
             };
           }
           
@@ -5959,27 +6179,33 @@
             const valor = parseFloat(d.valor);
             if (!isNaN(valor)) {
               indicadores[d.indicador].valores.push(valor);
-              indicadores[d.indicador].meses.push(d.mes);
+              indicadores[d.indicador].meses.push(d.mes || '');
               indicadores[d.indicador].anos.push(d.ano);
             }
           }
-          
           processos.add(d.processo);
         });
         
-        // Calcular estatísticas
+        // ============ ANÁLISE DETALHADA DE CADA INDICADOR ============
         let indicadoresComDados = 0;
         let indicadoresSemDados = 0;
         const indicadoresDetalhes = [];
+        const indicadoresEmMelhora = [];
+        const indicadoresEmPiora = [];
+        const indicadoresCriticos = [];
         
         Object.entries(indicadores).forEach(([nome, stats]) => {
+          const type = classifyIndicatorType(nome);
+          
           if (stats.valores.length > 0) {
             indicadoresComDados++;
             const valor_medio = stats.valores.reduce((a, b) => a + b, 0) / stats.valores.length;
             const valor_min = Math.min(...stats.valores);
             const valor_max = Math.max(...stats.valores);
+            const trend = calculateTrend(stats.valores, type.tipo);
+            const cumpre_objetivo = stats.valorObjetivo > 0 && valor_medio >= stats.valorObjetivo * 0.8;
             
-            indicadoresDetalhes.push({
+            const indicador = {
               nome: nome,
               processo: stats.processo,
               objetivo: stats.objetivo,
@@ -5987,8 +6213,24 @@
               valor_medio,
               valor_min,
               valor_max,
-              registos: stats.valores.length
-            });
+              registos: stats.valores.length,
+              valorObjetivo: stats.valorObjetivo,
+              type: type,
+              trend: trend,
+              unidade: stats.unidade,
+              responsavel: stats.responsavel,
+              cumpre_objetivo: cumpre_objetivo
+            };
+            
+            indicador.impactScore = calculateImpactScore(indicador);
+            
+            indicadoresDetalhes.push(indicador);
+            
+            // Classificar para insights específicos
+            if (trend.trend === 'melhora') indicadoresEmMelhora.push(indicador);
+            else if (trend.trend === 'piora') indicadoresEmPiora.push(indicador);
+            
+            if (!cumpre_objetivo) indicadoresCriticos.push(indicador);
           } else {
             indicadoresSemDados++;
             indicadoresDetalhes.push({
@@ -5996,115 +6238,218 @@
               processo: stats.processo,
               objetivo: stats.objetivo,
               comDados: false,
-              registos: 0
+              registos: 0,
+              type: type
             });
           }
         });
         
-        // === RESUMO EXECUTIVO ===
+        indicadoresDetalhes.sort((a, b) => (b.impactScore || 0) - (a.impactScore || 0));
+        indicadoresEmMelhora.sort((a, b) => b.impactScore - a.impactScore);
+        indicadoresEmPiora.sort((a, b) => b.impactScore - a.impactScore);
+        indicadoresCriticos.sort((a, b) => a.impactScore - b.impactScore);
+        
+        // ============ GERAÇÃO DO HTML ============
+        let html = '';
+        
         const total = Object.keys(indicadores).length;
         const taxaCobertura = total > 0 ? ((indicadoresComDados / total) * 100).toFixed(0) : 0;
         const statusGeral = taxaCobertura >= 80 ? '✅' : taxaCobertura >= 60 ? '⚠️' : '🔴';
         const totalRegistos = data.length;
-        const mediaRegistosPorIndicador = indicadoresComDados > 0 ? Math.round(totalRegistos / indicadoresComDados) : 0;
         
-        console.log('📊 Análise:', { total, indicadoresComDados, indicadoresSemDados, taxaCobertura, totalRegistos });
+        // === RESUMO EXECUTIVO COM IMPACTO ===
+        const indicadoresComImpacto = indicadoresDetalhes.filter(i => i.comDados && i.impactScore >= 70).length;
+        const indicadoresDeFoco = indicadoresDetalhes.filter(i => i.comDados && i.impactScore < 50).length;
         
-        html += `<div class="p-3 bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-300 rounded-lg mb-4">`;
-        html += `<div class="text-sm font-bold text-emerald-800 mb-2">${statusGeral} RESUMO EXECUTIVO - SUSTENTABILIDADE</div>`;
-        html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-green-600">${indicadoresComDados}</div><div class="text-slate-600">Com Dados 📊</div></div>`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-amber-600">${indicadoresSemDados}</div><div class="text-slate-600">Sem Dados ⚠️</div></div>`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-blue-600">${totalRegistos}</div><div class="text-slate-600">Registos Total</div></div>`;
-        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-emerald-600">${taxaCobertura}%</div><div class="text-slate-600">Cobertura</div></div>`;
+        html += `<div class="p-3 bg-gradient-to-r from-emerald-50 to-teal-100 border-2 border-emerald-400 rounded-lg mb-4 shadow-sm">`;
+        html += `<div class="text-sm font-black text-emerald-900 mb-3">${statusGeral} RESUMO EXECUTIVO - ANÁLISE DE IMPACTO AMBIENTAL</div>`;
+        html += `<div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-green-500"><div class="font-black text-lg text-green-600">${indicadoresComDados}</div><div class="text-slate-700 font-semibold">Indicadores<br/>Com Dados</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-emerald-500"><div class="font-black text-lg text-emerald-600">${indicadoresComImpacto}</div><div class="text-slate-700 font-semibold">Alto<br/>Impacto</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-amber-500"><div class="font-black text-lg text-amber-600">${indicadoresEmMelhora.length}</div><div class="text-slate-700 font-semibold">Em<br/>Melhora</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-red-500"><div class="font-black text-lg text-red-600">${indicadoresEmPiora.length}</div><div class="text-slate-700 font-semibold">Em<br/>Piora</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center border-l-4 border-slate-500"><div class="font-black text-lg text-slate-600">${taxaCobertura}%</div><div class="text-slate-700 font-semibold">Cobertura<br/>de Dados</div></div>`;
         html += `</div></div>`;
         
-        // === ALERTAS CRÍTICOS (Indicadores sem dados) ===
-        if (indicadoresSemDados > 0) {
-          html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
-          html += `<div class="font-bold text-red-800 mb-2">⚠️ INDICADORES SEM DADOS (${indicadoresSemDados})</div>`;
+        // === INDICADORES COM MELHOR IMPACTO & PROGRESSO ===
+        if (indicadoresEmMelhora.length > 0) {
+          html += `<div class="p-3 border-l-4 border-green-500 bg-green-50 rounded mb-4">`;
+          html += `<div class="font-bold text-green-800 mb-2">🌟 INDICADORES EM MELHORA (${indicadoresEmMelhora.length})</div>`;
           html += `<div class="space-y-1 text-xs">`;
           
-          indicadoresDetalhes
-            .filter(ind => !ind.comDados)
-            .slice(0, 3)
-            .forEach(ind => {
-              html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-red-200">`;
-              html += `<div>`;
-              html += `<div class="font-semibold text-red-700">${ind.nome}</div>`;
-              html += `<div class="text-slate-600">Processo: <span class="font-semibold">${ind.processo}</span></div>`;
-              html += `<div class="text-slate-500 text-xs">Objetivo: ${ind.objetivo}</div>`;
-              html += `</div></div>`;
-            });
+          indicadoresEmMelhora.slice(0, 3).forEach(ind => {
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-green-200">`;
+            html += `<div class="flex-1">`;
+            html += `<div class="font-bold text-green-700">${ind.type.icon} ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: <span class="font-semibold">${ind.processo}</span></div>`;
+            html += `<div class="text-green-700 font-semibold text-xs">${ind.trend.icon}: ${ind.trend.pct.toFixed(1)}% ${ind.trend.descrição}</div>`;
+            html += `</div>`;
+            html += `<div class="text-right ml-2">`;
+            html += `<div class="font-bold text-lg text-emerald-600">${ind.impactScore}</div>`;
+            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `</div></div>`;
+          });
           
-          if (indicadoresSemDados > 3) {
-            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresSemDados - 3} outros indicadores sem registos</div>`;
+          if (indicadoresEmMelhora.length > 3) {
+            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresEmMelhora.length - 3} outros indicadores em melhora</div>`;
           }
           
           html += `</div></div>`;
         }
         
-        // === INSIGHTS E RECOMENDAÇÕES ===
+        // === INDICADORES CRÍTICOS - MONITORAMENTO URGENTE ===
+        if (indicadoresEmPiora.length > 0) {
+          html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
+          html += `<div class="font-bold text-red-800 mb-2">🚨 INDICADORES EM PIORA (${indicadoresEmPiora.length}) - ATENÇÃO!</div>`;
+          html += `<div class="space-y-1 text-xs">`;
+          
+          indicadoresEmPiora.slice(0, 3).forEach(ind => {
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-2 border-red-400">`;
+            html += `<div class="flex-1">`;
+            html += `<div class="font-bold text-red-700">${ind.type.icon} ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: <span>${ind.processo}</span> | Responsável: <span>${ind.responsavel || 'N/D'}</span></div>`;
+            html += `<div class="text-red-700 font-bold text-xs">${ind.trend.icon}: Aumentou ${ind.trend.pct.toFixed(1)}% - ${ind.trend.descrição}</div>`;
+            html += `<div class="mt-1 text-xs bg-red-100 rounded p-1">💡 <strong>Ação:</strong> Investigar causa do aumento. Revisar procedimentos com ${ind.responsavel || 'responsável'}</div>`;
+            html += `</div>`;
+            html += `<div class="text-right ml-2">`;
+            html += `<div class="font-bold text-lg text-red-600">${ind.impactScore}</div>`;
+            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `</div></div>`;
+          });
+          
+          if (indicadoresEmPiora.length > 3) {
+            html += `<div class="text-red-600 italic text-xs mt-1 font-semibold">⚠️ ... e ${indicadoresEmPiora.length - 3} outros indicadores em piora</div>`;
+          }
+          
+          html += `</div></div>`;
+        }
+        
+        // === INDICADORES NÃO ALCANÇANDO OBJETIVOS ===
+        if (indicadoresCriticos.length > 0) {
+          html += `<div class="p-3 border-l-4 border-orange-500 bg-orange-50 rounded mb-4">`;
+          html += `<div class="font-bold text-orange-800 mb-2">⚡ INDICADORES ABAIXO DO OBJETIVO (${indicadoresCriticos.length})</div>`;
+          html += `<div class="space-y-1 text-xs">`;
+          
+          indicadoresCriticos.slice(0, 3).forEach(ind => {
+            const pctMeta = ind.valorObjetivo > 0 ? ((ind.valor_medio / ind.valorObjetivo) * 100).toFixed(0) : 0;
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-orange-200">`;
+            html += `<div class="flex-1">`;
+            html += `<div class="font-bold text-orange-700">${ind.type.icon} ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Valor: ${ind.valor_medio.toFixed(2)} ${ind.unidade} | Objetivo: ${ind.valorObjetivo} ${ind.unidade}</div>`;
+            html += `<div class="text-orange-600 font-semibold">Performance: ${pctMeta}% da meta</div>`;
+            html += `</div></div>`;
+          });
+          
+          if (indicadoresCriticos.length > 3) {
+            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresCriticos.length - 3} outros indicadores abaixo da meta</div>`;
+          }
+          
+          html += `</div></div>`;
+        }
+        
+        // === INSIGHTS E RECOMENDAÇÕES ESTRATÉGICAS ===
         html += `<div class="p-3 border-l-4 border-blue-500 bg-blue-50 rounded mb-4">`;
-        html += `<div class="font-bold text-blue-800 mb-2">💡 INSIGHTS & RECOMENDAÇÕES</div>`;
+        html += `<div class="font-bold text-blue-800 mb-2">💡 ANÁLISE ESTRATÉGICA & RECOMENDAÇÕES</div>`;
         html += `<ul class="space-y-1 text-xs text-slate-700 list-disc list-inside">`;
         
         if (indicadoresComDados === 0) {
-          html += `<li><strong>Status:</strong> Nenhum indicador com dados no período selecionado</li>`;
-          html += `<li><strong>Ação:</strong> Verificar se os dados foram carregados corretamente</li>`;
-        } else if (taxaCobertura >= 80) {
-          html += `<li><strong>Cobertura:</strong> ${taxaCobertura}% dos indicadores têm dados - excelente acompanhamento</li>`;
-          html += `<li><strong>Trend:</strong> ${indicadoresComDados} indicadores em monitoramento ativo</li>`;
-        } else if (taxaCobertura >= 50) {
-          html += `<li><strong>Cobertura:</strong> ${taxaCobertura}% dos indicadores com dados - cobertura parcial</li>`;
-          html += `<li><strong>Ação:</strong> Priorizar dados dos ${indicadoresSemDados} indicadores em falta</li>`;
+          html += `<li><strong>⚠️ Crítico:</strong> Nenhum indicador com dados. Implementar coleta de dados urgentemente.</li>`;
         } else {
-          html += `<li><strong>Crítico:</strong> Apenas ${taxaCobertura}% dos indicadores com dados</li>`;
-          html += `<li><strong>Ação Urgente:</strong> Implementar coleta de dados dos ${indicadoresSemDados} indicadores faltantes</li>`;
-        }
-        
-        html += `<li><strong>Total de Registos:</strong> ${totalRegistos} pontos de dados no período</li>`;
-        
-        if (indicadoresComDados > 0) {
-          html += `<li><strong>Média:</strong> ${mediaRegistosPorIndicador} registos por indicador</li>`;
+          const pctMelhora = ((indicadoresEmMelhora.length / indicadoresComDados) * 100).toFixed(0);
+          html += `<li><strong>🎯 Progresso:</strong> ${pctMelhora}% dos indicadores estão em trajetória positiva</li>`;
+          
+          if (indicadoresEmPiora.length > 0) {
+            html += `<li><strong>⚠️ Alerta:</strong> ${indicadoresEmPiora.length} indicador(es) em piora - requererem ação imediata</li>`;
+          }
+          
+          const mediaRegistos = Math.round(totalRegistos / indicadoresComDados);
+          if (mediaRegistos < 3) {
+            html += `<li><strong>📊 Frequência:</strong> Aumentar frequência de coleta (atualmente ${mediaRegistos} registos/indicador)</li>`;
+          }
+          
+          if (indicadoresSemDados > 0) {
+            html += `<li><strong>🔲 Cobertura:</strong> ${indicadoresSemDados} indicador(es) sem dados - ativar coleta</li>`;
+          }
+          
+          const tiposPresentes = new Set(indicadoresDetalhes.filter(i => i.comDados).map(i => i.type.tipo));
+          html += `<li><strong>📈 Escopo:</strong> Monitorando ${tiposPresentes.size} dimensões: ${Array.from(tiposPresentes).join(', ')}</li>`;
+          
+          html += `<li><strong>✅ Próximos Passos:</strong> ${indicadoresEmPiora.length > 0 ? 'Investigar causas de aumento; ' : ''}${indicadoresSemDados > 0 ? 'Completar coleta de dados; ' : ''}Reforçar práticas dos indicadores em melhora</li>`;
         }
         
         html += `</ul></div>`;
         
-        // === ANÁLISE POR PROCESSO ===
-        const porProcesso = {};
-        indicadoresDetalhes.forEach(ind => {
-          if (!porProcesso[ind.processo]) {
-            porProcesso[ind.processo] = { total: 0, comDados: 0 };
-          }
-          porProcesso[ind.processo].total++;
-          if (ind.comDados) porProcesso[ind.processo].comDados++;
+        // === ANÁLISE POR TIPO DE IMPACTO ===
+        const porTipo = {};
+        indicadoresDetalhes.filter(i => i.comDados).forEach(ind => {
+          const tipo = ind.type.tipo;
+          if (!porTipo[tipo]) porTipo[tipo] = { count: 0, scores: [], emMelhora: 0 };
+          porTipo[tipo].count++;
+          porTipo[tipo].scores.push(ind.impactScore);
+          if (ind.trend.trend === 'melhora') porTipo[tipo].emMelhora++;
         });
         
-        html += '<div class="p-3 border-l-4 border-emerald-500 bg-emerald-50 rounded">';
-        html += '<div class="font-bold text-emerald-800 mb-2">📊 COBERTURA POR PROCESSO</div>';
-        html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">';
-        
-        Object.entries(porProcesso).sort().forEach(([processo, stats]) => {
-          const cobertura = stats.total > 0 ? Math.round((stats.comDados / stats.total) * 100) : 0;
-          const statusColor = cobertura >= 80 ? 'border-green-400 bg-green-50' : cobertura >= 50 ? 'border-amber-400 bg-amber-50' : 'border-red-400 bg-red-50';
-          const statusIcon = cobertura >= 80 ? '✅' : cobertura >= 50 ? '⚠️' : '❌';
+        if (Object.keys(porTipo).length > 0) {
+          html += '<div class="p-3 border-l-4 border-teal-500 bg-teal-50 rounded">';
+          html += '<div class="font-bold text-teal-800 mb-2">🌍 ANÁLISE DE IMPACTO POR DIMENSÃO</div>';
+          html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">';
           
-          html += `<div class="border-l-4 ${statusColor} rounded p-2">`;
-          html += `<div class="font-bold">${statusIcon} ${processo}</div>`;
-          html += `<div class="text-slate-600 mt-1">Cobertura: <span class="font-bold text-lg">${cobertura}%</span></div>`;
-          html += `<div class="text-slate-500">${stats.comDados}/${stats.total} indicadores com dados</div>`;
-          html += `</div>`;
-        });
+          Object.entries(porTipo).sort().forEach(([tipo, stats]) => {
+            const avgScore = (stats.scores.reduce((a, b) => a + b, 0) / stats.scores.length).toFixed(0);
+            const pctMelhora = ((stats.emMelhora / stats.count) * 100).toFixed(0);
+            const statusColor = avgScore >= 70 ? 'border-green-400 bg-green-50' : avgScore >= 50 ? 'border-amber-400 bg-amber-50' : 'border-red-400 bg-red-50';
+            
+            html += `<div class="border-l-4 ${statusColor} rounded p-2">`;
+            html += `<div class="font-bold">${porTipo[tipo].count} indicadores de <strong>${tipo}</strong></div>`;
+            html += `<div class="text-slate-600 mt-1">Score Médio: <span class="font-bold text-lg text-teal-600">${avgScore}/100</span></div>`;
+            html += `<div class="text-slate-500">${pctMelhora}% em melhora | ${stats.emMelhora}/${stats.count} indicadores</div>`;
+            html += `</div>`;
+          });
+          
+          html += '</div></div>';
+        }
         
-        html += '</div></div>';
+        // === INDICADORES SEM DADOS ===
+        if (indicadoresSemDados > 0) {
+          const indicadoresSemDadosList = indicadoresDetalhes.filter(ind => !ind.comDados);
+          const baseId = 'sem-dados-' + Date.now();
+          const shouldCollapse = indicadoresSemDados > 5;
+          
+          html += `<div class="mt-4 p-3 border-l-4 border-slate-400 bg-slate-50 rounded">`;
+          html += `<div class="flex items-center justify-between mb-2">`;
+          html += `<div class="font-bold text-slate-800">📋 INDICADORES SEM DADOS (${indicadoresSemDados})</div>`;
+          
+          if (shouldCollapse) {
+            html += `<button onclick="toggleElement('${baseId}')" class="text-xs bg-slate-300 hover:bg-slate-400 text-slate-800 px-2 py-1 rounded transition-colors">📂 Ver Todos</button>`;
+          }
+          
+          html += `</div>`;
+          html += `<div class="space-y-1 text-xs">`;
+          
+          indicadoresSemDadosList.forEach((ind, idx) => {
+            const isHidden = shouldCollapse && idx >= 2;
+            const displayClass = isHidden ? ` hidden` : ``;
+            const itemId = `${baseId}-item-${idx}`;
+            
+            html += `<div id="${itemId}" class="flex justify-between items-start p-2 bg-white rounded border border-slate-200${displayClass}">`;
+            html += `<div>`;
+            html += `<div class="font-semibold text-slate-700">${ind.type.icon} ${ind.nome}</div>`;
+            html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo}</div>`;
+            html += `<div class="text-slate-500 text-xs">Objetivo: ${ind.objetivo}</div>`;
+            html += `</div></div>`;
+          });
+          
+          html += `</div>`;
+          html += `</div>`;
+        }
         
         container.innerHTML = html;
-        console.log('✅ Smart Analysis Sustentabilidade renderizada');
+        console.log('✅ Smart Analysis Sustentabilidade (com impacto) renderizada');
         
       } catch (error) {
         console.error('❌ Erro ao gerar análise sustentabilidade:', error);
         console.error('Stack:', error.stack);
+        container.innerHTML = `<div class="text-red-500 text-xs p-4">❌ Erro: ${error.message}</div>`;
       }
     }
 
