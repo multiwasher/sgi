@@ -582,6 +582,7 @@
         <button onclick="switchTab('plano-acao')" id="tab-plano-acao" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">PAC</button>
         <button onclick="openKpiModal()" id="tab-kpi" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">KPI'S</button>
         <a href="dashboard-analise.html" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white">📊 ANÁLISE</a>
+        <a href="https://fragosoq.github.io/audit/" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 text-white" target="_blank">🔍 AUDITORIAS</a>
       </div>
 
       <!-- Burger Menu (visible only on mobile) -->
@@ -606,7 +607,8 @@
           <button onclick="switchTabMobile('pdca')" id="mob-tab-pdca" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PDCA</button>
           <button onclick="switchTabMobile('plano-acao')" id="mob-tab-plano-acao" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">PLANO DE AÇÃO</button>
           <button onclick="openKpiModal()" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 border-t border-slate-700">KPI'S</button>
-          <a href="dashboard-analise.html" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg">📊 ANÁLISE VISUAL</a>
+          <a href="dashboard-analise.html" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-slate-800 border-t border-slate-700">📊 ANÁLISE VISUAL</a>
+          <a href="https://fragosoq.github.io/audit/" class="mobile-tab-btn block w-full text-left px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-slate-800 border-t border-slate-700 rounded-b-lg" target="_blank">🔍 AUDITORIAS</a>
         </div>
       </div>
 
@@ -1964,7 +1966,7 @@
         <h3 class="text-lg font-black text-slate-800 mb-4">Detalhes dos Dados</h3>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm">
-            <thead>
+            <thead id="kpi-table-head">
               <tr class="bg-slate-50 border-b border-slate-100">
                 <th onclick="toggleKpiYearSort()" class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition-colors" title="Clique para ordenar">Ano <span id="kpi-year-sort-indicator">↓</span></th>
                 <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
@@ -5109,6 +5111,9 @@
       document.getElementById('kpi-title').textContent = 'KPI\'s Estratégicos';
       document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores Estratégicos';
       
+      // Atualizar cabeçalhos da tabela
+      updateKpiTableHeaders();
+      
       fetchKpiEstrategicos();
     }
 
@@ -5271,6 +5276,9 @@
       document.getElementById('kpi-title').textContent = 'KPI\'s Sustentabilidade';
       document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores de Sustentabilidade Ambiental';
       
+      // Atualizar cabeçalhos da tabela
+      updateKpiTableHeaders();
+      
       // Carregar dados do Google Sheets
       fetchKpiSustentabilidade();
     }
@@ -5280,8 +5288,10 @@
         showLoading('A carregar KPI\'s de Sustentabilidade...');
         
         // URL do Google Sheets em formato CSV
+        // Separador "Indicadores" com gid=8112392
         const sheetId = '1-EJldsPPuWbJcC-guH_Jn42H5VNGydwXZEDD52LYUbM';
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+        const gidIndicadores = '8112392';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gidIndicadores}`;
         
         console.log('📥 Fetching CSV from:', csvUrl);
         const response = await fetch(csvUrl);
@@ -5382,7 +5392,7 @@
         }
         
         // Preencher os filtros
-        populateKpiFilters();
+        populateKpiFilters(kpiSustentabilidadeData);
         
         // Atualizar dashboard
         updateKpiDashboard();
@@ -5394,65 +5404,6 @@
         alert(`Erro ao carregar dados:\n${error.message}`);
         document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="10" class="px-8 py-12 text-center text-red-500">Erro ao carregar dados: ${error.message}</td></tr>`;
       }
-    }
-
-    function populateKpiFilters() {
-      // Obter dados corretos baseado no tipo de KPI
-      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
-      
-      console.log(`\n🔄 populateKpiFilters() called for: ${kpiCurrentType}`);
-      console.log(`Total records in currentData: ${currentData.length}`);
-      
-      // Extrair valores únicos para filtros
-      const anos = [...new Set(currentData.map(d => d.ano))].sort((a, b) => a - b);
-      let processos = [...new Set(currentData.map(d => d.processo))];
-      let indicadores = [...new Set(currentData.map(d => d.indicador))];
-      
-      console.log('Processos brutos encontrados:', processos);
-      console.log('Indicadores brutos encontrados:', indicadores);
-      console.log('Anos encontrados:', anos);
-      
-      // Ordenar alfabeticamente
-      processos = processos.sort();
-      indicadores = indicadores.sort();
-      
-      console.log('Processos após ordenação/filtragem:', processos);
-      console.log('Indicadores após ordenação/filtragem:', indicadores);
-      
-      // Preencher botões de anos (multi-select, sem "Todos")
-      const anoBtnContainer = document.getElementById('kpi-filter-ano-buttons');
-      anoBtnContainer.innerHTML = '';
-      anos.forEach(ano => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'kpi-year-btn px-2 py-1 rounded text-xs font-bold transition-all border-2 border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:bg-emerald-50';
-        btn.textContent = ano;
-        btn.dataset.year = ano;
-        btn.onclick = () => {
-          toggleYearButton(btn, ano);
-          updateKpiDashboard();
-        };
-        anoBtnContainer.appendChild(btn);
-      });
-      
-      console.log('✅ Anos buttons preenchido com:', anos.length, 'valores');
-      
-      // Preencher select de processos
-      const processoSelect = document.getElementById('kpi-filter-processo');
-      processoSelect.innerHTML = '<option value="">Todos os Processos</option>' + 
-        processos.map(p => `<option value="${p}">${p}</option>`).join('');
-      processoSelect.addEventListener('change', updateKpiDashboard);
-      
-      console.log('✅ Processos select preenchido com:', processos.length, 'valores');
-      console.log('Processos renderizados:', Array.from(processoSelect.options).map(o => o.value).filter(v => v !== ''));
-      
-      // Preencher select de indicadores
-      const indicadorSelect = document.getElementById('kpi-filter-indicador');
-      indicadorSelect.innerHTML = '<option value="">Todos os Indicadores</option>' + 
-        indicadores.map(ind => `<option value="${ind}">${ind}</option>`).join('');
-      indicadorSelect.addEventListener('change', updateKpiDashboard);
-      
-      console.log('✅ Indicadores select preenchido com:', indicadores.length, 'valores');
     }
 
     function updateKpiDashboard() {
@@ -5482,38 +5433,100 @@
         filteredData = filteredData.filter(d => d.indicador === indicadorFilter);
       }
       
-      // Atualizar estatísticas
-      updateKpiStats(filteredData);
+      // Atualizar estatísticas (com dados filtrados)
+      updateKpiStats(filteredData, currentData);
       
-      // Atualizar tabela
+      // Atualizar tabela (com dados filtrados)
       displayKpiTable(filteredData);
       
-      // Atualizar gráficos
+      // Atualizar gráficos (com dados filtrados)
       updateKpiCharts(filteredData);
     }
 
-    function updateKpiStats(data) {
-      // Calcular taxa de cumprimento (Real/Meta)
+    function updateKpiTableHeaders() {
+      const thead = document.getElementById('kpi-table-head');
+      
+      if (kpiCurrentType === 'sustentabilidade') {
+        thead.innerHTML = `
+          <tr class="bg-slate-50 border-b border-slate-100">
+            <th onclick="toggleKpiYearSort()" class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition-colors" title="Clique para ordenar">Ano <span id="kpi-year-sort-indicator">↓</span></th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Mês</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Indicador</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Unidade</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Objetivo</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cumprimento %</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">—</th>
+          </tr>
+        `;
+      } else {
+        thead.innerHTML = `
+          <tr class="bg-slate-50 border-b border-slate-100">
+            <th onclick="toggleKpiYearSort()" class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition-colors" title="Clique para ordenar">Ano <span id="kpi-year-sort-indicator">↓</span></th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Risco</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável Processo</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome do Indicador</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fórmula de Controlo</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequência de Análise</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Goal</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Meta</th>
+            <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Real</th>
+          </tr>
+        `;
+      }
+    }
+
+    function updateKpiStats(data, allDataForSmartAnalysis) {
+      // Se não recebeu dados completos, usar os dados filtrados (para compatibilidade)
+      if (!allDataForSmartAnalysis) {
+        allDataForSmartAnalysis = data;
+      }
+      
+      // Calcular taxa de cumprimento (Real/Meta) ou (Valor/Valor Objetivo)
       let totalRealizado = 0;
       let totalMeta = 0;
       let acimaMeta = 0;
       let abaixoMeta = 0;
       let kpisValidos = 0;
       
-      data.forEach(d => {
-        if (d.meta && d.meta > 0) {
-          const percentual = (d.real / d.meta) * 100;
-          totalRealizado += d.real;
-          totalMeta += d.meta;
-          kpisValidos++;
-          
-          if (percentual >= 100) {
-            acimaMeta++;
-          } else if (percentual < 80) {
-            abaixoMeta++;
+      if (kpiCurrentType === 'sustentabilidade') {
+        // Para KPIs de Sustentabilidade
+        data.forEach(d => {
+          if (d.valorObjetivo && d.valorObjetivo > 0) {
+            const percentual = (d.valor / d.valorObjetivo) * 100;
+            totalRealizado += d.valor;
+            totalMeta += d.valorObjetivo;
+            kpisValidos++;
+            
+            if (percentual >= 100) {
+              acimaMeta++;
+            } else if (percentual < 80) {
+              abaixoMeta++;
+            }
           }
-        }
-      });
+        });
+      } else {
+        // Para KPIs Estratégicos
+        data.forEach(d => {
+          if (d.meta && d.meta > 0) {
+            const percentual = (d.real / d.meta) * 100;
+            totalRealizado += d.real;
+            totalMeta += d.meta;
+            kpisValidos++;
+            
+            if (percentual >= 100) {
+              acimaMeta++;
+            } else if (percentual < 80) {
+              abaixoMeta++;
+            }
+          }
+        });
+      }
       
       const taxaCumprimento = kpisValidos > 0 ? ((totalRealizado / totalMeta) * 100).toFixed(1) : 0;
       
@@ -5524,12 +5537,24 @@
         const ultimoAno = data.filter(d => d.ano == anos[0]);
         const anoAnterior = data.filter(d => d.ano == anos[1]);
         
-        const mediaUltimo = ultimoAno.length > 0 
-          ? ultimoAno.reduce((sum, d) => sum + (d.meta > 0 ? (d.real / d.meta) * 100 : 0), 0) / ultimoAno.length 
-          : 0;
-        const mediaAnterior = anoAnterior.length > 0 
-          ? anoAnterior.reduce((sum, d) => sum + (d.meta > 0 ? (d.real / d.meta) * 100 : 0), 0) / anoAnterior.length 
-          : 0;
+        let mediaUltimo = 0;
+        let mediaAnterior = 0;
+        
+        if (kpiCurrentType === 'sustentabilidade') {
+          mediaUltimo = ultimoAno.length > 0 
+            ? ultimoAno.reduce((sum, d) => sum + (d.valorObjetivo > 0 ? (d.valor / d.valorObjetivo) * 100 : 0), 0) / ultimoAno.length 
+            : 0;
+          mediaAnterior = anoAnterior.length > 0 
+            ? anoAnterior.reduce((sum, d) => sum + (d.valorObjetivo > 0 ? (d.valor / d.valorObjetivo) * 100 : 0), 0) / anoAnterior.length 
+            : 0;
+        } else {
+          mediaUltimo = ultimoAno.length > 0 
+            ? ultimoAno.reduce((sum, d) => sum + (d.meta > 0 ? (d.real / d.meta) * 100 : 0), 0) / ultimoAno.length 
+            : 0;
+          mediaAnterior = anoAnterior.length > 0 
+            ? anoAnterior.reduce((sum, d) => sum + (d.meta > 0 ? (d.real / d.meta) * 100 : 0), 0) / anoAnterior.length 
+            : 0;
+        }
         
         if (mediaUltimo > mediaAnterior + 2) tendencia = '↑ +';
         else if (mediaUltimo < mediaAnterior - 2) tendencia = '↓ ';
@@ -5541,8 +5566,12 @@
       document.getElementById('kpi-stat-risco').textContent = abaixoMeta;
       document.getElementById('kpi-stat-tendencia').textContent = tendencia;
       
-      // Gerar Smart Analysis
-      generateSmartAnalysis(data, taxaCumprimento, acimaMeta, abaixoMeta, anos);
+      // Gerar Smart Analysis com dados COMPLETOS (não filtrados pelos filtros principais)
+      if (kpiCurrentType === 'sustentabilidade') {
+        generateSmartAnalysisSustentabilidade(allDataForSmartAnalysis, taxaCumprimento, acimaMeta, abaixoMeta, anos);
+      } else {
+        generateSmartAnalysis(allDataForSmartAnalysis, taxaCumprimento, acimaMeta, abaixoMeta, anos);
+      }
     }
 
     function generateSmartAnalysis(data, taxaCumprimento, acimaMeta, abaixoMeta, anos) {
@@ -5555,61 +5584,114 @@
           return;
         }
         
-        console.log('🤖 Gerando Smart Analysis com', data.length, 'registos');
+        if (!filtersContainer) {
+          console.error('❌ Smart Analysis filters container não encontrado!');
+          return;
+        }
         
-        // Coletar informações sobre filtros ativos
-        const selectedYearBtns = document.querySelectorAll('.kpi-year-btn.kpi-year-selected');
-        const anosFilter = Array.from(selectedYearBtns).map(btn => btn.dataset.year);
-        const processoFilter = document.getElementById('kpi-filter-processo').value;
-        const indicadorFilter = document.getElementById('kpi-filter-indicador').value;
+        // Guardar dados completos (sem filtro) para usar nos botões de anos
+        const originalDataForYearFilter = data;
         
-        // Detectar anos presentes nos dados filtrados (apenas anos atuais e anteriores)
-        const currentYear = new Date().getFullYear();
-        const anosEmDados = [...new Set(data.map(d => parseInt(d.ano)).filter(a => a <= currentYear && a > 0))].sort((a, b) => b - a);
+        console.log('🤖 Gerando Smart Analysis com', data.length, 'registos - Tipo:', kpiCurrentType);
+        console.log('📊 Primeiros 3 registos:', data.slice(0, 3));
         
-        // INICIALIZAR BOTÕES DE FILTRO DE ANOS - só faz uma vez
-        if (filtersContainer.querySelector('.flex.flex-wrap').children.length === 0) {
-          if (anosEmDados.length > 0) {
-            let buttonsHtml = '';
-            anosEmDados.forEach((ano, index) => {
-              const isFirst = index === 0;
-              const selectedClass = isFirst ? 'bg-emerald-100 text-emerald-700 border-emerald-500' : 'bg-white text-slate-700 border-slate-300';
-              buttonsHtml += `<button class="smart-analysis-year-btn px-3 py-1 rounded text-xs font-bold border-2 transition-all hover:border-emerald-500 hover:bg-emerald-50 ${selectedClass}" data-year="${ano}" data-selected="${isFirst}">${ano}</button>`;
-            });
-            
-            const flexWrapper = filtersContainer.querySelector('.flex.flex-wrap');
-            flexWrapper.innerHTML = buttonsHtml;
-            
-            // Adicionar event listeners aos botões
-            const yearBtns = filtersContainer.querySelectorAll('.smart-analysis-year-btn');
-            yearBtns.forEach(btn => {
-              btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const clickedBtn = e.target;
-                const isSelected = clickedBtn.dataset.selected === 'true';
-                
-                if (isSelected) {
-                  clickedBtn.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
-                  clickedBtn.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
-                  clickedBtn.dataset.selected = 'false';
-                } else {
-                  clickedBtn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
-                  clickedBtn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300');
-                  clickedBtn.dataset.selected = 'true';
-                }
-                
-                // Recalcular análise com anos selecionados
-                updateSmartAnalysisContent(data, anosEmDados);
+        // Detectar anos presentes nos dados - todos os anos válidos
+        const anosEmDados = [...new Set(data.map(d => {
+          const anoNum = parseInt(d.ano);
+          return anoNum > 0 ? anoNum : null;
+        }).filter(a => a !== null))].sort((a, b) => b - a);
+        
+        console.log('📊 Smart Analysis - Anos em dados:', anosEmDados);
+        
+        // INICIALIZAR BOTÕES DE FILTRO DE ANOS
+        // Procurar a div com flex flex-wrap (wrapper dos botões)
+        let flexWrapper = filtersContainer.querySelector('.flex.flex-wrap');
+        
+        if (!flexWrapper) {
+          console.warn('⚠️ Wrapper dos botões não encontrado, procurando alternativa...');
+          flexWrapper = filtersContainer.querySelector('div:last-child');
+        }
+        
+        console.log('💾 flexWrapper encontrado:', !!flexWrapper);
+        console.log('💾 Botões existentes:', flexWrapper ? flexWrapper.children.length : 'N/A');
+        
+        // Para sustentabilidade, sempre reinicializa os botões (podem ter vindo de estratégicos)
+        // Para estratégicos, só faz uma vez
+        const shouldReinitialize = kpiCurrentType === 'sustentabilidade' || (flexWrapper && flexWrapper.children.length === 0);
+        
+        if (flexWrapper && shouldReinitialize && anosEmDados.length > 0) {
+          console.log('🔄 Reinicializando botões de anos...');
+          let buttonsHtml = '';
+          anosEmDados.forEach((ano, index) => {
+            const isFirst = index === 0;
+            const selectedClass = isFirst ? 'bg-emerald-100 text-emerald-700 border-emerald-500' : 'bg-white text-slate-700 border-slate-300';
+            const dataSelected = isFirst ? 'true' : 'false';
+            buttonsHtml += `<button class="smart-analysis-year-btn px-3 py-1 rounded text-xs font-bold border-2 transition-all hover:border-emerald-500 hover:bg-emerald-50 ${selectedClass}" data-year="${ano}" data-selected="${dataSelected}">${ano}</button>`;
+            console.log(`  📌 Botão criado: ano=${ano}, data-selected="${dataSelected}"`);
+          });
+          
+          flexWrapper.innerHTML = buttonsHtml;
+          console.log('✅ Botões criados:', anosEmDados.length, 'HTML length:', buttonsHtml.length);
+          
+          // Adicionar event listeners aos botões
+          const yearBtns = flexWrapper.querySelectorAll('.smart-analysis-year-btn');
+          console.log('📌 Botões encontrados para listeners:', yearBtns.length);
+          
+          yearBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const clickedBtn = e.target;
+              const clickedYear = clickedBtn.dataset.year;
+              const wasSelected = clickedBtn.dataset.selected === 'true';
+              
+              console.log('🔘 Botão clicado:', clickedYear, 'estava selecionado:', wasSelected);
+              console.log('  Antes do click - data-selected:', clickedBtn.dataset.selected);
+              
+              // Alternar estado
+              if (wasSelected) {
+                // Desselecionar
+                clickedBtn.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
+                clickedBtn.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
+                clickedBtn.dataset.selected = 'false';
+              } else {
+                // Selecionar
+                clickedBtn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
+                clickedBtn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300');
+                clickedBtn.dataset.selected = 'true';
+              }
+              
+              console.log('  Depois do click - data-selected:', clickedBtn.dataset.selected);
+              console.log('🔄 Acionando updateSmartAnalysisContent...');
+              console.log(`  Passando dados:`, {
+                dataLength: originalDataForYearFilter.length,
+                anos: anosEmDados,
+                kpiType: kpiCurrentType
               });
+              
+              // Recalcular análise com anos selecionados - passar dados completos
+              updateSmartAnalysisContent(originalDataForYearFilter, anosEmDados, kpiCurrentType);
             });
+          });
+          
+          console.log('✅ Smart Analysis - Botões de anos inicializados com listeners');
+        } else {
+          if (anosEmDados.length === 0) {
+            console.warn('⚠️ Nenhum ano nos dados!');
+          }
+          if (!flexWrapper) {
+            console.error('❌ flexWrapper não encontrado!');
+          }
+          if (!shouldReinitialize) {
+            console.log('ℹ️ Não reinicializou (já tem botões ou é estratégico)');
           }
         }
         
-        // ATUALIZAR CONTEÚDO DA ANÁLISE
-        updateSmartAnalysisContent(data, anosEmDados);
+        // ATUALIZAR CONTEÚDO DA ANÁLISE - passar dados completos
+        updateSmartAnalysisContent(originalDataForYearFilter, anosEmDados, kpiCurrentType);
         
       } catch (error) {
         console.error('❌ Erro ao gerar Smart Analysis:', error);
+        console.error('Stack:', error.stack);
         const analysisContainer = document.getElementById('kpi-smart-analysis');
         if (analysisContainer) {
           analysisContainer.innerHTML = `<div class="text-red-500 text-xs p-4">Erro: ${error.message}</div>`;
@@ -5617,234 +5699,426 @@
       }
     }
     
-    function updateSmartAnalysisContent(originalData, anosEmDados) {
+    function updateSmartAnalysisContent(originalData, anosEmDados, kpiType = 'estrategicos') {
       try {
         const analysisContainer = document.getElementById('kpi-smart-analysis');
         const filtersContainer = document.getElementById('kpi-smart-analysis-filters');
         
-        // Obter anos selecionados nos botões
-        const selectedYearBtns = filtersContainer.querySelectorAll('.smart-analysis-year-btn[data-selected="true"]');
-        const selectedYears = Array.from(selectedYearBtns).map(btn => parseInt(btn.dataset.year));
+        console.log('🔄 updateSmartAnalysisContent chamado', { 
+          originalDataLength: originalData ? originalData.length : 0, 
+          anosEmDados, 
+          kpiType 
+        });
         
-        // Filtrar dados pelos anos selecionados
-        const data = selectedYears.length > 0 
-          ? originalData.filter(d => selectedYears.includes(parseInt(d.ano)))
-          : originalData;
-        
-        // Recoletar filtros
-        const selectedYearBtnsMain = document.querySelectorAll('.kpi-year-btn.kpi-year-selected');
-        const anosFilter = Array.from(selectedYearBtnsMain).map(btn => btn.dataset.year);
-        const processoFilter = document.getElementById('kpi-filter-processo').value;
-        const indicadorFilter = document.getElementById('kpi-filter-indicador').value;
-        
-        const currentYear = new Date().getFullYear();
-        
-        // Construir descrição dos filtros
-        let filtroDescricao = 'Dados: ';
-        let temFiltroAtivo = false;
-        
-        if (anosFilter.length > 0) {
-          filtroDescricao += `Anos [${anosFilter.join(', ')}]`;
-          temFiltroAtivo = true;
-        } else if (anosEmDados.length > 0) {
-          filtroDescricao += `Anos [${anosEmDados.join(', ')}]`;
-        } else {
-          filtroDescricao += `Todos os anos`;
-        }
-        
-        if (processoFilter) {
-          filtroDescricao += ` | Processo: ${processoFilter}`;
-          temFiltroAtivo = true;
-        }
-        if (indicadorFilter) {
-          filtroDescricao += ` | Indicador: ${indicadorFilter}`;
-          temFiltroAtivo = true;
-        }
-        
-        let html = '';
-        
-        // Header com contexto de filtros - DESTACADO
-        const headerClass = temFiltroAtivo 
-          ? 'mb-4 pb-3 px-3 py-2 border-2 border-blue-300 bg-blue-50 rounded-lg' 
-          : 'mb-4 pb-3 border-b border-slate-200';
-        const textClass = temFiltroAtivo 
-          ? 'text-sm text-blue-700' 
-          : 'text-xs text-slate-500';
-        
-        html += `<div class="${headerClass}">`;
-        html += `<p class="${textClass}"><strong>📊 Análise Inteligente</strong> ${temFiltroAtivo ? '🎯' : ''}</p>`;
-        html += `</div>`;
-        
-        if (data.length === 0) {
-          html += '<div class="text-center text-slate-500 py-6"><p>Nenhum dado disponível com os filtros selecionados.</p></div>';
-          analysisContainer.innerHTML = html;
+        if (!analysisContainer || !filtersContainer) {
+          console.error('❌ Containers não encontrados!');
           return;
         }
         
-        // 1. Identificar KPIs que NÃO estão OK (alertas)
-        const failingKpis = [];
+        // Recalcular anosEmDados a partir dos dados originais
+        const anosAtualizados = [...new Set(originalData.map(d => parseInt(d.ano)).filter(a => a > 0))].sort((a, b) => b - a);
+        console.log('📅 Anos atualizados:', anosAtualizados);
         
-        data.forEach(d => {
-          if (d.meta && d.meta > 0 && d.real !== undefined) {
-            if (!isKpiOk(d.real, d.meta, d.goal)) {
-              failingKpis.push({ 
-                indicador: d.indicador, 
-                processo: d.processo,
-                real: d.real,
-                meta: d.meta,
-                goal: d.goal || '≥'
-              });
-            }
-          }
+        // Obter anos selecionados nos botões
+        const selectedYearBtns = filtersContainer.querySelectorAll('.smart-analysis-year-btn[data-selected="true"]');
+        console.log('📌 Botões encontrados:', selectedYearBtns.length);
+        
+        // Debug: mostrar todos os botões para saber o estado deles
+        const allBtns = filtersContainer.querySelectorAll('.smart-analysis-year-btn');
+        console.log('📊 Total de botões:', allBtns.length);
+        allBtns.forEach(btn => {
+          console.log(`  - Botão: year=${btn.dataset.year}, data-selected="${btn.dataset.selected}" (tipo: ${typeof btn.dataset.selected})`);
         });
         
-        // Ordenar pelos piores primeiro
-        failingKpis.sort((a, b) => {
-          const pctA = (a.real / a.meta) * 100;
-          const pctB = (b.real / b.meta) * 100;
-          return pctA - pctB;
+        const selectedYears = Array.from(selectedYearBtns).map(btn => {
+          const year = parseInt(btn.dataset.year);
+          console.log(`  ✅ Ano selecionado: ${year}`);
+          return year;
         });
+        console.log('✅ Anos selecionados:', selectedYears);
         
-        // 2. Análise por processo - apenas com anos atuais e anteriores
-        const dataForProcessAnalysis = data.filter(d => parseInt(d.ano) <= currentYear);
+        // Filtrar dados pelos anos selecionados
+        let data = originalData;
+        if (selectedYears.length > 0) {
+          console.log('🔍 Filtrando dados pelos anos:', selectedYears);
+          const beforeCount = data.length;
+          data = originalData.filter(d => selectedYears.includes(parseInt(d.ano)));
+          console.log(`📊 Dados após filtro: ${data.length} de ${beforeCount}`);
+        } else {
+          console.log(`ℹ️ Nenhum ano selecionado, usando todos os ${data.length} dados`);
+        }
         
-        // Função para verificar se um KPI está OK baseado no GOAL
-        function isKpiOk(real, meta, goal) {
-          if (meta === 0 || real === undefined) return false;
+        if (data.length === 0) {
+          let html = '<div class="text-center text-slate-500 py-6"><p>Nenhum dado disponível com os filtros selecionados.</p></div>';
+          analysisContainer.innerHTML = html;
+          console.warn('⚠️ Sem dados após filtro de anos');
+          return;
+        }
+        
+        // Usar o tipo de KPI explicitamente informado
+        if (kpiType === 'sustentabilidade') {
+          console.log('🌱 Renderizando generateSmartAnalysisSustentabilidadeContent');
+          generateSmartAnalysisSustentabilidadeContent(analysisContainer, data, anosAtualizados);
+        } else {
+          console.log('🎯 Renderizando generateSmartAnalysisEstrategico');
+          generateSmartAnalysisEstrategico(analysisContainer, data, anosAtualizados);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao atualizar conteúdo Smart Analysis:', error);
+        console.error('Stack:', error.stack);
+      }
+    }
+
+    function generateSmartAnalysisEstrategico(container, data, anosEmDados) {
+      try {
+        // Função auxiliar para verificar se um KPI atinge o goal
+        function isGoalMet(real, meta, goal) {
+          const realVal = parseFloat(real);
+          const metaVal = parseFloat(meta);
+          if (metaVal === 0) return true;
           
           // Extrair operador do GOAL
           let operator = '≥'; // padrão
           if (goal) {
-            if (goal.includes('≤')) operator = '≤';
-            else if (goal.includes('≥')) operator = '≥';
-            else if (goal.includes('=')) operator = '=';
+            const goalStr = String(goal).trim();
+            if (goalStr.includes('≤')) operator = '≤';
+            else if (goalStr.includes('≥')) operator = '≥';
+            else if (goalStr.includes('=')) operator = '=';
           }
           
           // Aplicar comparação
-          if (operator === '≤') return real <= meta;
-          if (operator === '≥') return real >= meta;
-          if (operator === '=') return real === meta;
+          if (operator === '≤') return realVal <= metaVal;
+          if (operator === '≥') return realVal >= metaVal;
+          if (operator === '=') return realVal === metaVal;
           return false;
         }
         
-        const porProcesso = {};
-        dataForProcessAnalysis.forEach(d => {
-          if (!porProcesso[d.processo]) {
-            porProcesso[d.processo] = { total: 0, ok: 0 };
-          }
-          porProcesso[d.processo].total++;
-          
-          if (d.meta > 0 && d.real !== undefined) {
-            if (isKpiOk(d.real, d.meta, d.goal)) {
-              porProcesso[d.processo].ok++;
-            }
-          }
-        });
+        // Análise para KPIs Estratégicos com insights
+        let html = '';
         
-        // Recalcular estatísticas com dados filtrados
-        let totalRealizado = 0;
-        let totalMeta = 0;
-        let acimaMeta = 0;
-        let abaixoMeta = 0;
-        let kpisValidos = 0;
+        // Calcular métricas globais
+        let emAlvo = 0, emRisco = 0, critico = 0;
+        const indicadores = {};
+        const indicadoresComProblemas = [];
         
         data.forEach(d => {
-          if (d.meta && d.meta > 0 && d.real !== undefined) {
-            const percentual = (d.real / d.meta) * 100;
-            totalRealizado += d.real;
-            totalMeta += d.meta;
-            kpisValidos++;
-            
-            // Usar a mesma função de verificação
-            if (isKpiOk(d.real, d.meta, d.goal)) {
-              acimaMeta++;
-            } else {
-              abaixoMeta++;
+          if (!indicadores[d.indicador]) {
+            indicadores[d.indicador] = {
+              processo: d.processo,
+              meta: parseFloat(d.meta) || 0,
+              real: parseFloat(d.real) || 0,
+              goal: d.goal,
+              risco: d.risco,
+              responsavel: d.responsavelMonitorizacao
+            };
+          }
+        });
+        
+        // Classificar indicadores baseado no GOAL
+        Object.entries(indicadores).forEach(([indic, stats]) => {
+          if (stats.meta === 0) return;
+          
+          const cumpre = isGoalMet(stats.real, stats.meta, stats.goal);
+          const percentualDesvio = Math.abs(((stats.real - stats.meta) / stats.meta) * 100);
+          
+          if (cumpre) {
+            emAlvo++;
+          } else if (percentualDesvio <= 20) {
+            // Se não cumpre mas está perto (até 20% de desvio)
+            emRisco++;
+          } else {
+            critico++;
+            indicadoresComProblemas.push({
+              indicador: indic,
+              processo: stats.processo,
+              meta: stats.meta,
+              real: stats.real,
+              goal: stats.goal,
+              desvio: (stats.real - stats.meta).toFixed(2),
+              percentualDesvio: percentualDesvio.toFixed(1),
+              risco: stats.risco,
+              responsavel: stats.responsavel
+            });
+          }
+        });
+        
+        // === RESUMO EXECUTIVO ===
+        const total = Object.keys(indicadores).length;
+        const taxaGeral = total > 0 ? ((emAlvo / total) * 100).toFixed(0) : 0;
+        const statusGeral = taxaGeral >= 80 ? '✅' : taxaGeral >= 60 ? '⚠️' : '🔴';
+        
+        html += `<div class="p-3 bg-gradient-to-r from-slate-50 to-slate-100 border border-slate-300 rounded-lg mb-4">`;
+        html += `<div class="text-sm font-bold text-slate-800 mb-2">${statusGeral} RESUMO EXECUTIVO</div>`;
+        html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-green-600">${emAlvo}</div><div class="text-slate-600">Em Alvo ✅</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-amber-600">${emRisco}</div><div class="text-slate-600">Em Risco ⚠️</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-red-600">${critico}</div><div class="text-slate-600">Crítico 🔴</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-indigo-600">${taxaGeral}%</div><div class="text-slate-600">Taxa Geral</div></div>`;
+        html += `</div></div>`;
+        
+        // === ALERTAS CRÍTICOS ===
+        if (critico > 0) {
+          html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
+          html += `<div class="font-bold text-red-800 mb-2">⚠️ INDICADORES CRÍTICOS (${critico})</div>`;
+          html += `<div class="space-y-1 text-xs">`;
+          
+          indicadoresComProblemas
+            .sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio))
+            .slice(0, 3)
+            .forEach(ind => {
+              const goalDisplay = ind.goal ? (String(ind.goal).includes('≤') ? '≤' : String(ind.goal).includes('≥') ? '≥' : '=') : '≥';
+              html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-red-200">`;
+              html += `<div>`;
+              html += `<div class="font-semibold text-red-700">${ind.indicador}</div>`;
+              html += `<div class="text-slate-600">Processo: <span class="font-semibold">${ind.processo}</span></div>`;
+              html += `</div>`;
+              html += `<div class="text-right">`;
+              html += `<div class="font-bold text-red-600">${ind.percentualDesvio}% desvio</div>`;
+              html += `<div class="text-slate-500">Real: ${ind.real} | Meta: ${ind.meta} (${goalDisplay})</div>`;
+              html += `<div class="text-red-600 text-xs">Diferença: ${ind.desvio}</div>`;
+              html += `</div></div>`;
+            });
+          
+          if (indicadoresComProblemas.length > 3) {
+            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresComProblemas.length - 3} outros indicadores críticos</div>`;
+          }
+          
+          html += `</div></div>`;
+        }
+        
+        // === INSIGHTS E RECOMENDAÇÕES ===
+        html += `<div class="p-3 border-l-4 border-blue-500 bg-blue-50 rounded">`;
+        html += `<div class="font-bold text-blue-800 mb-2">💡 INSIGHTS & RECOMENDAÇÕES</div>`;
+        html += `<ul class="space-y-1 text-xs text-slate-700 list-disc list-inside">`;
+        
+        if (critico > 0) {
+          html += `<li><strong>Ação Imediata:</strong> ${critico} indicador(es) crítico(s) requerem intervenção urgente</li>`;
+        }
+        
+        if (taxaGeral >= 80) {
+          html += `<li><strong>Desempenho Geral:</strong> Estrutura de KPIs está alinhada com objetivos (${taxaGeral}%)</li>`;
+        } else if (taxaGeral >= 60) {
+          html += `<li><strong>Atenção:</strong> Alguns indicadores necessitam de ajustes de estratégia</li>`;
+        } else {
+          html += `<li><strong>Crítico:</strong> Revisão completa da estratégia recomendada (${taxaGeral}% de cumprimento)</li>`;
+        }
+        
+        // Processos com problemas (usando a mesma lógica de GOAL)
+        const processoStats = {};
+        data.forEach(d => {
+          if (!processoStats[d.processo]) processoStats[d.processo] = { total: 0, criticos: 0 };
+          processoStats[d.processo].total++;
+          const cumpre = isGoalMet(d.real, d.meta, d.goal);
+          if (!cumpre) {
+            const percentualDesvio = Math.abs(((parseFloat(d.real) - parseFloat(d.meta)) / parseFloat(d.meta)) * 100);
+            if (percentualDesvio > 20) {
+              processoStats[d.processo].criticos++;
             }
           }
         });
         
-        const taxaCumprimento = kpisValidos > 0 ? ((totalRealizado / totalMeta) * 100).toFixed(1) : 0;
-        
-        // Construir HTML
-        html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-        
-        // Seção: Alertas
-        if (failingKpis.length > 0) {
-          const alertsId = `alerts-${Date.now()}`;
-          html += '<div class="border border-orange-200 rounded-lg p-4 bg-orange-50 md:col-span-2">';
-          html += `<div class="flex items-center justify-between cursor-pointer" onclick="toggleAlertsSection('${alertsId}')">`;
-          html += `<h4 class="font-bold text-orange-800 text-sm">⚠️ Alertas - Fora do Alvo <span class="text-orange-600 font-normal text-xs ml-2">(${failingKpis.length} itens)</span></h4>`;
-          html += `<button class="toggle-alerts-btn text-orange-800 font-bold text-lg" data-alerts-id="${alertsId}">▼</button>`;
-          html += '</div>';
-          html += `<div id="${alertsId}" class="alerts-content hidden mt-4">`;
-          html += '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">';
-          failingKpis.forEach(kpi => {
-            html += `<div class="bg-white border border-orange-300 rounded p-2"><strong class="text-orange-800 text-xs block mb-1">${kpi.indicador}</strong><span class="text-orange-700 text-xs">${kpi.real} ${kpi.goal} ${kpi.meta}</span></div>`;
-          });
-          html += '</div></div></div>';
+        const processoCom80pct = Object.entries(processoStats).filter(([p, s]) => s.total > 0 && (s.criticos / s.total) >= 0.5);
+        if (processoCom80pct.length > 0) {
+          html += `<li><strong>Processo de Risco:</strong> ${processoCom80pct.map(([p]) => p).join(', ')} com múltiplos indicadores em risco</li>`;
         }
         
-        // Seção: Análise por Processo (se houver dados)
-        if (Object.keys(porProcesso).length > 0) {
-          html += '<div class="border border-blue-200 rounded-lg p-4 bg-blue-50 md:col-span-2">';
-          html += '<h4 class="font-bold text-blue-800 text-sm mb-2">📊 Desempenho por Processo</h4>';
-          html += '<div class="grid grid-cols-2 md:grid-cols-3 gap-2">';
-          Object.entries(porProcesso).forEach(([processo, stats]) => {
-            // Determinar saúde baseado em quantos estão OK
-            let health;
-            if (stats.ok === stats.total) {
-              // Todos OK = Verde
-              health = '🟢';
-            } else if (stats.ok === 0) {
-              // Nenhum OK = Vermelho
-              health = '🔴';
-            } else {
-              // Alguns OK = Amarelo
-              health = '🟡';
-            }
-            html += `<div class="text-xs text-blue-700"><strong>${health} ${processo}</strong><br/>${stats.ok}/${stats.total}</div>`;
-          });
-          html += '</div></div>';
-        }
+        html += `</ul></div>`;
         
-        // Seção: Recomendações
-        html += '<div class="border border-purple-200 rounded-lg p-4 bg-purple-50 md:col-span-2">';
-        html += '<h4 class="font-bold text-purple-800 text-sm mb-2">💡 Recomendações</h4>';
-        if (data.length > 0) {
-          if (taxaCumprimento < 75) {
-            html += '<div class="text-xs text-purple-700 mb-1">• Revisar as metas - desempenho geral abaixo de 75%</div>';
-          } else if (taxaCumprimento >= 100) {
-            html += '<div class="text-xs text-purple-700 mb-1">• Excelente desempenho! Considere aumentar metas</div>';
-          }
-          if (abaixoMeta > 0) {
-            html += `<div class="text-xs text-purple-700 mb-1">• ${abaixoMeta} KPI(s) fora do alvo - ação necessária</div>`;
-          }
-          if (abaixoMeta === 0 && acimaMeta > 0 && taxaCumprimento >= 80) {
-            html += '<div class="text-xs text-purple-700 mb-1">• Ótimo progresso - todos os KPIs dentro do alvo</div>';
-          }
-          if (data.length < 5 && (processoFilter || indicadorFilter)) {
-            html += '<div class="text-xs text-purple-700 mb-1">• Análise em dados filtrados - considere expandir filtros para visão completa</div>';
-          }
-        }
-        html += '</div>';
-        
-        html += '</div>';
-        
-        analysisContainer.innerHTML = html;
-        console.log('✅ Smart Analysis renderizada com sucesso');
+        container.innerHTML = html;
+        console.log('✅ Smart Analysis Estratégico renderizada');
         
       } catch (error) {
-        console.error('❌ Erro ao atualizar conteúdo Smart Analysis:', error);
+        console.error('❌ Erro ao gerar análise estratégica:', error);
       }
+    }
+
+    function generateSmartAnalysisSustentabilidadeContent(container, data, anosEmDados) {
+      try {
+        console.log('🌱 generateSmartAnalysisSustentabilidadeContent - data:', data.length, 'registos');
+        
+        // Análise para KPIs de Sustentabilidade
+        let html = '';
+        
+        // Agrupar dados por indicador
+        const indicadores = {};
+        const processos = new Set();
+        
+        data.forEach(d => {
+          if (!indicadores[d.indicador]) {
+            indicadores[d.indicador] = {
+              processo: d.processo,
+              objetivo: d.objetivo || '',
+              valores: [],
+              meses: [],
+              anos: []
+            };
+          }
+          
+          if (d.valor && d.valor !== '') {
+            const valor = parseFloat(d.valor);
+            if (!isNaN(valor)) {
+              indicadores[d.indicador].valores.push(valor);
+              indicadores[d.indicador].meses.push(d.mes);
+              indicadores[d.indicador].anos.push(d.ano);
+            }
+          }
+          
+          processos.add(d.processo);
+        });
+        
+        // Calcular estatísticas
+        let indicadoresComDados = 0;
+        let indicadoresSemDados = 0;
+        const indicadoresDetalhes = [];
+        
+        Object.entries(indicadores).forEach(([nome, stats]) => {
+          if (stats.valores.length > 0) {
+            indicadoresComDados++;
+            const valor_medio = stats.valores.reduce((a, b) => a + b, 0) / stats.valores.length;
+            const valor_min = Math.min(...stats.valores);
+            const valor_max = Math.max(...stats.valores);
+            
+            indicadoresDetalhes.push({
+              nome: nome,
+              processo: stats.processo,
+              objetivo: stats.objetivo,
+              comDados: true,
+              valor_medio,
+              valor_min,
+              valor_max,
+              registos: stats.valores.length
+            });
+          } else {
+            indicadoresSemDados++;
+            indicadoresDetalhes.push({
+              nome: nome,
+              processo: stats.processo,
+              objetivo: stats.objetivo,
+              comDados: false,
+              registos: 0
+            });
+          }
+        });
+        
+        // === RESUMO EXECUTIVO ===
+        const total = Object.keys(indicadores).length;
+        const taxaCobertura = total > 0 ? ((indicadoresComDados / total) * 100).toFixed(0) : 0;
+        const statusGeral = taxaCobertura >= 80 ? '✅' : taxaCobertura >= 60 ? '⚠️' : '🔴';
+        const totalRegistos = data.length;
+        const mediaRegistosPorIndicador = indicadoresComDados > 0 ? Math.round(totalRegistos / indicadoresComDados) : 0;
+        
+        console.log('📊 Análise:', { total, indicadoresComDados, indicadoresSemDados, taxaCobertura, totalRegistos });
+        
+        html += `<div class="p-3 bg-gradient-to-r from-emerald-50 to-emerald-100 border border-emerald-300 rounded-lg mb-4">`;
+        html += `<div class="text-sm font-bold text-emerald-800 mb-2">${statusGeral} RESUMO EXECUTIVO - SUSTENTABILIDADE</div>`;
+        html += `<div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-green-600">${indicadoresComDados}</div><div class="text-slate-600">Com Dados 📊</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-amber-600">${indicadoresSemDados}</div><div class="text-slate-600">Sem Dados ⚠️</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-blue-600">${totalRegistos}</div><div class="text-slate-600">Registos Total</div></div>`;
+        html += `<div class="bg-white rounded p-2 text-center"><div class="font-bold text-lg text-emerald-600">${taxaCobertura}%</div><div class="text-slate-600">Cobertura</div></div>`;
+        html += `</div></div>`;
+        
+        // === ALERTAS CRÍTICOS (Indicadores sem dados) ===
+        if (indicadoresSemDados > 0) {
+          html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
+          html += `<div class="font-bold text-red-800 mb-2">⚠️ INDICADORES SEM DADOS (${indicadoresSemDados})</div>`;
+          html += `<div class="space-y-1 text-xs">`;
+          
+          indicadoresDetalhes
+            .filter(ind => !ind.comDados)
+            .slice(0, 3)
+            .forEach(ind => {
+              html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-red-200">`;
+              html += `<div>`;
+              html += `<div class="font-semibold text-red-700">${ind.nome}</div>`;
+              html += `<div class="text-slate-600">Processo: <span class="font-semibold">${ind.processo}</span></div>`;
+              html += `<div class="text-slate-500 text-xs">Objetivo: ${ind.objetivo}</div>`;
+              html += `</div></div>`;
+            });
+          
+          if (indicadoresSemDados > 3) {
+            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresSemDados - 3} outros indicadores sem registos</div>`;
+          }
+          
+          html += `</div></div>`;
+        }
+        
+        // === INSIGHTS E RECOMENDAÇÕES ===
+        html += `<div class="p-3 border-l-4 border-blue-500 bg-blue-50 rounded mb-4">`;
+        html += `<div class="font-bold text-blue-800 mb-2">💡 INSIGHTS & RECOMENDAÇÕES</div>`;
+        html += `<ul class="space-y-1 text-xs text-slate-700 list-disc list-inside">`;
+        
+        if (indicadoresComDados === 0) {
+          html += `<li><strong>Status:</strong> Nenhum indicador com dados no período selecionado</li>`;
+          html += `<li><strong>Ação:</strong> Verificar se os dados foram carregados corretamente</li>`;
+        } else if (taxaCobertura >= 80) {
+          html += `<li><strong>Cobertura:</strong> ${taxaCobertura}% dos indicadores têm dados - excelente acompanhamento</li>`;
+          html += `<li><strong>Trend:</strong> ${indicadoresComDados} indicadores em monitoramento ativo</li>`;
+        } else if (taxaCobertura >= 50) {
+          html += `<li><strong>Cobertura:</strong> ${taxaCobertura}% dos indicadores com dados - cobertura parcial</li>`;
+          html += `<li><strong>Ação:</strong> Priorizar dados dos ${indicadoresSemDados} indicadores em falta</li>`;
+        } else {
+          html += `<li><strong>Crítico:</strong> Apenas ${taxaCobertura}% dos indicadores com dados</li>`;
+          html += `<li><strong>Ação Urgente:</strong> Implementar coleta de dados dos ${indicadoresSemDados} indicadores faltantes</li>`;
+        }
+        
+        html += `<li><strong>Total de Registos:</strong> ${totalRegistos} pontos de dados no período</li>`;
+        
+        if (indicadoresComDados > 0) {
+          html += `<li><strong>Média:</strong> ${mediaRegistosPorIndicador} registos por indicador</li>`;
+        }
+        
+        html += `</ul></div>`;
+        
+        // === ANÁLISE POR PROCESSO ===
+        const porProcesso = {};
+        indicadoresDetalhes.forEach(ind => {
+          if (!porProcesso[ind.processo]) {
+            porProcesso[ind.processo] = { total: 0, comDados: 0 };
+          }
+          porProcesso[ind.processo].total++;
+          if (ind.comDados) porProcesso[ind.processo].comDados++;
+        });
+        
+        html += '<div class="p-3 border-l-4 border-emerald-500 bg-emerald-50 rounded">';
+        html += '<div class="font-bold text-emerald-800 mb-2">📊 COBERTURA POR PROCESSO</div>';
+        html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">';
+        
+        Object.entries(porProcesso).sort().forEach(([processo, stats]) => {
+          const cobertura = stats.total > 0 ? Math.round((stats.comDados / stats.total) * 100) : 0;
+          const statusColor = cobertura >= 80 ? 'border-green-400 bg-green-50' : cobertura >= 50 ? 'border-amber-400 bg-amber-50' : 'border-red-400 bg-red-50';
+          const statusIcon = cobertura >= 80 ? '✅' : cobertura >= 50 ? '⚠️' : '❌';
+          
+          html += `<div class="border-l-4 ${statusColor} rounded p-2">`;
+          html += `<div class="font-bold">${statusIcon} ${processo}</div>`;
+          html += `<div class="text-slate-600 mt-1">Cobertura: <span class="font-bold text-lg">${cobertura}%</span></div>`;
+          html += `<div class="text-slate-500">${stats.comDados}/${stats.total} indicadores com dados</div>`;
+          html += `</div>`;
+        });
+        
+        html += '</div></div>';
+        
+        container.innerHTML = html;
+        console.log('✅ Smart Analysis Sustentabilidade renderizada');
+        
+      } catch (error) {
+        console.error('❌ Erro ao gerar análise sustentabilidade:', error);
+        console.error('Stack:', error.stack);
+      }
+    }
+
+    function generateSmartAnalysisSustentabilidade(data, taxaCumprimento, acimaMeta, abaixoMeta, anos) {
+      // Wrapper for sustainability KPIs - delegates to the main generateSmartAnalysis function
+      // The analysis logic is generic enough to handle both estrategicos and sustentabilidade KPIs
+      generateSmartAnalysis(data, taxaCumprimento, acimaMeta, abaixoMeta, anos);
     }
 
     function displayKpiTable(data) {
       const tbody = document.getElementById('kpi-table-body');
       
-      // Filter out future years
-      const currentYear = new Date().getFullYear();
-      const filteredData = data.filter(d => parseInt(d.ano) <= currentYear);
+      // Display all data available
+      const filteredData = data;
       
       if (filteredData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="11" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível com estes filtros.</td></tr>';
@@ -5863,32 +6137,57 @@
         return 0;
       });
       
-      tbody.innerHTML = filteredData.map(d => {
-        return `
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-3 py-2 text-xs font-semibold text-slate-800">${d.ano}</td>
-            <td class="px-3 py-2 text-xs text-slate-700">${d.processo}</td>
-            <td class="px-3 py-2 text-xs text-slate-700">${d.objetivo}</td>
-            <td class="px-3 py-2 text-xs text-slate-700">${d.risco}</td>
-            <td class="px-3 py-2 text-xs text-slate-700">${d.responsavelProcesso}</td>
-            <td class="px-3 py-2 text-xs text-slate-700"><strong>${d.indicador}</strong></td>
-            <td class="px-3 py-2 text-xs text-slate-600">${d.formula}</td>
-            <td class="px-3 py-2 text-xs text-slate-600">${d.frequencia}</td>
-            <td class="px-3 py-2 text-xs font-bold text-purple-600">${d.goal}</td>
-            <td class="px-3 py-2 text-xs font-bold text-amber-600">${d.meta}</td>
-            <td class="px-3 py-2 text-xs font-bold text-blue-600">${d.real}</td>
-          </tr>
-        `;
-      }).join('');
+      // Renderizar conforme o tipo de KPI
+      if (kpiCurrentType === 'sustentabilidade') {
+        // Para KPIs de Sustentabilidade
+        tbody.innerHTML = filteredData.map(d => {
+          const cumprimento = d.valorObjetivo > 0 ? ((d.valor / d.valorObjetivo) * 100).toFixed(1) : '—';
+          const cumprimentoClass = d.valorObjetivo > 0 && d.valor >= d.valorObjetivo ? 'text-green-600' : d.valorObjetivo > 0 && d.valor < d.valorObjetivo * 0.8 ? 'text-red-600' : 'text-amber-600';
+          
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-3 py-2 text-xs font-semibold text-slate-800">${d.ano}</td>
+              <td class="px-3 py-2 text-xs text-slate-700">${d.mes || '—'}</td>
+              <td class="px-3 py-2 text-xs font-bold text-blue-600">${d.valor}</td>
+              <td class="px-3 py-2 text-xs text-slate-700">${d.processo}</td>
+              <td class="px-3 py-2 text-xs text-slate-700"><strong>${d.indicador}</strong></td>
+              <td class="px-3 py-2 text-xs text-slate-600">${d.unidade || '—'}</td>
+              <td class="px-3 py-2 text-xs text-slate-700">${d.objetivo || '—'}</td>
+              <td class="px-3 py-2 text-xs font-bold text-purple-600">${d.valorObjetivo || '—'}</td>
+              <td class="px-3 py-2 text-xs font-bold ${cumprimentoClass}">${cumprimento}%</td>
+              <td class="px-3 py-2 text-xs text-slate-600">${d.responsavel || '—'}</td>
+              <td class="px-3 py-2 text-xs text-slate-500">—</td>
+            </tr>
+          `;
+        }).join('');
+      } else {
+        // Para KPIs Estratégicos
+        tbody.innerHTML = filteredData.map(d => {
+          return `
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-3 py-2 text-xs font-semibold text-slate-800">${d.ano}</td>
+              <td class="px-3 py-2 text-xs text-slate-700">${d.processo}</td>
+              <td class="px-3 py-2 text-xs text-slate-700">${d.objetivo}</td>
+              <td class="px-3 py-2 text-xs text-slate-700">${d.risco}</td>
+              <td class="px-3 py-2 text-xs text-slate-700">${d.responsavelProcesso}</td>
+              <td class="px-3 py-2 text-xs text-slate-700"><strong>${d.indicador}</strong></td>
+              <td class="px-3 py-2 text-xs text-slate-600">${d.formula}</td>
+              <td class="px-3 py-2 text-xs text-slate-600">${d.frequencia}</td>
+              <td class="px-3 py-2 text-xs font-bold text-purple-600">${d.goal}</td>
+              <td class="px-3 py-2 text-xs font-bold text-amber-600">${d.meta}</td>
+              <td class="px-3 py-2 text-xs font-bold text-blue-600">${d.real}</td>
+            </tr>
+          `;
+        }).join('');
+      }
     }
 
     // 🔍 Populate filter dropdowns with unique values
     function populateKpiFilters(data) {
       console.log('📊 Populating KPI filters...');
       
-      // Extract unique values and filter out future years
-      const currentYear = new Date().getFullYear();
-      const anos = [...new Set(data.map(d => d.ano).filter(Boolean))].filter(ano => parseInt(ano) <= currentYear).sort((a, b) => b - a);
+      // Extract unique values - all years available
+      const anos = [...new Set(data.map(d => d.ano).filter(Boolean))].sort((a, b) => b - a);
       const processos = [...new Set(data.map(d => d.processo).filter(Boolean))].sort();
       
       // Group indicadores by processo
@@ -5915,13 +6214,21 @@
       // Populate Ano buttons (multi-select)
       const anoBtnContainer = document.getElementById('kpi-filter-ano-buttons');
       anoBtnContainer.innerHTML = '';
-      anos.forEach(ano => {
+      anos.forEach((ano, index) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'kpi-year-btn px-2 py-1 rounded text-xs font-bold transition-all border-2 border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:bg-emerald-50';
         btn.textContent = ano;
         btn.dataset.year = ano;
-        btn.onclick = () => toggleYearButton(btn, ano);
+        // Seleciona o primeiro ano por padrão
+        if (index === 0) {
+          btn.classList.add('kpi-year-selected');
+          btn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
+        }
+        btn.onclick = () => {
+          toggleYearButton(btn, ano);
+          updateKpiDashboard();
+        };
         anoBtnContainer.appendChild(btn);
       });
       
@@ -5954,8 +6261,17 @@
       });
       
       // Add change listeners for cumulative filtering
-      processoSelect.addEventListener('change', applyKpiFilters);
-      indicadorSelect.addEventListener('change', applyKpiFilters);
+      // Remove old listeners first to avoid duplicates
+      const processoSelectNew = document.getElementById('kpi-filter-processo');
+      const indicadorSelectNew = document.getElementById('kpi-filter-indicador');
+      
+      processoSelectNew.removeEventListener('change', applyKpiFilters);
+      indicadorSelectNew.removeEventListener('change', applyKpiFilters);
+      
+      processoSelectNew.addEventListener('change', applyKpiFilters);
+      indicadorSelectNew.addEventListener('change', applyKpiFilters);
+      
+      console.log('✅ Filtros preenchidos e event listeners adicionados');
     }
 
     // 🔘 Toggle year button selection
@@ -5975,8 +6291,11 @@
       
       console.log(`🔄 Applying filters - Anos: [${selectedAnosArray.join(', ')}], Processo: "${processoFilter}", Indicador: "${indicadorFilter}"`);
       
+      // Get the correct data based on KPI type
+      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
+      
       // Apply cumulative filters to the original data
-      let filteredData = kpiEstrategicosData.filter(d => {
+      let filteredData = currentData.filter(d => {
         // For anos: if no selection, include all; if selection exists, match any selected year
         const matchAno = selectedAnosArray.length === 0 || selectedAnosArray.includes(String(d.ano)) || selectedAnosArray.includes(d.ano);
         const matchProcesso = !processoFilter || d.processo === processoFilter;
@@ -5986,7 +6305,9 @@
       
       console.log(`📊 Filtered data: ${filteredData.length} records`);
       
-      // Update table and charts with filtered data
+      // Update stats, table and charts with filtered data
+      // Pass both filtered data (for stats/table) and complete data (for Smart Analysis)
+      updateKpiStats(filteredData, currentData);
       displayKpiTable(filteredData);
       updateKpiCharts(filteredData);
     }
@@ -6249,71 +6570,169 @@
         'setembro': 9, 'outubro': 10, 'novembro': 11, 'dezembro': 12
       };
       
-      // Preparar dados para gráfico de linha (evolução temporal - por mês)
-      const timeSeriesData = {};
-      
-      // Verificar se há filtro de ano
+      // Verificar quantos anos estão selecionados (filtros normais do dashboard)
       const selectedYearBtns = document.querySelectorAll('.kpi-year-btn.kpi-year-selected');
       const anosFilter = Array.from(selectedYearBtns).map(btn => btn.dataset.year);
-      const hasAnoFilter = anosFilter.length > 0;
+      const multipleYearsSelected = anosFilter.length >= 2;
       
-      // Se não há filtro de ano, mostrar todos os meses encontrados nos dados
-      // Se há filtro de ano, mostrar todos os 12 meses
-      const dataYears = [...new Set(data.map(d => d.ano))];
-      const shouldShowAllMonths = hasAnoFilter;
+      console.log('📊 Anos selecionados:', anosFilter);
+      console.log('📊 Múltiplos anos selecionados:', multipleYearsSelected);
       
-      if (shouldShowAllMonths) {
+      // Preparar dados para gráfico de linha (evolução temporal)
+      let timeLabels, datasetsLine;
+      
+      if (multipleYearsSelected) {
+        // === MODO: Comparação de Múltiplos Anos ===
+        // Cada ano é uma curva separada
+        
+        // Estruturar dados por ano e mês
+        const dataByYearMonth = {};
+        
+        data.forEach(d => {
+          const year = d.ano;
+          let monthNum = parseInt(d.mes);
+          if (isNaN(monthNum)) {
+            monthNum = monthToNumber[d.mes.toLowerCase()] || 0;
+          }
+          
+          if (monthNum > 0 && monthNum <= 12 && anosFilter.includes(String(year))) {
+            const key = `${year}-${monthNum}`;
+            if (!dataByYearMonth[key]) {
+              dataByYearMonth[key] = { valor: 0, count: 0, valorObjetivo: 0 };
+            }
+            dataByYearMonth[key].valor += d.valor;
+            dataByYearMonth[key].valorObjetivo += d.valorObjetivo;
+            dataByYearMonth[key].count += 1;
+          }
+        });
+        
+        // Labels são os meses (1-12)
+        timeLabels = [];
+        for (let i = 1; i <= 12; i++) {
+          timeLabels.push(monthNames[i.toString()]);
+        }
+        
+        // Criar um dataset para cada ano
+        const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+        datasetsLine = [];
+        
+        anosFilter.sort((a, b) => parseInt(a) - parseInt(b)).forEach((year, index) => {
+          const yearValues = [];
+          for (let monthNum = 1; monthNum <= 12; monthNum++) {
+            const key = `${year}-${monthNum}`;
+            if (dataByYearMonth[key]) {
+              const avg = dataByYearMonth[key].valor / dataByYearMonth[key].count;
+              yearValues.push(parseFloat(avg.toFixed(2)));
+            } else {
+              yearValues.push(null); // Mês sem dados
+            }
+          }
+          
+          const color = colors[index % colors.length];
+          datasetsLine.push({
+            label: `${year}`,
+            data: yearValues,
+            borderColor: color,
+            backgroundColor: color.replace(')', ', 0.1)').replace('rgb', 'rgba'),
+            borderWidth: 3,
+            pointRadius: 5,
+            pointBackgroundColor: color,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            tension: 0.4,
+            fill: false,
+            spanGaps: true
+          });
+        });
+        
+        console.log('📊 Modo Múltiplos Anos - Datasets:', datasetsLine.length);
+        
+      } else {
+        // === MODO: Visualização por Mês (Padrão) ===
+        // Agregação simples por mês
+        
+        const timeSeriesData = {};
+        
         // Preencher todos os 12 meses
         for (let i = 1; i <= 12; i++) {
           timeSeriesData[i] = { valor: 0, count: 0, valorObjetivo: 0 };
         }
-      }
-      
-      // Processar dados
-      data.forEach(d => {
-        // Converter mês para número (se for texto)
-        let monthNum = parseInt(d.mes);
-        if (isNaN(monthNum)) {
-          monthNum = monthToNumber[d.mes.toLowerCase()] || 0;
-        }
         
-        if (monthNum > 0 && monthNum <= 12) {
-          if (!timeSeriesData[monthNum]) {
-            timeSeriesData[monthNum] = { valor: 0, count: 0, valorObjetivo: 0 };
+        // Processar dados
+        data.forEach(d => {
+          // Converter mês para número (se for texto)
+          let monthNum = parseInt(d.mes);
+          if (isNaN(monthNum)) {
+            monthNum = monthToNumber[d.mes.toLowerCase()] || 0;
           }
-          timeSeriesData[monthNum].valor += d.valor;
-          timeSeriesData[monthNum].valorObjetivo += d.valorObjetivo;
-          timeSeriesData[monthNum].count += 1;
-        }
-      });
-      
-      // Ordenar por número do mês
-      const timeLabels = Object.keys(timeSeriesData)
-        .map(k => parseInt(k))
-        .sort((a, b) => a - b)
-        .map(k => monthNames[k.toString()] || `Mês ${k}`);
-      
-      const sortedKeys = Object.keys(timeSeriesData)
-        .map(k => parseInt(k))
-        .sort((a, b) => a - b);
-      
-      const timeValues = sortedKeys.map(k => {
-        const data = timeSeriesData[k];
-        return data.count > 0 ? parseFloat((data.valor / data.count).toFixed(2)) : null;
-      });
-      
-      let timeObjectives = sortedKeys.map(k => {
-        const d = timeSeriesData[k];
-        return d.count > 0 ? parseFloat((d.valorObjetivo / d.count).toFixed(2)) : null;
-      });
-      
-      console.log('=== TEMPORAL EVOLUTION DEBUG ===');
-      console.log('timeLabels:', timeLabels);
-      console.log('timeValues:', timeValues);
-      console.log('timeObjectives:', timeObjectives);
-      console.log('Data entries count:', data.length);
-      console.log('sortedKeys:', sortedKeys);
-      console.log('timeSeriesData:', timeSeriesData);
+          
+          if (monthNum > 0 && monthNum <= 12) {
+            if (!timeSeriesData[monthNum]) {
+              timeSeriesData[monthNum] = { valor: 0, count: 0, valorObjetivo: 0 };
+            }
+            timeSeriesData[monthNum].valor += d.valor;
+            timeSeriesData[monthNum].valorObjetivo += d.valorObjetivo;
+            timeSeriesData[monthNum].count += 1;
+          }
+        });
+        
+        // Ordenar por número do mês
+        timeLabels = Object.keys(timeSeriesData)
+          .map(k => parseInt(k))
+          .sort((a, b) => a - b)
+          .map(k => monthNames[k.toString()] || `Mês ${k}`);
+        
+        const sortedKeys = Object.keys(timeSeriesData)
+          .map(k => parseInt(k))
+          .sort((a, b) => a - b);
+        
+        const timeValues = sortedKeys.map(k => {
+          const d = timeSeriesData[k];
+          return d.count > 0 ? parseFloat((d.valor / d.count).toFixed(2)) : null;
+        });
+        
+        let timeObjectives = sortedKeys.map(k => {
+          const d = timeSeriesData[k];
+          return d.count > 0 ? parseFloat((d.valorObjetivo / d.count).toFixed(2)) : null;
+        });
+        
+        console.log('=== TEMPORAL EVOLUTION DEBUG ===');
+        console.log('timeLabels:', timeLabels);
+        console.log('timeValues:', timeValues);
+        console.log('timeObjectives:', timeObjectives);
+        
+        datasetsLine = [
+          {
+            label: 'Valor Médio',
+            data: timeValues,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderWidth: 3,
+            pointRadius: 5,
+            pointBackgroundColor: '#10b981',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            spanGaps: true
+          },
+          {
+            label: 'Valor Objetivo',
+            data: timeObjectives,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0)',
+            borderWidth: 3,
+            pointRadius: 5,
+            pointBackgroundColor: '#f59e0b',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.4,
+            fill: false,
+            spanGaps: true
+          }
+        ];
+      }
       
       // Gráfico de Linha
       if (kpiChartLine) {
@@ -6321,46 +6740,23 @@
       }
       
       const ctxLine = document.getElementById('kpi-chart-line').getContext('2d');
+      const chartTitle = multipleYearsSelected ? '📈 Comparação de Evolução Temporal por Ano' : '📈 Evolução Temporal com Tendência';
+      
       kpiChartLine = new Chart(ctxLine, {
         type: 'line',
         data: {
           labels: timeLabels,
-          datasets: [
-            {
-              label: 'Valor Médio',
-              data: timeValues,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              borderWidth: 3,
-              pointRadius: 5,
-              pointBackgroundColor: '#10b981',
-              pointBorderColor: '#fff',
-              pointBorderWidth: 2,
-              tension: 0.4,
-              fill: true,
-              spanGaps: true
-            },
-            {
-              label: 'Valor Objetivo',
-              data: timeObjectives,
-              borderColor: '#f59e0b',
-              backgroundColor: 'rgba(245, 158, 11, 0)',
-              borderWidth: 3,
-              pointRadius: 5,
-              pointBackgroundColor: '#f59e0b',
-              pointBorderColor: '#fff',
-              pointBorderWidth: 2,
-              borderDash: [5, 5],
-              tension: 0.4,
-              fill: false,
-              spanGaps: true
-            }
-          ]
+          datasets: datasetsLine
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
+            title: {
+              display: true,
+              text: chartTitle,
+              font: { size: 14, weight: 'bold' }
+            },
             legend: { 
               display: true, 
               position: 'top',
