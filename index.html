@@ -458,6 +458,9 @@
         <button onclick="loadKpiEstrategicos()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
           📊 KPI'S ESTRATÉGICOS
         </button>
+        <button onclick="loadKpiEstrategicosPropostos()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
+          💡 PROPOSTA KPI'S ESTRATÉGICOS
+        </button>
         <button onclick="loadKpiSustentabilidade()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
           🌍 KPI'S SUSTENTABILIDADE
         </button>
@@ -4994,6 +4997,7 @@
 
     // KPI's Functions
     let kpiEstrategicosData = [];
+    let kpiEstrategicosPropostosData = [];
     let kpiSustentabilidadeData = [];
     let kpiCurrentType = 'sustentabilidade'; // Rastreia qual dashboard está activo
     let kpiChartLine = null;
@@ -5420,7 +5424,14 @@
 
     function updateKpiDashboard() {
       // Obter dados corretos baseado no tipo de KPI
-      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
+      let currentData;
+      if (kpiCurrentType === 'estrategicos') {
+        currentData = kpiEstrategicosData;
+      } else if (kpiCurrentType === 'estrategicos_propostos') {
+        currentData = kpiEstrategicosPropostosData;
+      } else {
+        currentData = kpiSustentabilidadeData;
+      }
       
       // Obter valores de filtro
       // Anos: múltipla seleção a partir dos botões
@@ -5453,6 +5464,255 @@
       
       // Atualizar gráficos (com dados filtrados)
       updateKpiCharts(filteredData);
+    }
+
+    async function loadKpiEstrategicosPropostos() {
+      kpiCurrentType = 'estrategicos_propostos';
+      closeKpiModal();
+      switchTab('kpi');
+      
+      document.getElementById('kpi-title').textContent = 'Proposta KPI\'s Estratégicos';
+      document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores Estratégicos (Proposta)';
+      
+      // Atualizar cabeçalhos da tabela
+      updateKpiTableHeaders();
+      
+      // Carregar dados propostos
+      loadKpiEstrategicosPropostosData();
+    }
+
+    function loadKpiEstrategicosPropostosData() {
+      try {
+        showLoading('A carregar Proposta KPI\'s Estratégicos...');
+        
+        // Dados propostos dos KPIs estratégicos
+        const kpiPropostos = [
+          {
+            ano: 'Proposta',
+            processo: 'Gestão Negócio',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Lúcio Mota',
+            responsavelMonitorizacao: 'Lúcio Mota',
+            indicador: 'EBITDA',
+            formula: 'Análise Contabilística',
+            frequencia: 'Mensal',
+            unidade: '%',
+            goal: '-',
+            meta: '≥ 33%',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Gestão Negócio',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Lúcio Mota',
+            responsavelMonitorizacao: 'Lúcio Mota',
+            indicador: 'MARGEM',
+            formula: 'Análise Contabilística',
+            frequencia: 'Anual',
+            unidade: '%',
+            goal: '-',
+            meta: '≥ 70%',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Marketing/Vendas',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Mário Fragoso',
+            responsavelMonitorizacao: 'Mário Fragoso',
+            indicador: 'Taxa de Conversão',
+            formula: '% Propostas Ganhas vs Oportunidades',
+            frequencia: 'Semest.',
+            unidade: '%',
+            goal: '716',
+            meta: '≥ 80%',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Engenharia',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Joni Regalado',
+            responsavelMonitorizacao: 'Joni Regalado',
+            indicador: 'Projetos SIFIDE - Apoio Despesas',
+            formula: '% Valor Global de ID investido (Pessoal + Func.)',
+            frequencia: 'Anual',
+            unidade: '€',
+            goal: '-',
+            meta: '≥ 12%',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Engenharia',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Joni Regalado',
+            responsavelMonitorizacao: 'Joni Regalado',
+            indicador: 'Projetos SIFIDE - Vendas',
+            formula: '% Valor Global produtos ID sobre Vol. Negócios',
+            frequencia: 'Anual',
+            unidade: '€',
+            goal: '-',
+            meta: '≥ 75%',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Compras',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Paulo Brioso',
+            responsavelMonitorizacao: 'Paulo Brioso',
+            indicador: 'Nível de Entregas - Prazo',
+            formula: 'Análise Prazos de Entrega',
+            frequencia: 'Semest.',
+            unidade: '%',
+            goal: '-',
+            meta: '≥ 80%',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Compras',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Paulo Brioso',
+            responsavelMonitorizacao: 'Paulo Brioso',
+            indicador: 'Nível de Entregas - Qualidade',
+            formula: 'Análise Qualidade de Produto adquirido',
+            frequencia: 'Semest.',
+            unidade: '%',
+            goal: '-',
+            meta: '≥ 80%',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Pós Venda',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Samuel Póvoa',
+            responsavelMonitorizacao: 'Samuel Póvoa',
+            indicador: 'Satisfação Cliente - IOT [Instalação]',
+            formula: 'Inquérito despoletado após 100h',
+            frequencia: '100h',
+            unidade: '%',
+            goal: '-',
+            meta: '≥ 80%',
+            real: '84,60%'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Pós Venda',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Tiago Oliveira',
+            responsavelMonitorizacao: 'Tiago Oliveira',
+            indicador: 'Satisfação Cliente - IOT [Equipamento]',
+            formula: 'Avaliação Qualitativa MWS (60 em 60 Lavagens)',
+            frequencia: '60 Lav.',
+            unidade: '%',
+            goal: '-',
+            meta: '≥ 80%',
+            real: '90,00%'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Pós Venda',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Cândido Veloso',
+            responsavelMonitorizacao: 'Cândido Veloso',
+            indicador: 'Satisfação Cliente - IOT [Serviço]',
+            formula: 'Avaliação Qualitativa Apoio Técnico (4 em 4 Meses)',
+            frequencia: '4 Meses',
+            unidade: '%',
+            goal: '-',
+            meta: '≥ 80%',
+            real: '80,00%'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Pós Venda',
+            objetivo: '-',
+            risco: 'Incumprimento Crítico',
+            recursos: '-',
+            responsavelProcesso: 'Cândido Veloso',
+            responsavelMonitorizacao: 'Cândido Veloso',
+            indicador: 'Lead Time de Resolução',
+            formula: 'Diferença entre Data de Fecho e Abertura',
+            frequencia: 'Mensal',
+            unidade: 'Dias',
+            goal: '-',
+            meta: '≤ [TBD]',
+            real: '-'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Qualidade',
+            objetivo: '-',
+            risco: 'Risco Moderado',
+            recursos: '-',
+            responsavelProcesso: 'Mário Fragoso',
+            responsavelMonitorizacao: 'Mário Fragoso',
+            indicador: 'First Pass Yield (FPY)',
+            formula: 'N.º de RNC\'s Vs. Σ Equipamentos Produzidos',
+            frequencia: 'Anual',
+            unidade: '%',
+            goal: '-',
+            meta: '≤ 85%',
+            real: '27,27%'
+          },
+          {
+            ano: 'Proposta',
+            processo: 'Recursos',
+            objetivo: '-',
+            risco: 'Risco Moderado',
+            recursos: '-',
+            responsavelProcesso: 'Joni Regalado',
+            responsavelMonitorizacao: 'Joni Regalado',
+            indicador: 'Índice de Rotatividade',
+            formula: 'Nº Demissões / Nº Funcionários Ativos',
+            frequencia: 'Anual',
+            unidade: 'un.',
+            goal: '-',
+            meta: '≤ 100%',
+            real: '-'
+          }
+        ];
+        
+        kpiEstrategicosPropostosData = kpiPropostos;
+        
+        console.log(`✅ Loaded ${kpiPropostos.length} Proposta KPI Estratégicos records.`);
+        
+        // Exibir todos os dados
+        populateKpiFilters(kpiEstrategicosPropostosData);
+        updateKpiStats(kpiEstrategicosPropostosData);
+        displayKpiTable(kpiEstrategicosPropostosData);
+        updateKpiCharts(kpiEstrategicosPropostosData);
+        hideLoading();
+      } catch (error) {
+        console.error('Erro ao carregar Proposta KPI\'s Estratégicos:', error);
+        hideLoading();
+        alert(`Erro ao carregar dados:\n${error.message}`);
+        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="11" class="px-8 py-12 text-center text-red-500">Erro: ${error.message}</td></tr>`;
+      }
     }
 
     function updateKpiTableHeaders() {
@@ -5522,8 +5782,23 @@
             }
           }
         });
+      } else if (kpiCurrentType === 'estrategicos_propostos') {
+        // Para KPIs Estratégicos Propostos - dados com meta como string
+        // Não fazer cálculos numéricos, apenas contar registos
+        data.forEach(d => {
+          if (d.indicador) {
+            kpisValidos++;
+            // Extrair valor real se disponível
+            const realValue = d.real && d.real !== '-' ? parseFloat(d.real.toString().replace(/,/g, '.')) : 0;
+            if (realValue > 0) {
+              totalRealizado += 1;
+            }
+          }
+        });
+        acimaMeta = totalRealizado;
+        totalMeta = kpisValidos > 0 ? kpisValidos : 1;
       } else {
-        // Para KPIs Estratégicos
+        // Para KPIs Estratégicos normais
         data.forEach(d => {
           if (d.meta && d.meta > 0) {
             const percentual = (d.real / d.meta) * 100;
@@ -5540,12 +5815,12 @@
         });
       }
       
-      const taxaCumprimento = kpisValidos > 0 ? ((totalRealizado / totalMeta) * 100).toFixed(1) : 0;
+      const taxaCumprimento = kpisValidos > 0 ? ((Math.max(totalRealizado, 0) / Math.max(totalMeta, 1)) * 100).toFixed(1) : 0;
       
       // Calcular tendência (comparando média dos últimos vs anteriores)
       const anos = [...new Set(data.map(d => d.ano).filter(Boolean))].sort((a, b) => parseInt(b) - parseInt(a));
       let tendencia = '→';
-      if (anos.length >= 2) {
+      if (anos.length >= 2 && kpiCurrentType !== 'estrategicos_propostos') {
         const ultimoAno = data.filter(d => d.ano == anos[0]);
         const anoAnterior = data.filter(d => d.ano == anos[1]);
         
@@ -5581,7 +5856,7 @@
       // Gerar Smart Analysis com dados COMPLETOS (não filtrados pelos filtros principais)
       if (kpiCurrentType === 'sustentabilidade') {
         generateSmartAnalysisSustentabilidade(allDataForSmartAnalysis, taxaCumprimento, acimaMeta, abaixoMeta, anos);
-      } else {
+      } else if (kpiCurrentType !== 'estrategicos_propostos') {
         generateSmartAnalysis(allDataForSmartAnalysis, taxaCumprimento, acimaMeta, abaixoMeta, anos);
       }
     }
@@ -5872,10 +6147,15 @@
         
         data.forEach(d => {
           if (!indicadores[d.indicador]) {
+            // Skip if meta is not a valid number (for proposta KPIs with string like "≥ 33%")
+            const metaNum = parseFloat(d.meta);
+            const realNum = parseFloat(d.real);
+            if (isNaN(metaNum) || metaNum === 0) return;
+            
             indicadores[d.indicador] = {
               processo: d.processo,
-              meta: parseFloat(d.meta) || 0,
-              real: parseFloat(d.real) || 0,
+              meta: metaNum,
+              real: realNum || 0,
               goal: d.goal,
               risco: d.risco,
               responsavel: d.responsavelMonitorizacao || '',
@@ -6560,7 +6840,20 @@
       console.log('📊 Populating KPI filters...');
       
       // Extract unique values - all years available
-      const anos = [...new Set(data.map(d => d.ano).filter(Boolean))].sort((a, b) => b - a);
+      // Handle both numeric years and string years like "Proposta"
+      const anosRaw = [...new Set(data.map(d => d.ano).filter(Boolean))];
+      const anos = anosRaw.sort((a, b) => {
+        const aNum = parseInt(a);
+        const bNum = parseInt(b);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return bNum - aNum; // numeric sort descending
+        }
+        if (isNaN(aNum) && isNaN(bNum)) {
+          return String(a).localeCompare(String(b)); // string sort
+        }
+        return isNaN(aNum) ? 1 : -1; // non-numeric goes last
+      });
+      
       const processos = [...new Set(data.map(d => d.processo).filter(Boolean))].sort();
       
       // Group indicadores by processo
@@ -6729,8 +7022,8 @@
     }
 
     function updateKpiCharts(data) {
-      // if Estratégicos, usar abordagem simples
-      if (kpiCurrentType === 'estrategicos') {
+      // if Estratégicos ou Estratégicos Propostos, usar abordagem simples
+      if (kpiCurrentType === 'estrategicos' || kpiCurrentType === 'estrategicos_propostos') {
         updateKpiChartsEstrategicos(data);
       } else {
         updateKpiChartsSustentabilidade(data);
@@ -6778,8 +7071,11 @@
         data.forEach(d => {
           const year = parseInt(d.ano);
           if (yearlyData[year]) {
-            yearlyData[year].real += d.real;
-            yearlyData[year].meta += d.meta;
+            // Parse real and meta safely (can be strings or numbers)
+            const realVal = parseFloat(d.real);
+            const metaVal = parseFloat(d.meta);
+            if (!isNaN(realVal)) yearlyData[year].real += realVal;
+            if (!isNaN(metaVal)) yearlyData[year].meta += metaVal;
             yearlyData[year].count += 1;
           }
         });
@@ -6799,8 +7095,11 @@
           if (!comparison[key]) {
             comparison[key] = { real: 0, meta: 0, count: 0 };
           }
-          comparison[key].real += d.real;
-          comparison[key].meta += d.meta;
+          // Parse real and meta safely (can be strings or numbers)
+          const realVal = parseFloat(d.real);
+          const metaVal = parseFloat(d.meta);
+          if (!isNaN(realVal)) comparison[key].real += realVal;
+          if (!isNaN(metaVal)) comparison[key].meta += metaVal;
           comparison[key].count += 1;
         });
         
