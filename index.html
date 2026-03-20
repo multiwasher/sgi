@@ -464,6 +464,9 @@
         <button onclick="loadKpiSustentabilidade()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
           🌍 KPI'S SUSTENTABILIDADE
         </button>
+        <button onclick="loadKpiSustentabilidadePropostos()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-black py-3 px-4 rounded-xl transition-all shadow-lg active:scale-95">
+          🌱 PROPOSTA KPI'S SUSTENTABILIDADE
+        </button>
       </div>
     </div>
   </div>
@@ -4999,6 +5002,7 @@
     let kpiEstrategicosData = [];
     let kpiEstrategicosPropostosData = [];
     let kpiSustentabilidadeData = [];
+    let kpiSustentabilidadePropostosData = [];
     let kpiCurrentType = 'sustentabilidade'; // Rastreia qual dashboard está activo
     let kpiChartLine = null;
     let kpiChartBar = null;
@@ -5422,6 +5426,124 @@
       }
     }
 
+    async function loadKpiSustentabilidadePropostos() {
+      kpiCurrentType = 'sustentabilidade_propostos';
+      closeKpiModal();
+      switchTab('kpi');
+      
+      document.getElementById('kpi-title').textContent = 'Proposta KPI\'s Sustentabilidade';
+      document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores de Sustentabilidade Ambiental (Proposta)';
+      
+      // Atualizar cabeçalhos da tabela
+      updateKpiTableHeaders();
+      
+      // Carregar dados propostos
+      loadKpiSustentabilidadePropostosData();
+    }
+
+    function loadKpiSustentabilidadePropostosData() {
+      try {
+        showLoading('A carregar Proposta KPI\'s Sustentabilidade...');
+        
+        // Dados propostos dos KPIs de sustentabilidade
+        const kpiPropostos = [
+          {
+            ano: 'Proposta',
+            mes: '-',
+            valor: 138,
+            processo: 'Geral',
+            indicador: 'Intensidade Energética (kWh/un)',
+            unidade: 'kWh/un',
+            objetivo: 'Escassez de Recursos (Energia)',
+            valorObjetivo: '-',
+            responsavel: 'Paulo Brioso'
+          },
+          {
+            ano: 'Proposta',
+            mes: '-',
+            valor: 25,
+            processo: 'Geral',
+            indicador: 'Consumo de Água Total',
+            unidade: 'm3',
+            objetivo: 'Consumo de Recurso Hídrico',
+            valorObjetivo: '-',
+            responsavel: 'Paulo Brioso'
+          },
+          {
+            ano: 'Proposta',
+            mes: '-',
+            valor: 0,
+            processo: 'Geral',
+            indicador: 'Eficiência de Autoconsumo',
+            unidade: '%',
+            objetivo: 'Dependência Energética / Pegada CO2',
+            valorObjetivo: '-',
+            responsavel: 'Joni Regalado'
+          },
+          {
+            ano: 'Proposta',
+            mes: '-',
+            valor: 1118,
+            processo: 'Pós-Venda',
+            indicador: 'Eficiência de Combustível (€)',
+            unidade: '€',
+            objetivo: 'Emissões GEE (Transportes)',
+            valorObjetivo: '-',
+            responsavel: 'Lúcio Mota'
+          },
+          {
+            ano: 'Proposta',
+            mes: '-',
+            valor: 0,
+            processo: 'Soldadura',
+            indicador: 'Químicos por Unidade',
+            unidade: 'L/un',
+            objetivo: 'Uso de Substâncias Perigosas',
+            valorObjetivo: '-',
+            responsavel: 'Carlos Tarenta'
+          },
+          {
+            ano: 'Proposta',
+            mes: '-',
+            valor: 86,
+            processo: 'Soldadura',
+            indicador: 'Gases de Soldadura',
+            unidade: 'm3',
+            objetivo: 'Consumo de Gases Industriais',
+            valorObjetivo: '-',
+            responsavel: 'Mário Fragoso'
+          },
+          {
+            ano: 'Proposta',
+            mes: '-',
+            valor: 2,
+            processo: 'Produção',
+            indicador: 'Resíduos Totais (Papel+Plástico)',
+            unidade: 'ton',
+            objetivo: 'Geração de Resíduos (Circularidade)',
+            valorObjetivo: '-',
+            responsavel: 'Paulo Brioso'
+          }
+        ];
+        
+        kpiSustentabilidadePropostosData = kpiPropostos;
+        
+        console.log(`✅ Loaded ${kpiPropostos.length} Proposta KPI Sustentabilidade records.`);
+        
+        // Exibir todos os dados
+        populateKpiFilters(kpiSustentabilidadePropostosData);
+        updateKpiStats(kpiSustentabilidadePropostosData);
+        displayKpiTable(kpiSustentabilidadePropostosData);
+        updateKpiCharts(kpiSustentabilidadePropostosData);
+        hideLoading();
+      } catch (error) {
+        console.error('Erro ao carregar Proposta KPI\'s Sustentabilidade:', error);
+        hideLoading();
+        alert(`Erro ao carregar dados:\n${error.message}`);
+        document.getElementById('kpi-table-body').innerHTML = `<tr><td colspan="10" class="px-8 py-12 text-center text-red-500">Erro: ${error.message}</td></tr>`;
+      }
+    }
+
     function updateKpiDashboard() {
       // Obter dados corretos baseado no tipo de KPI
       let currentData;
@@ -5429,6 +5551,8 @@
         currentData = kpiEstrategicosData;
       } else if (kpiCurrentType === 'estrategicos_propostos') {
         currentData = kpiEstrategicosPropostosData;
+      } else if (kpiCurrentType === 'sustentabilidade_propostos') {
+        currentData = kpiSustentabilidadePropostosData;
       } else {
         currentData = kpiSustentabilidadeData;
       }
@@ -5718,7 +5842,7 @@
     function updateKpiTableHeaders() {
       const thead = document.getElementById('kpi-table-head');
       
-      if (kpiCurrentType === 'sustentabilidade') {
+      if (kpiCurrentType === 'sustentabilidade' || kpiCurrentType === 'sustentabilidade_propostos') {
         thead.innerHTML = `
           <tr class="bg-slate-50 border-b border-slate-100">
             <th onclick="toggleKpiYearSort()" class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-100 transition-colors" title="Clique para ordenar">Ano <span id="kpi-year-sort-indicator">↓</span></th>
@@ -5782,6 +5906,20 @@
             }
           }
         });
+      } else if (kpiCurrentType === 'sustentabilidade_propostos') {
+        // Para KPIs de Sustentabilidade Propostos - contar registos
+        data.forEach(d => {
+          if (d.indicador) {
+            kpisValidos++;
+            // Extrair valor real se disponível
+            const realValue = d.valor && d.valor !== '-' ? parseFloat(d.valor.toString().replace(/,/g, '.')) : 0;
+            if (realValue > 0) {
+              totalRealizado += 1;
+            }
+          }
+        });
+        acimaMeta = totalRealizado;
+        totalMeta = kpisValidos > 0 ? kpisValidos : 1;
       } else if (kpiCurrentType === 'estrategicos_propostos') {
         // Para KPIs Estratégicos Propostos - dados com meta como string
         // Não fazer cálculos numéricos, apenas contar registos
@@ -5820,7 +5958,7 @@
       // Calcular tendência (comparando média dos últimos vs anteriores)
       const anos = [...new Set(data.map(d => d.ano).filter(Boolean))].sort((a, b) => parseInt(b) - parseInt(a));
       let tendencia = '→';
-      if (anos.length >= 2 && kpiCurrentType !== 'estrategicos_propostos') {
+      if (anos.length >= 2 && kpiCurrentType !== 'estrategicos_propostos' && kpiCurrentType !== 'sustentabilidade_propostos') {
         const ultimoAno = data.filter(d => d.ano == anos[0]);
         const anoAnterior = data.filter(d => d.ano == anos[1]);
         
@@ -5856,7 +5994,7 @@
       // Gerar Smart Analysis com dados COMPLETOS (não filtrados pelos filtros principais)
       if (kpiCurrentType === 'sustentabilidade') {
         generateSmartAnalysisSustentabilidade(allDataForSmartAnalysis, taxaCumprimento, acimaMeta, abaixoMeta, anos);
-      } else if (kpiCurrentType !== 'estrategicos_propostos') {
+      } else if (kpiCurrentType !== 'estrategicos_propostos' && kpiCurrentType !== 'sustentabilidade_propostos') {
         generateSmartAnalysis(allDataForSmartAnalysis, taxaCumprimento, acimaMeta, abaixoMeta, anos);
       }
     }
@@ -6791,7 +6929,7 @@
       });
       
       // Renderizar conforme o tipo de KPI
-      if (kpiCurrentType === 'sustentabilidade') {
+      if (kpiCurrentType === 'sustentabilidade' || kpiCurrentType === 'sustentabilidade_propostos') {
         // Para KPIs de Sustentabilidade
         tbody.innerHTML = filteredData.map(d => {
           const cumprimento = d.valorObjetivo > 0 ? ((d.valor / d.valorObjetivo) * 100).toFixed(1) : '—';
@@ -6958,7 +7096,16 @@
       console.log(`🔄 Applying filters - Anos: [${selectedAnosArray.join(', ')}], Processo: "${processoFilter}", Indicador: "${indicadorFilter}"`);
       
       // Get the correct data based on KPI type
-      const currentData = kpiCurrentType === 'estrategicos' ? kpiEstrategicosData : kpiSustentabilidadeData;
+      let currentData;
+      if (kpiCurrentType === 'estrategicos') {
+        currentData = kpiEstrategicosData;
+      } else if (kpiCurrentType === 'estrategicos_propostos') {
+        currentData = kpiEstrategicosPropostosData;
+      } else if (kpiCurrentType === 'sustentabilidade_propostos') {
+        currentData = kpiSustentabilidadePropostosData;
+      } else {
+        currentData = kpiSustentabilidadeData;
+      }
       
       // Apply cumulative filters to the original data
       let filteredData = currentData.filter(d => {
