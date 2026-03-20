@@ -105,6 +105,80 @@
       height: 12px;
       border-radius: 2px;
     }
+
+    /* Estilos para Filtros Multi-Seleção */
+    .filter-section {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px -1px rgba(0,0,0,0.03);
+    }
+
+    .filter-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .filter-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #334155;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .filter-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .filter-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      border: 2px solid #cbd5e1;
+      background: white;
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+
+    .filter-btn.active {
+      background: var(--secondary);
+      color: white;
+      border-color: var(--secondary);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .reset-filters-btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      border: none;
+      background: #e2e8f0;
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .reset-filters-btn:hover {
+      background: #cbd5e1;
+      color: #1e293b;
+    }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -136,6 +210,37 @@
       <button class="nav-link" onclick="switchTab('reunioes')">📅 Reuniões</button>
       <button class="nav-link" onclick="switchTab('auditorias')">🔍 Auditorias</button>
       <button class="nav-link" onclick="switchTab('categorias')">🏷️ Categorias</button>
+    </div>
+
+    <!-- Seção de Filtros -->
+    <div class="filter-section">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Filtro de Anos -->
+        <div class="filter-group">
+          <div class="filter-title">🗓️ Anos</div>
+          <div class="filter-buttons">
+            <button class="filter-btn" data-filter-type="year" onclick="toggleFilter('year', '2024')">2024</button>
+            <button class="filter-btn" data-filter-type="year" onclick="toggleFilter('year', '2025')">2025</button>
+            <button class="filter-btn active" data-filter-type="year" onclick="toggleFilter('year', '2026')">2026</button>
+          </div>
+        </div>
+
+        <!-- Filtro de Categorias -->
+        <div class="filter-group">
+          <div class="filter-title">🏷️ Categorias</div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" onclick="toggleFilter('category', 'Estratégica')">Estratégica</button>
+            <button class="filter-btn active" onclick="toggleFilter('category', 'Revisão')">Revisão</button>
+            <button class="filter-btn active" onclick="toggleFilter('category', 'Operacional')">Operacional</button>
+            <button class="filter-btn active" onclick="toggleFilter('category', 'Auditoria')">Auditoria</button>
+          </div>
+        </div>
+
+        <!-- Botão Resetar Filtros -->
+        <div class="filter-group flex items-end">
+          <button class="reset-filters-btn w-full" onclick="resetAllFilters()">🔄 Resetar Filtros</button>
+        </div>
+      </div>
     </div>
 
     <!-- TAB 1: Visão Geral -->
@@ -330,6 +435,83 @@
       pink: '#ec4899',
       indigo: '#6366f1'
     };
+
+    // Sistema de Filtros
+    let activeFilters = {
+      year: '2026',  // Anos: apenas 1 valor (exclusivo)
+      category: ['Estratégica', 'Revisão', 'Operacional', 'Auditoria', 'Qualidade', 'Performance', 'Cliente', 'Recursos', 'Suprimentos']
+    };
+
+    function toggleFilter(type, value) {
+      const button = event.target;
+      
+      if (type === 'year') {
+        // Anos: radio button (apenas 1 selecionado)
+        // Remove active de todos os botões de ano
+        document.querySelectorAll('[data-filter-type="year"]').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        // Adiciona active apenas ao clicado
+        button.classList.add('active');
+        activeFilters.year = value;
+      } else {
+        // Categorias: checkbox (múltiplas seleções)
+        if (activeFilters[type].includes(value)) {
+          activeFilters[type] = activeFilters[type].filter(v => v !== value);
+          button.classList.remove('active');
+        } else {
+          activeFilters[type].push(value);
+          button.classList.add('active');
+        }
+      }
+      
+      applyFilters();
+    }
+
+    function resetAllFilters() {
+      activeFilters = {
+        year: '2026',
+        category: ['Estratégica', 'Revisão', 'Operacional', 'Auditoria', 'Qualidade', 'Performance', 'Cliente', 'Recursos', 'Suprimentos']
+      };
+
+      // Resetar botões de filtro de ano
+      document.querySelectorAll('[data-filter-type="year"]').forEach((btn, index) => {
+        if (index === 2) { // 2026 é o terceiro botão (índice 2)
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Resetar botões de filtro de categoria
+      document.querySelectorAll('.filter-group').forEach(group => {
+        const buttons = group.querySelectorAll('.filter-btn:not([data-filter-type])');
+        buttons.forEach(btn => {
+          if (['Estratégica', 'Revisão', 'Operacional', 'Auditoria', 'Qualidade', 'Performance', 'Cliente', 'Recursos', 'Suprimentos'].includes(btn.textContent.trim())) {
+            btn.classList.add('active');
+          }
+        });
+      });
+
+      applyFilters();
+    }
+
+    function applyFilters() {
+      // Atualizar gráficos com os filtros aplicados
+      console.log('Filtros aplicados:', activeFilters);
+      
+      // Aqui você pode adicionar lógica para filtrar dados dos gráficos
+      // Por enquanto, vamos apenas fazer um visual feedback
+      
+      // Redraw dos gráficos
+      setTimeout(() => {
+        Object.keys(chartInstances).forEach(key => {
+          if (chartInstances[key]) {
+            chartInstances[key].update('active');
+          }
+        });
+      }, 100);
+    }
 
     // Função para trocar abas
     function switchTab(tabName) {

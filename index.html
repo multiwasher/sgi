@@ -5090,6 +5090,18 @@
       return result;
     }
 
+    // Toggle para Accordions (Colapsáveis)
+    function toggleAccordion(id) {
+      const content = document.getElementById(id);
+      const chevron = document.getElementById(id + '-chevron');
+      if (content) {
+        content.classList.toggle('hidden');
+        if (chevron) {
+          chevron.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+      }
+    }
+
     function openKpiModal() {
       const m = document.getElementById('kpiModal');
       m.classList.remove('hidden');
@@ -5673,25 +5685,22 @@
               e.preventDefault();
               const clickedBtn = e.target;
               const clickedYear = clickedBtn.dataset.year;
-              const wasSelected = clickedBtn.dataset.selected === 'true';
               
-              console.log('🔘 Botão clicado:', clickedYear, 'estava selecionado:', wasSelected);
-              console.log('  Antes do click - data-selected:', clickedBtn.dataset.selected);
+              console.log('🔘 Botão clicado (Radio):', clickedYear);
               
-              // Alternar estado
-              if (wasSelected) {
-                // Desselecionar
-                clickedBtn.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
-                clickedBtn.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
-                clickedBtn.dataset.selected = 'false';
-              } else {
-                // Selecionar
-                clickedBtn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
-                clickedBtn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300');
-                clickedBtn.dataset.selected = 'true';
-              }
+              // Desselecionar todos os botões
+              yearBtns.forEach(b => {
+                b.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
+                b.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
+                b.dataset.selected = 'false';
+              });
               
-              console.log('  Depois do click - data-selected:', clickedBtn.dataset.selected);
+              // Selecionar apenas o botão clicado
+              clickedBtn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
+              clickedBtn.classList.remove('bg-white', 'text-slate-700', 'border-slate-300');
+              clickedBtn.dataset.selected = 'true';
+              
+              console.log('  Ano selecionado (único):', clickedYear);
               console.log('🔄 Acionando updateSmartAnalysisContent...');
               console.log(`  Passando dados:`, {
                 dataLength: originalDataForYearFilter.length,
@@ -5940,11 +5949,15 @@
         // === INDICADORES NO ALVO ===
         const emAlvoIndicadores = indicadoresDetalhes.filter(i => i.cumpre);
         if (emAlvoIndicadores.length > 0) {
-          html += `<div class="p-3 border-l-4 border-green-500 bg-green-50 rounded mb-4">`;
-          html += `<div class="font-bold text-green-800 mb-3">✅ INDICADORES NO ALVO (${emAlvoIndicadores.length})</div>`;
-          html += `<div class="space-y-2 text-xs">`;
+          const alvoId = 'accordion-alvo-' + Date.now();
+          html += `<div class="border-l-4 border-green-500 bg-green-50 rounded mb-4 overflow-hidden">`;
+          html += `<div onclick="toggleAccordion('${alvoId}')" class="p-3 cursor-pointer hover:bg-green-100 transition-colors flex items-center justify-between">`;
+          html += `<div class="font-bold text-green-800">✅ INDICADORES NO ALVO (${emAlvoIndicadores.length})</div>`;
+          html += `<span class="text-green-800 transform transition-transform" id="${alvoId}-chevron">▼</span>`;
+          html += `</div>`;
+          html += `<div id="${alvoId}" class="hidden space-y-2 text-xs px-3 pb-3">`;
           
-          emAlvoIndicadores.slice(0, 5).forEach(ind => {
+          emAlvoIndicadores.forEach((ind) => {
             html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-green-400">`;
             html += `<div class="flex-1">`;
             html += `<div class="font-bold text-green-700">📌 ${ind.nome}</div>`;
@@ -5954,13 +5967,9 @@
             html += `</div>`;
             html += `<div class="text-right ml-2">`;
             html += `<div class="font-black text-lg text-green-600">${ind.impactScore}</div>`;
-            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `<div class="text-slate-500 text-xs cursor-help" title="Score de criticidade: 0-30 (Baixo) | 31-70 (Médio) | 71-100 (Alto). Baseado no status e risco associado.">Impacto</div>`;
             html += `</div></div>`;
           });
-          
-          if (emAlvoIndicadores.length > 5) {
-            html += `<div class="text-green-600 italic text-xs mt-2 font-semibold">✅ ... e ${emAlvoIndicadores.length - 5} outros indicadores no alvo</div>`;
-          }
           
           html += `</div></div>`;
         }
@@ -5968,11 +5977,15 @@
         // === INDICADORES EM RISCO ===
         const emRisco = riscoNiveis.moderado.concat(riscoNiveis.alto);
         if (emRisco.length > 0) {
-          html += `<div class="p-3 border-l-4 border-amber-500 bg-amber-50 rounded mb-4">`;
-          html += `<div class="font-bold text-amber-800 mb-3">⚠️ INDICADORES EM RISCO (${emRisco.length})</div>`;
-          html += `<div class="space-y-2 text-xs">`;
+          const riscoId = 'accordion-risco-' + Date.now();
+          html += `<div class="border-l-4 border-amber-500 bg-amber-50 rounded mb-4 overflow-hidden">`;
+          html += `<div onclick="toggleAccordion('${riscoId}')" class="p-3 cursor-pointer hover:bg-amber-100 transition-colors flex items-center justify-between">`;
+          html += `<div class="font-bold text-amber-800">⚠️ INDICADORES EM RISCO (${emRisco.length})</div>`;
+          html += `<span class="text-amber-800 transform transition-transform" id="${riscoId}-chevron">▼</span>`;
+          html += `</div>`;
+          html += `<div id="${riscoId}" class="hidden space-y-2 text-xs px-3 pb-3">`;
           
-          emRisco.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).slice(0, 5).forEach(ind => {
+          emRisco.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).forEach((ind) => {
             html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-amber-400">`;
             html += `<div class="flex-1">`;
             html += `<div class="font-bold text-amber-700">📊 ${ind.nome}</div>`;
@@ -5983,39 +5996,25 @@
             html += `</div>`;
             html += `<div class="text-right ml-2">`;
             html += `<div class="font-black text-lg text-amber-600">${ind.impactScore}</div>`;
-            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `<div class="text-slate-500 text-xs cursor-help" title="Score de criticidade: 0-30 (Baixo) | 31-70 (Médio) | 71-100 (Alto). Baseado no status e risco associado.">Impacto</div>`;
             html += `</div></div>`;
           });
-          
-          if (emRisco.length > 5) {
-            html += `<div class="text-amber-600 italic text-xs mt-2 font-semibold">⚠️ ... e ${emRisco.length - 5} outros indicadores em risco</div>`;
-          }
           
           html += `</div></div>`;
         }
         
         // === INDICADORES CRÍTICOS ===
         if (riscoNiveis.crítico.length > 0) {
-          const baseId = 'critico-' + Date.now();
-          const shouldCollapse = riscoNiveis.crítico.length > 5;
-          
-          html += `<div class="p-3 border-l-4 border-red-500 bg-red-50 rounded mb-4">`;
-          html += `<div class="flex items-center justify-between mb-3">`;
+          const criticoId = 'accordion-critico-' + Date.now();
+          html += `<div class="border-l-4 border-red-500 bg-red-50 rounded mb-4 overflow-hidden">`;
+          html += `<div onclick="toggleAccordion('${criticoId}')" class="p-3 cursor-pointer hover:bg-red-100 transition-colors flex items-center justify-between">`;
           html += `<div class="font-bold text-red-800">🚨 INDICADORES CRÍTICOS (${riscoNiveis.crítico.length}) - ATENÇÃO!</div>`;
-          
-          if (shouldCollapse) {
-            html += `<button onclick="toggleElement('${baseId}')" class="text-xs bg-red-300 hover:bg-red-400 text-red-900 px-2 py-1 rounded transition-colors font-semibold">📂 Ver Todos</button>`;
-          }
-          
+          html += `<span class="text-red-800 transform transition-transform" id="${criticoId}-chevron">▼</span>`;
           html += `</div>`;
-          html += `<div class="space-y-2 text-xs">`;
+          html += `<div id="${criticoId}" class="hidden space-y-2 text-xs px-3 pb-3">`;
           
-          riscoNiveis.crítico.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).forEach((ind, idx) => {
-            const isHidden = shouldCollapse && idx >= 3;
-            const displayClass = isHidden ? ` hidden` : ``;
-            const itemId = `${baseId}-item-${idx}`;
-            
-            html += `<div id="${itemId}" class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-red-500${displayClass}">`;
+          riscoNiveis.crítico.sort((a, b) => parseFloat(b.percentualDesvio) - parseFloat(a.percentualDesvio)).forEach((ind) => {
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-4 border-red-500">`;
             html += `<div class="flex-1">`;
             html += `<div class="font-bold text-red-700">📉 ${ind.nome}</div>`;
             html += `<div class="text-slate-600 text-xs">Processo: ${ind.processo} | Responsável: ${ind.responsavel || 'N/D'}</div>`;
@@ -6025,13 +6024,9 @@
             html += `</div>`;
             html += `<div class="text-right ml-2">`;
             html += `<div class="font-black text-lg text-red-600">${ind.impactScore}</div>`;
-            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `<div class="text-slate-500 text-xs cursor-help" title="Score de criticidade: 0-30 (Baixo) | 31-70 (Médio) | 71-100 (Alto). Baseado no status e risco associado.">Impacto</div>`;
             html += `</div></div>`;
           });
-          
-          if (riscoNiveis.crítico.length > 5) {
-            html += `<div class="text-red-600 italic text-xs mt-2 font-semibold">🚨 ... e ${riscoNiveis.crítico.length - 5} outros indicadores críticos</div>`;
-          }
           
           html += `</div></div>`;
         }
@@ -6064,7 +6059,8 @@
           html += `<div class="font-bold">${statusIcon} ${processo}</div>`;
           html += `<div class="text-slate-600 mt-2 leading-tight">`;
           html += `  <div>📌 Taxa Cumprimento: <span class="font-bold text-sm">${stats.alvo}/${stats.total}</span> (${taxaCumprimento}%)</div>`;
-          html += `  <div>⚙️ Score Impacto Médio: <span class="font-bold text-sm text-indigo-600">${avgScore}/100</span></div>`;
+          html += `  <div title="Média ponderada de criticidade dos indicadores: (Alvo=0%, Risco=50%, Crítico=100%)" class="cursor-help">⚙️ Score Impacto Médio: <span class="font-bold text-sm text-indigo-600">${avgScore}/100</span></div>`;
+          html += `  <div class="text-slate-500 text-[10px] italic mt-1">💡 Cálculo: Média dos scores dos ${stats.total} indicador(es) do processo</div>`;
           html += `</div>`;
           html += `<div class="text-slate-500 mt-1 text-xs">Status: ${stats.alvo === stats.total ? '✅ Todos em alvo' : stats.critico > 0 ? `⚠️ ${stats.critico} crítico(s)` : '🟡 Monitorar'}</div>`;
           html += `</div>`;
@@ -6291,8 +6287,14 @@
           html += `<div class="font-bold text-green-800 mb-2">🌟 INDICADORES EM MELHORA (${indicadoresEmMelhora.length})</div>`;
           html += `<div class="space-y-1 text-xs">`;
           
-          indicadoresEmMelhora.slice(0, 3).forEach(ind => {
-            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-green-200">`;
+          const melhoriaBaseId = 'melhoria-' + Date.now();
+          const melhoriaHasMore = indicadoresEmMelhora.length > 3;
+          
+          indicadoresEmMelhora.forEach((ind, idx) => {
+            const isHidden = melhoriaHasMore && idx >= 3;
+            const displayClass = isHidden ? ` hidden melhoria-more-item` : ``;
+            
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-green-200${displayClass}">`;
             html += `<div class="flex-1">`;
             html += `<div class="font-bold text-green-700">${ind.type.icon} ${ind.nome}</div>`;
             html += `<div class="text-slate-600 text-xs">Processo: <span class="font-semibold">${ind.processo}</span></div>`;
@@ -6300,12 +6302,12 @@
             html += `</div>`;
             html += `<div class="text-right ml-2">`;
             html += `<div class="font-bold text-lg text-emerald-600">${ind.impactScore}</div>`;
-            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `<div class="text-slate-500 text-xs cursor-help" title="Score de criticidade: 0-30 (Baixo) | 31-70 (Médio) | 71-100 (Alto). Baseado no status e risco associado.">Impacto</div>`;
             html += `</div></div>`;
           });
           
-          if (indicadoresEmMelhora.length > 3) {
-            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresEmMelhora.length - 3} outros indicadores em melhora</div>`;
+          if (melhoriaHasMore) {
+            html += `<button onclick="document.querySelectorAll('.melhoria-more-item').forEach(el => el.classList.toggle('hidden'))" class="text-slate-600 italic text-xs mt-1 font-semibold bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition-colors">... e mais ${indicadoresEmMelhora.length - 3}</button>`;
           }
           
           html += `</div></div>`;
@@ -6317,8 +6319,14 @@
           html += `<div class="font-bold text-red-800 mb-2">🚨 INDICADORES EM PIORA (${indicadoresEmPiora.length}) - ATENÇÃO!</div>`;
           html += `<div class="space-y-1 text-xs">`;
           
-          indicadoresEmPiora.slice(0, 3).forEach(ind => {
-            html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-2 border-red-400">`;
+          const pioraBaseId = 'piora-' + Date.now();
+          const pioraHasMore = indicadoresEmPiora.length > 3;
+          
+          indicadoresEmPiora.forEach((ind, idx) => {
+            const isHidden = pioraHasMore && idx >= 3;
+            const displayClass = isHidden ? ` hidden piora-more-item` : ``;
+            
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border-l-2 border-red-400${displayClass}">`;
             html += `<div class="flex-1">`;
             html += `<div class="font-bold text-red-700">${ind.type.icon} ${ind.nome}</div>`;
             html += `<div class="text-slate-600 text-xs">Processo: <span>${ind.processo}</span> | Responsável: <span>${ind.responsavel || 'N/D'}</span></div>`;
@@ -6327,12 +6335,12 @@
             html += `</div>`;
             html += `<div class="text-right ml-2">`;
             html += `<div class="font-bold text-lg text-red-600">${ind.impactScore}</div>`;
-            html += `<div class="text-slate-500 text-xs">Impacto</div>`;
+            html += `<div class="text-slate-500 text-xs cursor-help" title="Score de criticidade: 0-30 (Baixo) | 31-70 (Médio) | 71-100 (Alto). Baseado no status e risco associado.">Impacto</div>`;
             html += `</div></div>`;
           });
           
-          if (indicadoresEmPiora.length > 3) {
-            html += `<div class="text-red-600 italic text-xs mt-1 font-semibold">⚠️ ... e ${indicadoresEmPiora.length - 3} outros indicadores em piora</div>`;
+          if (pioraHasMore) {
+            html += `<button onclick="document.querySelectorAll('.piora-more-item').forEach(el => el.classList.toggle('hidden'))" class="text-red-600 italic text-xs mt-1 font-semibold bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors">⚠️ Ver todos os ${indicadoresEmPiora.length}</button>`;
           }
           
           html += `</div></div>`;
@@ -6344,9 +6352,15 @@
           html += `<div class="font-bold text-orange-800 mb-2">⚡ INDICADORES ABAIXO DO OBJETIVO (${indicadoresCriticos.length})</div>`;
           html += `<div class="space-y-1 text-xs">`;
           
-          indicadoresCriticos.slice(0, 3).forEach(ind => {
+          const criticosBaseId = 'criticos-' + Date.now();
+          const criticosHasMore = indicadoresCriticos.length > 3;
+          
+          indicadoresCriticos.forEach((ind, idx) => {
+            const isHidden = criticosHasMore && idx >= 3;
+            const displayClass = isHidden ? ` hidden criticos-more-item` : ``;
             const pctMeta = ind.valorObjetivo > 0 ? ((ind.valor_medio / ind.valorObjetivo) * 100).toFixed(0) : 0;
-            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-orange-200">`;
+            
+            html += `<div class="flex justify-between items-start p-2 bg-white rounded border border-orange-200${displayClass}">`;
             html += `<div class="flex-1">`;
             html += `<div class="font-bold text-orange-700">${ind.type.icon} ${ind.nome}</div>`;
             html += `<div class="text-slate-600 text-xs">Valor: ${ind.valor_medio.toFixed(2)} ${ind.unidade} | Objetivo: ${ind.valorObjetivo} ${ind.unidade}</div>`;
@@ -6354,8 +6368,8 @@
             html += `</div></div>`;
           });
           
-          if (indicadoresCriticos.length > 3) {
-            html += `<div class="text-slate-600 italic text-xs mt-1">... e ${indicadoresCriticos.length - 3} outros indicadores abaixo da meta</div>`;
+          if (criticosHasMore) {
+            html += `<button onclick="document.querySelectorAll('.criticos-more-item').forEach(el => el.classList.toggle('hidden'))" class="text-orange-600 italic text-xs mt-1 font-semibold bg-orange-100 hover:bg-orange-200 px-2 py-1 rounded transition-colors">⚡ Ver todos os ${indicadoresCriticos.length}</button>`;
           }
           
           html += `</div></div>`;
