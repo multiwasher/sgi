@@ -90,6 +90,21 @@
     .swot-a{ border-left: 4px solid #ef4444; }     /* Ameaças */
 
     /* SWOT Category Badge */
+    .swot-code-link {
+      cursor: pointer;
+      color: #059669;
+      font-weight: 600;
+      text-decoration: underline;
+      transition: all 0.2s ease;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    .swot-code-link:hover {
+      background-color: #d1fae5;
+      color: #047857;
+    }
+
     .swot-cat-badge {
       display: inline-flex;
       align-items: center;
@@ -468,6 +483,59 @@
           🌱 PROPOSTA KPI'S SUSTENTABILIDADE
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Visualizar Detalhes da SWOT -->
+  <div id="viewSwotDetailsModal" class="fixed inset-0 hidden z-[120] items-center justify-center bg-slate-900/60 backdrop-blur-sm" onclick="closeViewSwotDetailsModal(event)">
+    <div class="glass-card w-full max-w-2xl p-8 m-4 shadow-2xl" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 id="swotDetailsTitle" class="text-xl font-black text-slate-800 tracking-tight">Detalhes da SWOT</h2>
+          <p id="swotDetailsCode" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1"></p>
+        </div>
+        <button onclick="closeViewSwotDetailsModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Quadrante</p>
+          <div id="swotDetailsQuadrant" class="flex items-center gap-2">
+            <span id="swotDetailsQuadrantBadge" class="px-3 py-1 rounded-lg text-[10px] font-bold text-white"></span>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Descrição</p>
+          <p id="swotDetailsDescription" class="text-sm text-slate-700 leading-relaxed"></p>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Categoria</p>
+          <div id="swotDetailsCategory" class="flex items-center gap-2"></div>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Status</p>
+          <span id="swotDetailsStatus" class="px-3 py-1 rounded-full text-[9px] font-bold inline-flex"></span>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Em Plano de Ação?</p>
+          <span id="swotDetailsPlan" class="text-sm font-semibold"></span>
+        </div>
+
+        <div id="swotDetailsActionsContainer" style="display: none;">
+          <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Ações Estratégicas</p>
+          <div id="swotDetailsActions" class="space-y-2 bg-slate-50 p-4 rounded-lg"></div>
+        </div>
+      </div>
+
+      <button onclick="closeViewSwotDetailsModal()" class="w-full mt-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg transition-colors">Fechar</button>
     </div>
   </div>
 
@@ -1864,20 +1932,20 @@
       <!-- Tabela Plano de Ação -->
       <div class="glass-card overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
+          <table class="w-full text-left text-[11px]">
             <thead>
               <tr class="bg-slate-50 border-b border-slate-100">
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data de Registo</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Origem da Ação</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ação a ser Realizada</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prazo/Monitorização</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data de Conclusão</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status das Ações</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Análise da Eficácia</th>
-                <th class="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Observações</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">#</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Data de Registo</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Origem da Ação</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Processo</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Ação a ser Realizada</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Responsável</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Prazo/Monitorização</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Data de Conclusão</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Status das Ações</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Análise da Eficácia</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Observações</th>
               </tr>
             </thead>
             <tbody id="planoAcaoTableBody" class="divide-y divide-slate-50">
@@ -3163,19 +3231,22 @@
         const dataConclusao = formatDate(item['Data de Conclusão'] || '-');
         
         return `<tr class="hover:bg-slate-50">
-          <td class="px-4 py-3 text-xs font-semibold text-slate-700">${escapeHtml(item['#'] || '-')}</td>
-          <td class="px-4 py-3 text-xs text-slate-600">${escapeHtml(dataRegisto)}</td>
-          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(item['Origem da Ação'] || '-')}</td>
-          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(item['Processo'] || '-')}</td>
-          <td class="px-4 py-3 text-xs text-slate-600">${escapeHtml(item['Ação a ser Realizada'] || '-')}</td>
-          <td class="px-4 py-3 text-xs text-slate-600 font-semibold">${escapeHtml(item['Responsável'] || '-')}</td>
-          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(item['Prazo/Monitorização'] || '-')}</td>
-          <td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(dataConclusao)}</td>
-          <td class="px-4 py-3"><span class="${statusClass} px-2 py-1 rounded text-[9px] font-bold uppercase">${escapeHtml(status)}</span></td>
-          <td class="px-4 py-3"><span class="${eficaciaClass} px-2 py-1 rounded text-[9px] font-bold uppercase">${escapeHtml(eficacia || '-')}</span></td>
-          <td class="px-4 py-3 text-xs text-slate-500 max-w-xs truncate" title="${escapeHtml(item['Observações'] || '')}">${escapeHtml(item['Observações'] || '-')}</td>
+          <td class="px-2 py-2 text-[10px] font-semibold text-slate-700">${escapeHtml(item['#'] || '-')}</td>
+          <td class="px-2 py-2 text-[10px] text-slate-600">${escapeHtml(dataRegisto)}</td>
+          <td class="px-2 py-2 text-[10px] text-slate-500">${escapeHtml(item['Origem da Ação'] || '-')}</td>
+          <td class="px-2 py-2 text-[10px] text-slate-500">${escapeHtml(item['Processo'] || '-')}</td>
+          <td class="px-2 py-2 text-[10px] text-slate-600">${escapeHtml(item['Ação a ser Realizada'] || '-')}</td>
+          <td class="px-2 py-2 text-[10px] text-slate-600 font-semibold">${escapeHtml(item['Responsável'] || '-')}</td>
+          <td class="px-2 py-2 text-[10px] text-slate-500">${escapeHtml(item['Prazo/Monitorização'] || '-')}</td>
+          <td class="px-2 py-2 text-[10px] text-slate-500">${escapeHtml(dataConclusao)}</td>
+          <td class="px-2 py-2"><span class="${statusClass} px-2 py-1 rounded text-[8px] font-bold uppercase">${escapeHtml(status)}</span></td>
+          <td class="px-2 py-2"><span class="${eficaciaClass} px-2 py-1 rounded text-[8px] font-bold uppercase">${escapeHtml(eficacia || '-')}</span></td>
+          <td class="px-2 py-2 text-[10px] text-slate-500 max-w-xs" id="obs-${idx}"></td>
         </tr>`;
       }).join('');
+      
+      // Processar observações para tornar códigos SWOT clicáveis
+      updatePlanoAcaoRowsWithData(data);
     }
 
     function updatePlanoAcaoStats() {
@@ -7900,7 +7971,211 @@
           fetchPlanoAcao();
         }, 500);
       }
+
+      // ✅ Process Plano de Ação observations to link SWOT codes
+      document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('swot-code-link')) {
+          e.stopPropagation();
+        }
+      });
     };
+
+    // ✅ Abrir modal com detalhes da SWOT
+    function openViewSwotDetailsModal(codigo) {
+      // Se swotData estiver vazio, carregar dados da SWOT primeiro
+      if (!swotData || !Array.isArray(swotData) || swotData.length === 0) {
+        console.warn('Dados SWOT vazios. Carregando...');
+        // Fazer callback para tentar encontrar depois de carregar
+        fetchSwot();
+        // Tentar novamente após um pequeno delay
+        setTimeout(() => openViewSwotDetailsModal(codigo), 1000);
+        return;
+      }
+
+      // Buscar o item SWOT pelo código, tentando múltiplas chaves
+      let swotItem = null;
+      const codigoNormalizado = String(codigo).trim().toUpperCase();
+      
+      for (let i = 0; i < swotData.length; i++) {
+        const item = swotData[i];
+        const itemCodigo = getAny(item, ['código','Código','ID','id','codigo','Code','CODE']);
+        const itemCodigoNormalizado = String(itemCodigo).trim().toUpperCase();
+        
+        // Tentativa 1: Comparação exata
+        if (itemCodigoNormalizado === codigoNormalizado) {
+          swotItem = item;
+          break;
+        }
+        
+        // Tentativa 2: Comparação parcial (caso o código esteja incompleto)
+        if (itemCodigoNormalizado.includes(codigoNormalizado) || codigoNormalizado.includes(itemCodigoNormalizado)) {
+          swotItem = item;
+          break;
+        }
+      }
+
+      if (!swotItem) {
+        // Log para debug
+        console.warn('SWOT com código "' + codigo + '" não encontrado. Códigos disponíveis:');
+        swotData.forEach((item, idx) => {
+          const c = getAny(item, ['código','Código','ID','id','codigo','Code','CODE']);
+          console.log('  [' + idx + '] ' + c);
+        });
+        
+        // Mostrar modal de erro
+        const modal = document.getElementById('viewSwotDetailsModal');
+        if (modal) {
+          document.getElementById('swotDetailsTitle').textContent = 'Código SWOT não encontrado';
+          document.getElementById('swotDetailsCode').textContent = 'Código: #' + escapeHtml(String(codigo));
+          document.getElementById('swotDetailsDescription').textContent = 'O código SWOT "' + escapeHtml(codigo) + '" não foi encontrado na base de dados. Verifique se o código está correto.';
+          document.getElementById('swotDetailsQuadrant').innerHTML = '';
+          document.getElementById('swotDetailsStatus').innerHTML = '';
+          document.getElementById('swotDetailsPlan').innerHTML = '';
+          document.getElementById('swotDetailsActionsContainer').style.display = 'none';
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
+        }
+        return;
+      }
+
+      // Preencher modal com os dados
+      const description = getAny(swotItem, ['Descrição','Descricao','DESC','desc','Description']);
+      const swotRaw = getAny(swotItem, ['SWOT','Swot','swot']);
+      const quadrant = resolveQuadrant(swotRaw);
+      const tomada = getTomadaAcao(swotItem);
+      const ativo = isAtivoFromTomada(tomada);
+
+      document.getElementById('swotDetailsTitle').textContent = 'Detalhes: ' + escapeHtml(String(description || 'Sem descrição'));
+      document.getElementById('swotDetailsCode').textContent = 'Código: #' + escapeHtml(String(codigo));
+      document.getElementById('swotDetailsDescription').textContent = escapeHtml(String(description || 'Sem descrição'));
+
+      // Quadrante com cor
+      let quadrantColor = 'bg-slate-400';
+      let quadrantIcon = '';
+      let quadrantName = quadrant || 'INDEFINIDO';
+      if (quadrant === 'FORÇAS') {
+        quadrantColor = 'bg-emerald-500';
+        quadrantIcon = '⚡ ';
+      } else if (quadrant === 'OPORTUNIDADES') {
+        quadrantColor = 'bg-blue-500';
+        quadrantIcon = '👁️ ';
+      } else if (quadrant === 'FRAQUEZAS') {
+        quadrantColor = 'bg-amber-500';
+        quadrantIcon = '⚠️ ';
+      } else if (quadrant === 'AMEAÇAS') {
+        quadrantColor = 'bg-red-500';
+        quadrantIcon = '🔴 ';
+      }
+
+      const badge = document.getElementById('swotDetailsQuadrantBadge');
+      badge.className = quadrantColor + ' px-3 py-1 rounded-lg text-[10px] font-bold text-white';
+      badge.textContent = quadrantIcon + quadrantName;
+
+      // Status
+      const statusEl = document.getElementById('swotDetailsStatus');
+      statusEl.className = ativo ? 'px-3 py-1 rounded-full text-[9px] font-bold inline-flex bg-emerald-100 text-emerald-700' : 'px-3 py-1 rounded-full text-[9px] font-bold inline-flex bg-slate-100 text-slate-500';
+      statusEl.textContent = ativo ? 'Ativo' : 'Não Ativo';
+
+      // Plano de Ação
+      const planEl = document.getElementById('swotDetailsPlan');
+      const planValue = tomada && String(tomada).toUpperCase() === 'S' ? 'Sim' : 'Não';
+      planEl.textContent = planValue;
+      planEl.className = planValue === 'Sim' ? 'text-sm font-semibold text-emerald-600' : 'text-sm font-semibold text-slate-500';
+
+      // Ações
+      const actionsContainer = document.getElementById('swotDetailsActionsContainer');
+      const actionsDiv = document.getElementById('swotDetailsActions');
+      actionsDiv.innerHTML = '';
+      let hasActions = false;
+
+      for (let i = 1; i <= 6; i++) {
+        const cod = getAny(swotItem, [
+          'CÓDIGO_AÇÃO ' + i, 'CODIGO_ACAO ' + i, 'CÓDIGO AÇÃO ' + i, 'CODIGO ACAO ' + i,
+          'CODIGO_AÇÃO ' + i, 'CÓDIGO_ACAO ' + i
+        ]);
+        const acao = getAny(swotItem, ['AÇÃO ' + i, 'ACAO ' + i, 'Ação ' + i, 'Acao ' + i]);
+
+        if (acao && String(acao).trim()) {
+          hasActions = true;
+          const actionCode = cod || deriveActionCode(codigo, i);
+          actionsDiv.innerHTML += '<div class="p-2 bg-white border border-slate-100 rounded"><p class="text-[9px] font-bold text-slate-600 mb-1">Ação ' + i + ': ' + escapeHtml(String(actionCode)) + '</p><p class="text-[10px] text-slate-600">' + escapeHtml(String(acao)) + '</p></div>';
+        }
+      }
+
+      if (hasActions) {
+        actionsContainer.style.display = 'block';
+      } else {
+        actionsContainer.style.display = 'none';
+      }
+
+      // Abrir modal
+      const modal = document.getElementById('viewSwotDetailsModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+      }
+    }
+
+    // ✅ Fechar modal de detalhes da SWOT
+    function closeViewSwotDetailsModal(event) {
+      const modal = document.getElementById('viewSwotDetailsModal');
+      if (!modal) return;
+      
+      // Se um event foi passado e não é o modal em si, não fazer nada
+      if (event && event.target !== modal) return;
+      
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
+
+    // ✅ Construir lista de códigos SWOT válidos para validação
+    function buildValidSwotCodes() {
+      const validCodes = [];
+      if (swotData && Array.isArray(swotData)) {
+        swotData.forEach(item => {
+          const codigo = getAny(item, ['código','Código','ID','id','codigo','Code','CODE']);
+          if (codigo) {
+            validCodes.push(String(codigo).trim().toUpperCase());
+          }
+        });
+      }
+      return validCodes;
+    }
+
+    // ✅ Atualizar renderização do PAC para incluir dados nas células
+    function updatePlanoAcaoRowsWithData(data) {
+      data.forEach((item, idx) => {
+        const obsCell = document.getElementById('obs-' + idx);
+        if (obsCell) {
+          const observacoes = String(item['Observações'] || '-');
+          obsCell.setAttribute('data-observacoes', observacoes);
+          obsCell.title = observacoes;
+          
+          // Processar e tornar clicáveis todos os códigos SWOT detectados
+          const codigosSwot = observacoes.match(/[SOWT][OWTS]?\d+(_\d+)?/g) || [];
+          let html = escapeHtml(observacoes);
+          
+          codigosSwot.forEach(codigo => {
+            const regex = new RegExp('\\b' + codigo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g');
+            html = html.replace(regex, '<span class="swot-code-link" data-swot-codigo="' + codigo + '">' + codigo + '</span>');
+          });
+          
+          obsCell.innerHTML = html;
+        }
+      });
+      
+      // Adicionar event listeners aos links SWOT
+      document.querySelectorAll('.swot-code-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const codigo = this.getAttribute('data-swot-codigo');
+          if (codigo) {
+            openViewSwotDetailsModal(codigo);
+          }
+        });
+      });
+    }
   </script>
 </body>
 </html>
