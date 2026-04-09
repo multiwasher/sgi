@@ -4740,6 +4740,54 @@
       }).join('');
     }
 
+    function getPlanoSActionsFromSwotCode(swotCode) {
+      // Extrai os códigos das ações estratégicas com PLANO: S para um código SWOT específico
+      if (!swotCode || !swotData || swotData.length === 0) return [];
+      
+      const codigoNorm = normLoose(swotCode);
+      const swotItem = swotData.find(item => {
+        const itemCodigo = getAny(item, ['código','Código','ID','id','codigo']);
+        return normLoose(itemCodigo) === codigoNorm;
+      });
+      
+      if (!swotItem) return [];
+      
+      const actionCodes = [];
+      const planoMap = buildPlanoMap(swotItem);
+      
+      for (let i = 1; i <= 6; i++) {
+        const planoFlag = planoMap[i] ?? '';
+        if (isYes(planoFlag)) {
+          const cod = getAny(swotItem, [
+            `CÓDIGO_AÇÃO ${i}`, `CODIGO_ACAO ${i}`, `CÓDIGO AÇÃO ${i}`, `CODIGO ACAO ${i}`,
+            `CODIGO_AÇÃO ${i}`, `CÓDIGO_ACAO ${i}`
+          ]);
+          if (cod) actionCodes.push(String(cod).trim());
+        }
+      }
+      
+      return actionCodes;
+    }
+
+    function getPlanoSActionsFromObservations(observacoes) {
+      // Extrai códigos SWOT das observações e retorna as ações com PLANO: S
+      if (!observacoes) return [];
+      
+      const codigosArray = String(observacoes || '')
+        .split(/[;,]/)
+        .map(c => c.trim())
+        .filter(c => c.length > 0);
+      
+      const allActionCodes = [];
+      codigosArray.forEach(codigo => {
+        const actionCodes = getPlanoSActionsFromSwotCode(codigo);
+        allActionCodes.push(...actionCodes);
+      });
+      
+      // Remove duplicados
+      return [...new Set(allActionCodes)];
+    }
+
     function renderRo(data) {
       const tbody = document.getElementById('roTableBody');
       
@@ -4758,6 +4806,10 @@
         const proveniencia = getAny(item, ['Proveniência (Origem do Risco)', 'Proveniencia (Origem do Risco)', 'Proveniência', 'Proveniencia']);
         const observacoes = getAny(item, ['Observações', 'Observacoes', 'Observação', 'Observacao']);
         const keyword = getAny(item, ['KeyWord', 'Keyword']);
+        
+        // Obtém as ações estratégicas com PLANO: S a partir das observações
+        const planoSActions = getPlanoSActionsFromObservations(observacoes);
+        const paDisplay = planoSActions.length > 0 ? planoSActions.join(', ') : (pa ? pa : '-');
 
         // Determina se é Risco (R) ou Oportunidade (O)
         const roNormalized = normLoose(ro);
@@ -4776,7 +4828,7 @@
             <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(origem)}</td>
             <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(processos)}</td>
             <td class="px-6 py-4 text-center text-sm font-bold text-slate-700">${escapeHtml(codigo)}</td>
-            <td class="px-6 py-4 text-center text-sm font-black ${pa && normLoose(pa) === 'sim' || normLoose(pa) === 's' ? 'text-emerald-600' : 'text-slate-400'}">${escapeHtml(pa)}</td>
+            <td class="px-6 py-4 text-center text-sm font-black ${paDisplay !== '-' ? 'text-emerald-600' : 'text-slate-400'}">${escapeHtml(paDisplay)}</td>
             <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(proveniencia)}</td>
             <td class="px-6 py-4 text-sm text-slate-700">
               ${observacoes && String(observacoes).trim() 
