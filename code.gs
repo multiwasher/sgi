@@ -7,7 +7,7 @@
  * Parâmetro: ?sheet=SWOT|R&O|Partes%20Interessadas (padrão: SWOT)
  */
 
-const SPREADSHEET_ID = "1A0id_1DRMdpATDCB3Ctp8OZMqwwdj46BG5Pcdw2ULhw";
+const SPREADSHEET_ID = "1n-9nPmr_owOXxOhfIqqIGnoBu8MdbkeknW1nRSKF6AI";
 
 /**
  * GET: devolve dados de qualquer separador
