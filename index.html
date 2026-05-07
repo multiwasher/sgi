@@ -5406,6 +5406,68 @@
       return result;
     }
 
+    // Normaliza ano para evitar perdas por formatação inconsistente (ex.: espaços, texto extra)
+    function normalizeKpiYear(rawYear) {
+      const value = String(rawYear ?? '').trim();
+      if (!value) return '';
+
+      const yearMatch = value.match(/\b(19|20)\d{2}\b/);
+      if (yearMatch) return yearMatch[0];
+
+      return value;
+    }
+
+    function normalizeSheetHeader(rawHeader) {
+      return String(rawHeader ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function parseLocaleNumber(value, emptyFallback = 0) {
+      if (value === null || value === undefined) return emptyFallback;
+      const raw = String(value).trim();
+      if (!raw) return emptyFallback;
+
+      // Converte formatos pt/en comuns: 1.234,56 | 1,234.56 | 1234,56 | 1234.56
+      const sanitized = raw.replace(/\s/g, '');
+      const hasComma = sanitized.includes(',');
+      const hasDot = sanitized.includes('.');
+
+      let normalized = sanitized;
+      if (hasComma && hasDot) {
+        if (sanitized.lastIndexOf(',') > sanitized.lastIndexOf('.')) {
+          normalized = sanitized.replace(/\./g, '').replace(',', '.');
+        } else {
+          normalized = sanitized.replace(/,/g, '');
+        }
+      } else if (hasComma) {
+        normalized = sanitized.replace(',', '.');
+      }
+
+      const parsed = parseFloat(normalized);
+      return isNaN(parsed) ? emptyFallback : parsed;
+    }
+
+    function getSelectedKpiYears() {
+      const selectedYearBtns = document.querySelectorAll('.kpi-year-btn.kpi-year-selected');
+      return Array.from(selectedYearBtns)
+        .map(btn => normalizeKpiYear(btn.dataset.year))
+        .filter(Boolean);
+    }
+
+    function setKpiYearButtonState(btn, isSelected) {
+      btn.classList.toggle('kpi-year-selected', isSelected);
+      btn.classList.toggle('bg-emerald-100', isSelected);
+      btn.classList.toggle('text-emerald-700', isSelected);
+      btn.classList.toggle('border-emerald-500', isSelected);
+      btn.classList.toggle('bg-white', !isSelected);
+      btn.classList.toggle('text-slate-700', !isSelected);
+      btn.classList.toggle('border-slate-200', !isSelected);
+    }
+
     // Toggle para Accordions (Colapsáveis)
     function toggleAccordion(id) {
       const content = document.getElementById(id);
@@ -5519,6 +5581,9 @@
         kpiEstrategicosData = [];
         let validRows = 0;
         let skippedRows = 0;
+        let skippedNoIndicador = 0;
+        let skippedNoAno = 0;
+        let lastAno = '';
         
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) {
@@ -5535,8 +5600,11 @@
             continue;
           }
           
-          const ano = cols[0]?.trim() || '';
-          const processo = cols[1]?.trim() || '';
+          const anoRaw = cols[0]?.trim() || '';
+          const ano = normalizeKpiYear(anoRaw) || lastAno;
+          if (ano) lastAno = ano;
+
+          const processo = cols[1]?.trim() || 'Sem Processo';
           const objetivo = cols[2]?.trim() || '';
           const risco = cols[3]?.trim() || '';
           const recursos = cols[4]?.trim() || '';
@@ -5550,8 +5618,15 @@
           const meta = parseFloat(cols[12]) || 0;
           const real = parseFloat(cols[13]) || 0;
           
-          // Requer processo e indicador
-          if (!processo || !indicador) {
+          // Requer indicador e ano normalizado para preservar coerência temporal
+          if (!ano) {
+            skippedNoAno++;
+            skippedRows++;
+            continue;
+          }
+
+          if (!indicador) {
+            skippedNoIndicador++;
             skippedRows++;
             continue;
           }
@@ -5577,6 +5652,7 @@
         }
         
         console.log(`✅ Loaded ${validRows} KPI Estratégicos records. Skipped ${skippedRows}.`);
+        console.log(`ℹ️ Estratégicos descartados - sem ano: ${skippedNoAno}, sem indicador: ${skippedNoIndicador}`);
         
         if (validRows === 0) {
           throw new Error('Nenhum registro válido foi carregado do CSV');
@@ -5642,21 +5718,41 @@
           return;
         }
         
-        // Parse CSV com o novo cabeçalho: 
-        // Col A (0): Ano
-        // Col B (1): Mês  
-        // Col C (2): Valor
-        // Col D (3): Processo
-        // Col E (4): Indicador
-        // Col F (5): Unidade
-        // Col G (6): Objetivo (descrição)
-        // Col H (7): Valor Objetivo (valor numérico para comparação)
-        // Col I (8): Responsável
+        // Mapeamento dinâmico por cabeçalho do separador "Indicadores"
+        // Esperado: Ano | Mês | Valor | Processo | Indicador | Unidade | Objetivo | Valor Objetivo | Responsável (Registo)
+        const headerCols = parseCSVLine(lines[0]);
+        const headerIndex = {};
+        headerCols.forEach((header, idx) => {
+          headerIndex[normalizeSheetHeader(header)] = idx;
+        });
+
+        const idxAno = headerIndex['ano'] ?? 0;
+        const idxMes = headerIndex['mes'] ?? 1;
+        const idxValor = headerIndex['valor'] ?? 2; // Coluna C
+        const idxProcesso = headerIndex['processo'] ?? 3;
+        const idxIndicador = headerIndex['indicador'] ?? 4;
+        const idxUnidade = headerIndex['unidade'] ?? 5;
+        const idxObjetivo = headerIndex['objetivo'] ?? 6;
+        const idxValorObjetivo = headerIndex['valor objetivo'] ?? 7;
+        const idxResponsavel = headerIndex['responsavel (registo)'] ?? headerIndex['responsavel'] ?? 8;
+
+        console.log('📌 Fonte KPI Sustentabilidade:', {
+          sheetId,
+          gid: gidIndicadores,
+          tab: 'Indicadores',
+          headerCols,
+          valorColumnIndex: idxValor,
+          valorColumnExpected: 'C'
+        });
         
         console.log('📋 Parsing CSV lines...');
         kpiSustentabilidadeData = [];
         let validRows = 0;
         let skippedRows = 0;
+        let skippedNoIndicador = 0;
+        let skippedNoAno = 0;
+        let missingValorRows = 0;
+        let lastAno = '';
         
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) {
@@ -5672,42 +5768,60 @@
             console.log(`  Parsed:`, cols);
           }
           
-          // Necessário até coluna I (índice 8). Aceita colunas adicionais
-          if (cols.length < 9) {
-            console.warn(`Row ${i}: insufficient columns (${cols.length} < 9, precisa até coluna I)`);
+          // Necessário pelo menos até a maior coluna referenciada pelos cabeçalhos
+          const maxRequiredIndex = Math.max(idxAno, idxMes, idxValor, idxProcesso, idxIndicador, idxUnidade, idxObjetivo, idxValorObjetivo, idxResponsavel);
+          if (cols.length <= maxRequiredIndex) {
+            console.warn(`Row ${i}: insufficient columns (${cols.length} <= ${maxRequiredIndex})`);
             skippedRows++;
             continue;
           }
           
           const record = {
-            ano: cols[0]?.trim() || '',
-            mes: cols[1]?.trim() || '',
-            valor: parseFloat(cols[2]) || 0,
-            processo: cols[3]?.trim() || '',      // Coluna D
-            indicador: cols[4]?.trim() || '',     // Coluna E
-            unidade: cols[5]?.trim() || '',
-            objetivo: cols[6]?.trim() || '',      // Coluna G - descrição
-            valorObjetivo: parseFloat(cols[7]) || 0,  // Coluna H - valor numérico
-            responsavel: cols[8]?.trim() || ''    // Coluna I
+            ano: normalizeKpiYear(cols[idxAno]?.trim() || '') || lastAno,
+            mes: cols[idxMes]?.trim() || '',
+            valor: parseLocaleNumber(cols[idxValor], null),
+            processo: cols[idxProcesso]?.trim() || 'Sem Processo',
+            indicador: cols[idxIndicador]?.trim() || '',
+            unidade: cols[idxUnidade]?.trim() || '',
+            objetivo: cols[idxObjetivo]?.trim() || '',
+            valorObjetivo: parseLocaleNumber(cols[idxValorObjetivo], null),
+            responsavel: cols[idxResponsavel]?.trim() || ''
           };
+
+          if (record.valor === null) {
+            missingValorRows++;
+          }
+
+          if (record.ano) {
+            lastAno = record.ano;
+          }
           
           // Debug first few records
           if (i <= 3) {
             console.log(`[Row ${i}] Parsed record:`, record);
           }
           
-          // Validar que temos dados principais
-          if (record.indicador && record.processo) {
+          // Validar que temos dados principais sem perder registos por processo em branco
+          if (!record.ano) {
+            skippedNoAno++;
+            skippedRows++;
+            console.warn(`Row ${i}: missing ano (não foi possível inferir)`);
+            continue;
+          }
+
+          if (record.indicador) {
             kpiSustentabilidadeData.push(record);
             validRows++;
           } else {
-            if (!record.indicador) console.warn(`Row ${i}: missing indicador`);
-            if (!record.processo) console.warn(`Row ${i}: missing processo`);
+            skippedNoIndicador++;
+            console.warn(`Row ${i}: missing indicador`);
             skippedRows++;
           }
         }
         
         console.log(`✅ Loaded ${validRows} KPI records. Skipped ${skippedRows} invalid rows.`);
+        console.log(`ℹ️ Sustentabilidade descartados - sem ano: ${skippedNoAno}, sem indicador: ${skippedNoIndicador}`);
+        console.log(`ℹ️ Sustentabilidade linhas com VALOR vazio (coluna C): ${missingValorRows}`);
         if (kpiSustentabilidadeData.length > 0) {
           console.log('First record:', kpiSustentabilidadeData[0]);
           const withObj = kpiSustentabilidadeData.filter(r => r.valorObjetivo > 0);
@@ -7220,19 +7334,31 @@
       const filteredData = data;
       
       if (filteredData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível com estes filtros.</td></tr>';
+        const anosSelecionados = getSelectedKpiYears();
+        const hintAno = anosSelecionados.length > 0 ? ` para ${anosSelecionados.join(', ')}` : '';
+        tbody.innerHTML = `<tr><td colspan="11" class="px-8 py-12 text-center text-slate-500">Nenhum dado disponível${hintAno} com estes filtros.</td></tr>`;
         return;
       }
       
       // Ordenar por ano de acordo com kpiYearSortOrder
       filteredData.sort((a, b) => {
-        if (a.ano !== b.ano) {
+        const anoA = parseInt(normalizeKpiYear(a.ano), 10);
+        const anoB = parseInt(normalizeKpiYear(b.ano), 10);
+
+        if (!isNaN(anoA) && !isNaN(anoB) && anoA !== anoB) {
           if (kpiYearSortOrder === 'asc') {
-            return a.ano - b.ano; // Menor para maior
+            return anoA - anoB; // Menor para maior
           } else {
-            return b.ano - a.ano; // Maior para menor
+            return anoB - anoA; // Maior para menor
           }
         }
+
+        if (String(a.ano) !== String(b.ano)) {
+          return kpiYearSortOrder === 'asc'
+            ? String(a.ano).localeCompare(String(b.ano))
+            : String(b.ano).localeCompare(String(a.ano));
+        }
+
         return 0;
       });
       
@@ -7240,20 +7366,23 @@
       if (kpiCurrentType === 'sustentabilidade' || kpiCurrentType === 'sustentabilidade_propostos') {
         // Para KPIs de Sustentabilidade
         tbody.innerHTML = filteredData.map(d => {
-          const cumprimento = d.valorObjetivo > 0 ? ((d.valor / d.valorObjetivo) * 100).toFixed(1) : '—';
-          const cumprimentoClass = d.valorObjetivo > 0 && d.valor >= d.valorObjetivo ? 'text-green-600' : d.valorObjetivo > 0 && d.valor < d.valorObjetivo * 0.8 ? 'text-red-600' : 'text-amber-600';
+          const valorDisplay = d.valor === null ? '—' : d.valor;
+          const valorObjetivoDisplay = d.valorObjetivo === null ? '—' : d.valorObjetivo;
+          const hasCumprimento = d.valor !== null && d.valorObjetivo !== null && d.valorObjetivo > 0;
+          const cumprimento = hasCumprimento ? ((d.valor / d.valorObjetivo) * 100).toFixed(1) : '—';
+          const cumprimentoClass = hasCumprimento && d.valor >= d.valorObjetivo ? 'text-green-600' : hasCumprimento && d.valor < d.valorObjetivo * 0.8 ? 'text-red-600' : 'text-amber-600';
           
           return `
             <tr class="hover:bg-slate-50 transition-colors">
               <td class="px-3 py-2 text-xs font-semibold text-slate-800">${d.ano}</td>
               <td class="px-3 py-2 text-xs text-slate-700">${d.mes || '—'}</td>
-              <td class="px-3 py-2 text-xs font-bold text-blue-600">${d.valor}</td>
+              <td class="px-3 py-2 text-xs font-bold text-blue-600">${valorDisplay}</td>
               <td class="px-3 py-2 text-xs text-slate-700">${d.processo}</td>
               <td class="px-3 py-2 text-xs text-slate-700"><strong>${d.indicador}</strong></td>
               <td class="px-3 py-2 text-xs text-slate-600">${d.unidade || '—'}</td>
               <td class="px-3 py-2 text-xs text-slate-700">${d.objetivo || '—'}</td>
-              <td class="px-3 py-2 text-xs font-bold text-purple-600">${d.valorObjetivo || '—'}</td>
-              <td class="px-3 py-2 text-xs font-bold ${cumprimentoClass}">${cumprimento}%</td>
+              <td class="px-3 py-2 text-xs font-bold text-purple-600">${valorObjetivoDisplay}</td>
+              <td class="px-3 py-2 text-xs font-bold ${cumprimentoClass}">${cumprimento}${hasCumprimento ? '%' : ''}</td>
               <td class="px-3 py-2 text-xs text-slate-600">${d.responsavel || '—'}</td>
               <td class="px-3 py-2 text-xs text-slate-500">—</td>
             </tr>
@@ -7284,10 +7413,12 @@
     // 🔍 Populate filter dropdowns with unique values
     function populateKpiFilters(data) {
       console.log('📊 Populating KPI filters...');
+
+      const previouslySelectedYears = new Set(getSelectedKpiYears());
       
       // Extract unique values - all years available
       // Handle both numeric years and string years like "Proposta"
-      const anosRaw = [...new Set(data.map(d => d.ano).filter(Boolean))];
+      const anosRaw = [...new Set(data.map(d => normalizeKpiYear(d.ano)).filter(Boolean))];
       const anos = anosRaw.sort((a, b) => {
         const aNum = parseInt(a);
         const bNum = parseInt(b);
@@ -7326,23 +7457,32 @@
       // Populate Ano buttons (multi-select)
       const anoBtnContainer = document.getElementById('kpi-filter-ano-buttons');
       anoBtnContainer.innerHTML = '';
+      let selectedCount = 0;
       anos.forEach((ano, index) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'kpi-year-btn px-2 py-1 rounded text-xs font-bold transition-all border-2 border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:bg-emerald-50';
         btn.textContent = ano;
         btn.dataset.year = ano;
-        // Seleciona o primeiro ano por padrão
-        if (index === 0) {
-          btn.classList.add('kpi-year-selected');
-          btn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-500');
-        }
+
+        const shouldSelect = previouslySelectedYears.has(ano);
+        setKpiYearButtonState(btn, shouldSelect);
+        if (shouldSelect) selectedCount++;
+
         btn.onclick = () => {
           toggleYearButton(btn, ano);
           updateKpiDashboard();
         };
         anoBtnContainer.appendChild(btn);
       });
+
+      // Se nenhuma seleção anterior for válida, selecionar o primeiro ano disponível
+      if (selectedCount === 0 && anos.length > 0) {
+        const firstBtn = anoBtnContainer.querySelector('.kpi-year-btn');
+        if (firstBtn) {
+          setKpiYearButtonState(firstBtn, true);
+        }
+      }
       
       // Populate Processo select
       const processoSelect = document.getElementById('kpi-filter-processo');
@@ -7388,7 +7528,8 @@
 
     // 🔘 Toggle year button selection
     function toggleYearButton(btn, year) {
-      btn.classList.toggle('kpi-year-selected');
+      const isSelected = btn.classList.contains('kpi-year-selected');
+      setKpiYearButtonState(btn, !isSelected);
       applyKpiFilters();
     }
 
@@ -7455,15 +7596,14 @@
       console.log('🧹 Clearing all filters');
       // Clear year buttons
       document.querySelectorAll('.kpi-year-btn').forEach(btn => {
-        btn.classList.remove('kpi-year-selected');
+        setKpiYearButtonState(btn, false);
       });
       // Clear other filters
       document.getElementById('kpi-filter-processo').value = '';
       document.getElementById('kpi-filter-indicador').value = '';
-      
-      // Display all data
-      displayKpiTable(kpiEstrategicosData);
-      updateKpiCharts(kpiEstrategicosData);
+
+      // Display all data conforme o dashboard atual
+      updateKpiDashboard();
     }
 
     function toggleAlertsSection(alertsId) {
@@ -7477,6 +7617,19 @@
     }
 
     function updateKpiCharts(data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        if (kpiChartLine) {
+          kpiChartLine.destroy();
+          kpiChartLine = null;
+        }
+        if (kpiChartBar) {
+          kpiChartBar.destroy();
+          kpiChartBar = null;
+        }
+        console.warn('📉 Sem dados para renderizar gráficos com os filtros atuais.');
+        return;
+      }
+
       // if Estratégicos ou Estratégicos Propostos, usar abordagem simples
       if (kpiCurrentType === 'estrategicos' || kpiCurrentType === 'estrategicos_propostos') {
         updateKpiChartsEstrategicos(data);
