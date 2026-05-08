@@ -5431,19 +5431,23 @@
       const raw = String(value).trim();
       if (!raw) return emptyFallback;
 
-      // Converte formatos pt/en comuns: 1.234,56 | 1,234.56 | 1234,56 | 1234.56
-      const sanitized = raw.replace(/\s/g, '');
+      // Remove % € símbolos e espaços, mantém apenas dígitos, vírgulas e pontos
+      let sanitized = raw.replace(/[%€$\s]/g, '');
+      
       const hasComma = sanitized.includes(',');
       const hasDot = sanitized.includes('.');
 
       let normalized = sanitized;
       if (hasComma && hasDot) {
         if (sanitized.lastIndexOf(',') > sanitized.lastIndexOf('.')) {
+          // Format: 1.234,56 (português)
           normalized = sanitized.replace(/\./g, '').replace(',', '.');
         } else {
+          // Format: 1,234.56 (inglês)
           normalized = sanitized.replace(/,/g, '');
         }
       } else if (hasComma) {
+        // Only comma: assume decimal separator
         normalized = sanitized.replace(',', '.');
       }
 
@@ -5511,9 +5515,11 @@
       try {
         showLoading('A carregar KPI\'s Estratégicos...');
         
-        // URL do Google Sheets em formato CSV (separador "base_dados")
+        // URL do Google Sheets em formato CSV
+        // Separador "BD" (ID col A, ano col B, Real col 14)
         const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1722482891`;
+        const gidBd = '0';
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gidBd}`;
         
         console.log('📥 Fetching Estratégicos CSV from:', csvUrl);
         const response = await fetch(csvUrl);
@@ -5535,16 +5541,14 @@
             const nextChar = i + 1 < rawCSV.length ? rawCSV[i + 1] : '';
             
             if (char === '"') {
-              // Toggle quote state, handle escaped quotes
               if (inQuotes && nextChar === '"') {
                 currentLine += '"';
-                i++; // skip next quote
+                i++;
               } else {
                 inQuotes = !inQuotes;
               }
               currentLine += char;
             } else if (char === '\n' && !inQuotes) {
-              // Only treat \n as line Break if we're not inside quotes
               if (currentLine.trim()) {
                 lines.push(currentLine);
               }
@@ -5554,7 +5558,6 @@
             }
           }
           
-          // Don't forget the last line
           if (currentLine.trim()) {
             lines.push(currentLine);
           }
@@ -5570,11 +5573,38 @@
           return;
         }
         
-        // Parse CSV - Cabeçalhos em linha 1:
-        // A(0): ano, B(1): Processo, C(2): Objetivo, D(3): Risco, E(4): Recursos
-        // F(5): Responsável Processo, G(6): Responsável Monitorização, H(7): Nome do Indicador
-        // I(8): Fórmula de Controlo, J(9): Frequência de Análise, K(10): Un., L(11): Goal
-        // M(12): Meta, N(13): Real
+        // Mapeamento dinâmico por cabeçalho do separador "BD"
+        const headerCols = parseCSVLine(lines[0]);
+        const headerIndex = {};
+        headerCols.forEach((header, idx) => {
+          headerIndex[normalizeSheetHeader(header)] = idx;
+        });
+
+        const idxAno = headerIndex['ano'] ?? 1;
+        const idxProcesso = headerIndex['processo'] ?? 2;
+        const idxObjetivo = headerIndex['objetivo'] ?? 3;
+        const idxRisco = headerIndex['risco'] ?? 4;
+        const idxRecursos = headerIndex['recursos'] ?? 5;
+        const idxResponsavelProcesso = headerIndex['responsavel processo'] ?? 6;
+        const idxResponsavelMonitorizacao = headerIndex['responsavel monitorizacao'] ?? 7;
+        const idxIndicador = headerIndex['nome do indicador'] ?? headerIndex['indicador'] ?? 8;
+        const idxFormula = headerIndex['formula de controlo'] ?? 9;
+        const idxFrequencia = headerIndex['frequencia de analise'] ?? 10;
+        const idxUnidade = headerIndex['un.'] ?? headerIndex['unidade'] ?? 11;
+        const idxGoal = headerIndex['goal'] ?? 12;
+        const idxMeta = headerIndex['meta'] ?? 13;
+        const idxReal = headerIndex['real'] ?? 14;
+        const maxRequiredIndex = Math.max(idxAno, idxProcesso, idxObjetivo, idxRisco, idxRecursos, idxResponsavelProcesso, idxResponsavelMonitorizacao, idxIndicador, idxFormula, idxFrequencia, idxUnidade, idxGoal, idxMeta, idxReal);
+
+        console.log('📌 Fonte KPI Estratégicos:', {
+          sheetId,
+          gid: gidBd,
+          tab: 'BD',
+          headerCols,
+          idxAno,
+          idxReal,
+          maxRequiredIndex
+        });
         
         console.log('📋 Parsing Estratégicos CSV...');
         
@@ -5591,34 +5621,20 @@
             continue;
           }
           
-          // Parser CSV robusto para lidar com valores entre aspas
           const cols = parseCSVLine(lines[i]);
           
-          // Validar colunas necessárias (até coluna N = 14 colunas)
-          if (cols.length < 14) {
+          if (cols.length <= maxRequiredIndex) {
             skippedRows++;
             continue;
           }
-          
-          const anoRaw = cols[0]?.trim() || '';
-          const ano = normalizeKpiYear(anoRaw) || lastAno;
-          if (ano) lastAno = ano;
 
-          const processo = cols[1]?.trim() || 'Sem Processo';
-          const objetivo = cols[2]?.trim() || '';
-          const risco = cols[3]?.trim() || '';
-          const recursos = cols[4]?.trim() || '';
-          const responsavelProcesso = cols[5]?.trim() || '';
-          const responsavelMonitorizacao = cols[6]?.trim() || '';
-          const indicador = cols[7]?.trim() || '';
-          const formula = cols[8]?.trim() || '';
-          const frequencia = cols[9]?.trim() || '';
-          const unidade = cols[10]?.trim() || '';
-          const goal = cols[11]?.trim() || '';
-          const meta = parseFloat(cols[12]) || 0;
-          const real = parseFloat(cols[13]) || 0;
+          const ano = normalizeKpiYear(cols[idxAno]?.trim() || '') || lastAno;
+          if (ano) {
+            lastAno = ano;
+          }
+
+          const indicador = cols[idxIndicador]?.trim() || '';
           
-          // Requer indicador e ano normalizado para preservar coerência temporal
           if (!ano) {
             skippedNoAno++;
             skippedRows++;
@@ -5632,20 +5648,20 @@
           }
           
           kpiEstrategicosData.push({
-            ano: ano,
-            processo: processo,
-            objetivo: objetivo,
-            risco: risco,
-            recursos: recursos,
-            responsavelProcesso: responsavelProcesso,
-            responsavelMonitorizacao: responsavelMonitorizacao,
-            indicador: indicador,
-            formula: formula,
-            frequencia: frequencia,
-            unidade: unidade,
-            goal: goal,
-            meta: meta,
-            real: real
+            ano,
+            processo: cols[idxProcesso]?.trim() || 'Sem Processo',
+            objetivo: cols[idxObjetivo]?.trim() || '',
+            risco: cols[idxRisco]?.trim() || '',
+            recursos: cols[idxRecursos]?.trim() || '',
+            responsavelProcesso: cols[idxResponsavelProcesso]?.trim() || '',
+            responsavelMonitorizacao: cols[idxResponsavelMonitorizacao]?.trim() || '',
+            indicador,
+            formula: cols[idxFormula]?.trim() || '',
+            frequencia: cols[idxFrequencia]?.trim() || '',
+            unidade: cols[idxUnidade]?.trim() || '',
+            goal: cols[idxGoal]?.trim() || '',
+            meta: parseLocaleNumber(cols[idxMeta]),
+            real: parseLocaleNumber(cols[idxReal])
           });
           
           validRows++;
