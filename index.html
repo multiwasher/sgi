@@ -5594,6 +5594,8 @@
         const idxGoal = headerIndex['goal'] ?? 12;
         const idxMeta = headerIndex['meta'] ?? 13;
         const idxReal = headerIndex['real'] ?? 14;
+        const idxControlo = headerIndex['controlo'];
+        const hasControloCol = Number.isInteger(idxControlo);
         const maxRequiredIndex = Math.max(idxAno, idxProcesso, idxObjetivo, idxRisco, idxRecursos, idxResponsavelProcesso, idxResponsavelMonitorizacao, idxIndicador, idxFormula, idxFrequencia, idxUnidade, idxGoal, idxMeta, idxReal);
 
         console.log('📌 Fonte KPI Estratégicos:', {
@@ -5613,6 +5615,7 @@
         let skippedRows = 0;
         let skippedNoIndicador = 0;
         let skippedNoAno = 0;
+        let fallbackRealFromControlo = 0;
         let lastAno = '';
         
         for (let i = 1; i < lines.length; i++) {
@@ -5647,6 +5650,14 @@
             continue;
           }
           
+          const parsedReal = parseLocaleNumber(cols[idxReal], null);
+          const parsedControlo = hasControloCol ? parseLocaleNumber(cols[idxControlo], null) : null;
+          const resolvedReal = parsedReal ?? parsedControlo ?? 0;
+
+          if (parsedReal === null && parsedControlo !== null) {
+            fallbackRealFromControlo++;
+          }
+
           kpiEstrategicosData.push({
             ano,
             processo: cols[idxProcesso]?.trim() || 'Sem Processo',
@@ -5661,7 +5672,7 @@
             unidade: cols[idxUnidade]?.trim() || '',
             goal: cols[idxGoal]?.trim() || '',
             meta: parseLocaleNumber(cols[idxMeta]),
-            real: parseLocaleNumber(cols[idxReal])
+            real: resolvedReal
           });
           
           validRows++;
@@ -5669,6 +5680,7 @@
         
         console.log(`✅ Loaded ${validRows} KPI Estratégicos records. Skipped ${skippedRows}.`);
         console.log(`ℹ️ Estratégicos descartados - sem ano: ${skippedNoAno}, sem indicador: ${skippedNoIndicador}`);
+        console.log(`ℹ️ Estratégicos com REAL recuperado da coluna controlo: ${fallbackRealFromControlo}`);
         
         if (validRows === 0) {
           throw new Error('Nenhum registro válido foi carregado do CSV');
