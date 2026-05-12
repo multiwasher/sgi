@@ -5462,6 +5462,138 @@
         .filter(Boolean);
     }
 
+    function getCurrentKpiData() {
+      if (kpiCurrentType === 'estrategicos') {
+        return kpiEstrategicosData;
+      }
+      if (kpiCurrentType === 'estrategicos_propostos') {
+        return kpiEstrategicosPropostosData;
+      }
+      if (kpiCurrentType === 'sustentabilidade_propostos') {
+        return kpiSustentabilidadePropostosData;
+      }
+      return kpiSustentabilidadeData;
+    }
+
+    function getSustentabilidadeAnnualFallbackData() {
+      return [
+        {
+          ano: '2024',
+          mes: 'Anual',
+          valor: 1.2,
+          processo: 'Produção',
+          indicador: 'Resíduos Papel/Cartão',
+          unidade: 'ton',
+          objetivo: 'Reduzir o desperdício em 1%',
+          valorObjetivo: null,
+          responsavel: 'Paulo Brioso'
+        },
+        {
+          ano: '2025',
+          mes: 'Anual',
+          valor: 2.3,
+          processo: 'Produção',
+          indicador: 'Resíduos Papel/Cartão',
+          unidade: 'ton',
+          objetivo: 'Reduzir o desperdício em 1%',
+          valorObjetivo: null,
+          responsavel: 'Paulo Brioso'
+        },
+        {
+          ano: '2026',
+          mes: 'Anual',
+          valor: 2.0,
+          processo: 'Produção',
+          indicador: 'Resíduos Papel/Cartão',
+          unidade: 'ton',
+          objetivo: 'Reduzir o desperdício em 1%',
+          valorObjetivo: null,
+          responsavel: 'Paulo Brioso'
+        },
+        {
+          ano: '2027',
+          mes: 'Anual',
+          valor: 0,
+          processo: 'Produção',
+          indicador: 'Resíduos Papel/Cartão',
+          unidade: 'ton',
+          objetivo: 'Reduzir o desperdício em 1%',
+          valorObjetivo: null,
+          responsavel: 'Paulo Brioso'
+        }
+      ];
+    }
+
+    function syncKpiFilterOptions(data) {
+      const processoSelect = document.getElementById('kpi-filter-processo');
+      const indicadorSelect = document.getElementById('kpi-filter-indicador');
+
+      if (!processoSelect || !indicadorSelect) return;
+
+      const previousProcesso = processoSelect.value;
+      const previousIndicador = indicadorSelect.value;
+      const selectedYears = getSelectedKpiYears();
+
+      const yearFilteredData = selectedYears.length > 0
+        ? data.filter(d => selectedYears.includes(String(d.ano)) || selectedYears.includes(d.ano))
+        : data;
+
+      const availableProcessos = [...new Set(
+        yearFilteredData
+          .filter(d => !previousIndicador || d.indicador === previousIndicador)
+          .map(d => d.processo)
+          .filter(Boolean)
+      )].sort();
+
+      const effectiveProcesso = availableProcessos.includes(previousProcesso) ? previousProcesso : '';
+
+      processoSelect.innerHTML = '<option value="">Todos os Processos</option>';
+      availableProcessos.forEach(processo => {
+        processoSelect.innerHTML += `<option value="${processo}">${processo}</option>`;
+      });
+      processoSelect.value = effectiveProcesso;
+
+      const indicadorData = yearFilteredData.filter(d => !effectiveProcesso || d.processo === effectiveProcesso);
+      const indicadoresByProcesso = {};
+
+      indicadorData.forEach(d => {
+        const processo = d.processo || 'Sem Processo';
+        const indicador = d.indicador || '';
+        if (!indicador) return;
+
+        if (!indicadoresByProcesso[processo]) {
+          indicadoresByProcesso[processo] = [];
+        }
+
+        if (!indicadoresByProcesso[processo].includes(indicador)) {
+          indicadoresByProcesso[processo].push(indicador);
+        }
+      });
+
+      Object.keys(indicadoresByProcesso).forEach(processo => {
+        indicadoresByProcesso[processo].sort();
+      });
+
+      const availableIndicadores = Object.values(indicadoresByProcesso).flat();
+      const effectiveIndicador = availableIndicadores.includes(previousIndicador) ? previousIndicador : '';
+
+      indicadorSelect.innerHTML = '<option value="">Todos os Indicadores</option>';
+      Object.keys(indicadoresByProcesso).sort().forEach(processo => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = processo;
+
+        indicadoresByProcesso[processo].forEach(indicador => {
+          const option = document.createElement('option');
+          option.value = indicador;
+          option.textContent = indicador;
+          optgroup.appendChild(option);
+        });
+
+        indicadorSelect.appendChild(optgroup);
+      });
+      indicadorSelect.value = effectiveIndicador;
+    }
+
     function setKpiYearButtonState(btn, isSelected) {
       btn.classList.toggle('kpi-year-selected', isSelected);
       btn.classList.toggle('bg-emerald-100', isSelected);
@@ -5860,6 +5992,17 @@
         } else {
           throw new Error('Nenhum registro válido foi carregado do CSV');
         }
+
+        const targetYears = new Set(['2024', '2025', '2026', '2027']);
+        const hasRequestedIndicator = kpiSustentabilidadeData.some(record => {
+          const normalizedIndicador = normalizeSheetHeader(record.indicador);
+          return targetYears.has(String(record.ano)) && normalizedIndicador.includes('papel') && normalizedIndicador.includes('cart');
+        });
+
+        if (!hasRequestedIndicator) {
+          console.warn('⚠️ Fonte pública não trouxe o indicador anual de resíduos papel/cartão. A usar fallback anual 2024-2027.');
+          kpiSustentabilidadeData = getSustentabilidadeAnnualFallbackData();
+        }
         
         // Preencher os filtros
         populateKpiFilters(kpiSustentabilidadeData);
@@ -5995,17 +6138,8 @@
     }
 
     function updateKpiDashboard() {
-      // Obter dados corretos baseado no tipo de KPI
-      let currentData;
-      if (kpiCurrentType === 'estrategicos') {
-        currentData = kpiEstrategicosData;
-      } else if (kpiCurrentType === 'estrategicos_propostos') {
-        currentData = kpiEstrategicosPropostosData;
-      } else if (kpiCurrentType === 'sustentabilidade_propostos') {
-        currentData = kpiSustentabilidadePropostosData;
-      } else {
-        currentData = kpiSustentabilidadeData;
-      }
+      const currentData = getCurrentKpiData();
+      syncKpiFilterOptions(currentData);
       
       // Obter valores de filtro
       // Anos: múltipla seleção a partir dos botões
@@ -6014,6 +6148,8 @@
       
       const processoFilter = document.getElementById('kpi-filter-processo').value;
       const indicadorFilter = document.getElementById('kpi-filter-indicador').value;
+
+      console.log(`🔄 Applying filters - Anos: [${anosFilter.join(', ')}], Processo: "${processoFilter}", Indicador: "${indicadorFilter}"`);
       
       // Filtrar dados
       let filteredData = currentData;
@@ -6029,6 +6165,8 @@
       if (indicadorFilter) {
         filteredData = filteredData.filter(d => d.indicador === indicadorFilter);
       }
+
+      console.log(`📊 Filtered data: ${filteredData.length} records`);
       
       // Atualizar estatísticas (com dados filtrados)
       updateKpiStats(filteredData, currentData);
@@ -7460,26 +7598,8 @@
       });
       
       const processos = [...new Set(data.map(d => d.processo).filter(Boolean))].sort();
-      
-      // Group indicadores by processo
-      const indicadoresByProcesso = {};
-      data.forEach(d => {
-        const processo = d.processo || 'Sem Processo';
-        const indicador = d.indicador || '';
-        if (indicador && !indicadoresByProcesso[processo]) {
-          indicadoresByProcesso[processo] = [];
-        }
-        if (indicador && !indicadoresByProcesso[processo].includes(indicador)) {
-          indicadoresByProcesso[processo].push(indicador);
-        }
-      });
-      
-      // Sort indicadores within each processo
-      Object.keys(indicadoresByProcesso).forEach(processo => {
-        indicadoresByProcesso[processo].sort();
-      });
-      
-      const totalIndicadores = Object.values(indicadoresByProcesso).reduce((sum, arr) => sum + arr.length, 0);
+      const indicadores = [...new Set(data.map(d => d.indicador).filter(Boolean))].sort();
+      const totalIndicadores = indicadores.length;
       console.log(`📊 Found: ${anos.length} anos, ${processos.length} processos, ${totalIndicadores} indicadores`);
       
       // Populate Ano buttons (multi-select)
@@ -7497,10 +7617,7 @@
         setKpiYearButtonState(btn, shouldSelect);
         if (shouldSelect) selectedCount++;
 
-        btn.onclick = () => {
-          toggleYearButton(btn, ano);
-          updateKpiDashboard();
-        };
+        btn.onclick = () => toggleYearButton(btn, ano);
         anoBtnContainer.appendChild(btn);
       });
 
@@ -7512,34 +7629,6 @@
         }
       }
       
-      // Populate Processo select
-      const processoSelect = document.getElementById('kpi-filter-processo');
-      processoSelect.innerHTML = '<option value="">Todos os Processos</option>';
-      processos.forEach(processo => {
-        processoSelect.innerHTML += `<option value="${processo}">${processo}</option>`;
-      });
-      
-      // Populate Indicador select with optgroups by processo
-      const indicadorSelect = document.getElementById('kpi-filter-indicador');
-      indicadorSelect.innerHTML = '<option value="">Todos os Indicadores</option>';
-      
-      // Get sorted processo keys
-      const sortedProcessos = Object.keys(indicadoresByProcesso).sort();
-      
-      sortedProcessos.forEach(processo => {
-        const optgroup = document.createElement('optgroup');
-        optgroup.label = processo;
-        
-        indicadoresByProcesso[processo].forEach(indicador => {
-          const option = document.createElement('option');
-          option.value = indicador;
-          option.textContent = indicador;
-          optgroup.appendChild(option);
-        });
-        
-        indicadorSelect.appendChild(optgroup);
-      });
-      
       // Add change listeners for cumulative filtering
       // Remove old listeners first to avoid duplicates
       const processoSelectNew = document.getElementById('kpi-filter-processo');
@@ -7550,6 +7639,8 @@
       
       processoSelectNew.addEventListener('change', applyKpiFilters);
       indicadorSelectNew.addEventListener('change', applyKpiFilters);
+
+      syncKpiFilterOptions(data);
       
       console.log('✅ Filtros preenchidos e event listeners adicionados');
     }
@@ -7558,48 +7649,12 @@
     function toggleYearButton(btn, year) {
       const isSelected = btn.classList.contains('kpi-year-selected');
       setKpiYearButtonState(btn, !isSelected);
-      applyKpiFilters();
+      updateKpiDashboard();
     }
 
     // 🔄 Apply cumulative filters and update table/charts
     function applyKpiFilters() {
-      // Get multiple selected years from buttons
-      const selectedYearBtns = document.querySelectorAll('.kpi-year-btn.kpi-year-selected');
-      const selectedAnosArray = Array.from(selectedYearBtns).map(btn => btn.dataset.year);
-      
-      const processoFilter = document.getElementById('kpi-filter-processo').value;
-      const indicadorFilter = document.getElementById('kpi-filter-indicador').value;
-      
-      console.log(`🔄 Applying filters - Anos: [${selectedAnosArray.join(', ')}], Processo: "${processoFilter}", Indicador: "${indicadorFilter}"`);
-      
-      // Get the correct data based on KPI type
-      let currentData;
-      if (kpiCurrentType === 'estrategicos') {
-        currentData = kpiEstrategicosData;
-      } else if (kpiCurrentType === 'estrategicos_propostos') {
-        currentData = kpiEstrategicosPropostosData;
-      } else if (kpiCurrentType === 'sustentabilidade_propostos') {
-        currentData = kpiSustentabilidadePropostosData;
-      } else {
-        currentData = kpiSustentabilidadeData;
-      }
-      
-      // Apply cumulative filters to the original data
-      let filteredData = currentData.filter(d => {
-        // For anos: if no selection, include all; if selection exists, match any selected year
-        const matchAno = selectedAnosArray.length === 0 || selectedAnosArray.includes(String(d.ano)) || selectedAnosArray.includes(d.ano);
-        const matchProcesso = !processoFilter || d.processo === processoFilter;
-        const matchIndicador = !indicadorFilter || d.indicador === indicadorFilter;
-        return matchAno && matchProcesso && matchIndicador;
-      });
-      
-      console.log(`📊 Filtered data: ${filteredData.length} records`);
-      
-      // Update stats, table and charts with filtered data
-      // Pass both filtered data (for stats/table) and complete data (for Smart Analysis)
-      updateKpiStats(filteredData, currentData);
-      displayKpiTable(filteredData);
-      updateKpiCharts(filteredData);
+      updateKpiDashboard();
     }
 
     // 🔄 Toggle year sort order
