@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Visual - Indicadores Estrategicos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 0% 0%, #f0fdf4 0%, #f8fafc 35%, #ecfeff 100%);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #a7f3d0;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+  <header class="bg-gradient-to-r from-emerald-900 via-teal-900 to-cyan-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-emerald-800/40 shadow-lg">
+    <div class="flex items-center space-x-3.5">
+      <div class="bg-emerald-600 p-2.5 rounded-2xl shadow-inner flex items-center justify-center border border-emerald-500/30">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 00-2 2z"></path>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-extrabold tracking-tight flex items-center gap-2">
+          Dashboard Visual
+          <span class="text-xs bg-emerald-500/30 text-emerald-200 font-bold px-2 py-0.5 rounded-full border border-emerald-400/20">INDICADORES ESTRATEGICOS</span>
+        </h1>
+        <p class="text-[11px] text-emerald-200">Leitura direta do Google Sheets (Separador BD)</p>
+      </div>
+    </div>
+    <a href="index.html" class="text-xs font-black bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl border border-white/20">Voltar ao Portal</a>
+  </header>
+
+  <div class="flex-1 grid grid-cols-1 xl:grid-cols-5 gap-6 p-6">
+    <aside class="xl:col-span-1 bg-white border border-slate-200/85 rounded-2xl p-5 shadow-sm h-max xl:sticky xl:top-6 space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+          </svg>
+          Filtros
+        </h3>
+        <button onclick="resetFilters()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">Limpar</button>
+      </div>
+
+      <div class="space-y-2.5">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Anos em Comparacao</label>
+        <div class="grid grid-cols-3 gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200/60" id="years-selector-container"></div>
+        <p class="text-[10px] text-slate-400">Selecione um ou mais anos para comparar.</p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Processo</label>
+        <div class="relative">
+          <select id="filter-processo" onchange="onProcessChange()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none">
+            <option value="all">Todos os Processos</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Indicador</label>
+        <div class="relative">
+          <select id="filter-indicador" onchange="updateDashboard()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none">
+            <option value="all">Todos os Indicadores</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div id="load-status" class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">A carregar dados...</div>
+    </aside>
+
+    <main class="xl:col-span-4 space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-emerald-700 to-teal-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-emerald-100 uppercase tracking-wider">Volume de Negocios</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-vol-negocios">-</h3>
+          <p class="text-[9px] text-emerald-100 mt-2" id="kpi-vol-negocios-meta">Meta: -</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-cyan-700 to-blue-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-cyan-100 uppercase tracking-wider">Margem</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-margem">-</h3>
+          <p class="text-[9px] text-cyan-100 mt-2" id="kpi-margem-meta">Meta: -</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-sky-700 to-indigo-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-sky-100 uppercase tracking-wider">Novas Oportunidades</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-oportunidades">-</h3>
+          <p class="text-[9px] text-sky-100 mt-2" id="kpi-oportunidades-meta">Meta: -</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-lime-700 to-emerald-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-lime-100 uppercase tracking-wider">Maquinas Vendidas</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-maquinas">-</h3>
+          <p class="text-[9px] text-lime-100 mt-2" id="kpi-maquinas-meta">Meta: -</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm lg:col-span-2 flex flex-col justify-between">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div>
+              <h4 class="text-sm font-bold text-slate-900" id="chart-evolution-title">Evolucao do Desempenho Anual</h4>
+              <p class="text-[11px] text-slate-500">Comparacao dos valores reais por indicador e ano</p>
+            </div>
+          </div>
+          <div class="h-80 relative w-full">
+            <canvas id="chartEvolucaoAnos"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+          <div class="border-b border-slate-100 pb-3 mb-4">
+            <h4 class="text-sm font-bold text-slate-900">Cumprimento de Metas</h4>
+            <p class="text-[11px] text-slate-500">Contagem de metas atingidas vs nao atingidas</p>
+          </div>
+          <div class="h-52 flex items-center justify-center relative">
+            <canvas id="chartMetasOverview"></canvas>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center text-xs border-t border-slate-100 pt-3 mt-4">
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase font-bold tracking-wider">Atingidas</span>
+              <span class="text-emerald-600 font-extrabold text-sm" id="metas-met-count">0</span>
+            </div>
+            <div class="border-l border-slate-150">
+              <span class="text-slate-400 block text-[9px] uppercase font-bold tracking-wider">Nao Atingidas</span>
+              <span class="text-rose-500 font-extrabold text-sm" id="metas-unmet-count">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const chartValueLabelsPlugin = {
+      id: 'chartValueLabelsPlugin',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        ctx.save();
+
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+          const meta = chart.getDatasetMeta(datasetIndex);
+          if (meta.hidden) return;
+
+          meta.data.forEach((element, index) => {
+            const value = dataset.data[index];
+            if (value === null || value === undefined) return;
+
+            const isLineDataset = meta.type === 'line' || dataset.type === 'line';
+            const position = element.tooltipPosition();
+            const label = formatCompactValue(value, isLineDataset ? '' : inferDatasetUnit(chart, index));
+
+            ctx.font = '700 10px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = isLineDataset ? '#be123c' : '#0f172a';
+            ctx.fillText(label, position.x, position.y - (isLineDataset ? 10 : 6));
+          });
+        });
+
+        ctx.restore();
+      }
+    };
+
+    const yearColorPalette = {
+      2014: '#94a3b8', 2015: '#64748b', 2016: '#475569', 2017: '#f59e0b', 2018: '#d97706',
+      2019: '#10b981', 2020: '#059669', 2021: '#06b6d4', 2022: '#0891b2', 2023: '#3b82f6',
+      2024: '#2563eb', 2025: '#6366f1', 2026: '#4f46e5', 2027: '#7c3aed', 2028: '#9333ea', 2029: '#a855f7'
+    };
+
+    let db = [];
+    let selectedYears = [];
+    let availableYears = [];
+    let chartEvolucao;
+    let chartMetas;
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      initCharts();
+      await loadStrategicIndicators();
+    });
+
+    async function loadStrategicIndicators() {
+      try {
+        setStatus('A carregar dados do Google Sheets (BD)...');
+        const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
+        const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=BD&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,AA,AB')}`;
+        const response = await fetch(gvizUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('Falha ao ler dados do separador BD no Google Sheets');
+        }
+
+        const raw = await response.text();
+        const jsonStart = raw.indexOf('{');
+        const jsonEnd = raw.lastIndexOf('}');
+        if (jsonStart === -1 || jsonEnd === -1) {
+          throw new Error('Resposta GViz inválida');
+        }
+
+        const gviz = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+        const rows = gviz?.table?.rows || [];
+        if (!rows.length) {
+          throw new Error('Sem dados no separador BD');
+        }
+
+        const byIndicator = new Map();
+
+        for (const row of rows) {
+          const cols = row.c || [];
+          const ano = Number(getCellValue(cols, 1));
+          const indicador = String(getCellText(cols, 8)).trim();
+          if (!Number.isFinite(ano) || !indicador) continue;
+
+          const process = String(getCellText(cols, 2) || 'Sem Processo').trim();
+          const id = String(getCellText(cols, 0) || '').trim();
+          const key = [id, process, indicador].join('||');
+
+          const rawGoal = String(getCellText(cols, 12) || '').trim();
+          const goal = normalizeGoal(rawGoal);
+          const meta = getNumericCell(cols, 13);
+          const real = getNumericCell(cols, 14);
+          const controlo = parseLocaleNumber(getCellText(cols, 15));
+          const monthlyReal = getLastMonthlyValueFromGviz(cols, 16, 27);
+          const finalReal = real !== null ? real : (controlo !== null ? controlo : monthlyReal);
+
+          if (!byIndicator.has(key)) {
+            byIndicator.set(key, {
+              id,
+              processo: process,
+              indicador,
+              un: String(getCellText(cols, 11) || '').trim(),
+              goal,
+              meta,
+              values: {}
+            });
+          }
+
+          const item = byIndicator.get(key);
+          if (meta !== null) item.meta = meta;
+          if (goal) item.goal = goal;
+          if (finalReal !== null) {
+            item.values[ano] = finalReal;
+          }
+        }
+
+        db = Array.from(byIndicator.values()).filter((item) => Object.keys(item.values).length > 0);
+        availableYears = getYearsFromDb(db);
+        selectedYears = availableYears.slice(-3);
+        if (selectedYears.length === 0 && availableYears.length > 0) {
+          selectedYears = [availableYears[availableYears.length - 1]];
+        }
+
+        renderYearButtons();
+        populateProcessFilter();
+        populateIndicatorsCascade();
+        updateDashboard();
+
+        setStatus(`Dados carregados: ${db.length} indicadores com leitura valida.`);
+      } catch (error) {
+        console.error(error);
+        setStatus('Erro ao carregar dados: ' + error.message, true);
+      }
+    }
+
+    function getCellValue(cols, index) {
+      const cell = cols[index];
+      return cell && cell.v !== undefined ? cell.v : null;
+    }
+
+    function getCellText(cols, index) {
+      const cell = cols[index];
+      if (!cell) return '';
+      if (cell.f !== undefined && cell.f !== null && String(cell.f).trim() !== '') return String(cell.f);
+      if (cell.v !== undefined && cell.v !== null) return String(cell.v);
+      return '';
+    }
+
+    function getNumericCell(cols, index) {
+      const cell = cols[index];
+      if (!cell) return null;
+      if (typeof cell.v === 'number' && Number.isFinite(cell.v)) return cell.v;
+      return parseLocaleNumber(getCellText(cols, index));
+    }
+
+    function parseCSV(rawCSV) {
+      const rows = [];
+      let row = [];
+      let value = '';
+      let inQuotes = false;
+
+      for (let idx = 0; idx < rawCSV.length; idx++) {
+        const ch = rawCSV[idx];
+        const next = rawCSV[idx + 1];
+
+        if (ch === '"') {
+          if (inQuotes && next === '"') {
+            value += '"';
+            idx += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+          continue;
+        }
+
+        if (ch === ',' && !inQuotes) {
+          row.push(value);
+          value = '';
+          continue;
+        }
+
+        if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          if (ch === '\r' && next === '\n') idx += 1;
+          row.push(value);
+          if (row.some((cell) => (cell || '').trim() !== '')) {
+            rows.push(row);
+          }
+          row = [];
+          value = '';
+          continue;
+        }
+
+        value += ch;
+      }
+
+      if (value.length > 0 || row.length > 0) {
+        row.push(value);
+        if (row.some((cell) => (cell || '').trim() !== '')) {
+          rows.push(row);
+        }
+      }
+
+      return rows;
+    }
+
+    function normalizeHeader(value) {
+      return (value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function normalizeGoal(value) {
+      if (value.includes('≤') || value.includes('<=')) return '≤';
+      if (value.includes('≥') || value.includes('>=')) return '≥';
+      return '≥';
+    }
+
+    function parseLocaleNumber(rawValue) {
+      if (rawValue === null || rawValue === undefined) return null;
+      let value = String(rawValue).trim();
+      if (!value || value === '-' || value.toUpperCase() === 'OK') return null;
+
+      value = value
+        .replace(/\u00A0/g, ' ')
+        .replace(/[€%]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/[^0-9,.-]/g, '');
+
+      if (!value) return null;
+
+      const commaPos = value.lastIndexOf(',');
+      const dotPos = value.lastIndexOf('.');
+
+      if (commaPos > -1 && dotPos > -1) {
+        if (commaPos > dotPos) {
+          value = value.replace(/\./g, '').replace(',', '.');
+        } else {
+          value = value.replace(/,/g, '');
+        }
+      } else if (commaPos > -1) {
+        value = value.replace(',', '.');
+      }
+
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function getYearsFromDb(data) {
+      const years = new Set();
+      data.forEach((item) => {
+        Object.keys(item.values).forEach((y) => years.add(parseInt(y, 10)));
+      });
+      return Array.from(years).filter(Number.isFinite).sort((a, b) => a - b);
+    }
+
+    function renderYearButtons() {
+      const container = document.getElementById('years-selector-container');
+      container.innerHTML = '';
+      availableYears.forEach((year) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.id = `btn-year-${year}`;
+        button.onclick = () => toggleYear(year);
+        button.textContent = year;
+        button.className = 'py-1.5 px-2 text-xs font-bold rounded-lg transition-all focus:outline-none text-center';
+        container.appendChild(button);
+      });
+      updateYearButtonsUI();
+    }
+
+    function toggleYear(year) {
+      const index = selectedYears.indexOf(year);
+      if (index > -1) {
+        if (selectedYears.length === 1) return;
+        selectedYears.splice(index, 1);
+      } else {
+        selectedYears.push(year);
+      }
+      updateYearButtonsUI();
+      updateDashboard();
+    }
+
+    function updateYearButtonsUI() {
+      availableYears.forEach((year) => {
+        const btn = document.getElementById(`btn-year-${year}`);
+        if (!btn) return;
+        if (selectedYears.includes(year)) {
+          btn.className = 'py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all border border-emerald-600 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 focus:outline-none text-center';
+        } else {
+          btn.className = 'py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all border border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 focus:outline-none text-center';
+        }
+      });
+    }
+
+    function populateProcessFilter() {
+      const select = document.getElementById('filter-processo');
+      const processes = Array.from(new Set(db.map((item) => item.processo))).sort((a, b) => a.localeCompare(b));
+      select.innerHTML = '<option value="all">Todos os Processos</option>';
+      processes.forEach((process) => {
+        const option = document.createElement('option');
+        option.value = process;
+        option.textContent = process;
+        select.appendChild(option);
+      });
+    }
+
+    function populateIndicatorsCascade() {
+      const process = document.getElementById('filter-processo').value;
+      const select = document.getElementById('filter-indicador');
+      select.innerHTML = '<option value="all">Todos os Indicadores</option>';
+
+      const filtered = process === 'all' ? db : db.filter((item) => item.processo === process);
+      const indicators = Array.from(new Set(filtered.map((item) => item.indicador))).sort((a, b) => a.localeCompare(b));
+      indicators.forEach((indicator) => {
+        const option = document.createElement('option');
+        option.value = indicator;
+        option.textContent = indicator;
+        select.appendChild(option);
+      });
+    }
+
+    function onProcessChange() {
+      populateIndicatorsCascade();
+      updateDashboard();
+    }
+
+    function initCharts() {
+      const ctxEvolucao = document.getElementById('chartEvolucaoAnos').getContext('2d');
+      chartEvolucao = new Chart(ctxEvolucao, {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        plugins: [chartValueLabelsPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+            tooltip: { backgroundColor: '#0f172a' }
+          },
+          scales: {
+            y: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' } },
+            x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' } }
+          }
+        }
+      });
+
+      const ctxMetas = document.getElementById('chartMetasOverview').getContext('2d');
+      chartMetas = new Chart(ctxMetas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Atingido', 'Nao Atingido'],
+          datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          cutout: '72%'
+        }
+      });
+    }
+
+    function updateDashboard() {
+      if (db.length === 0) return;
+
+      const years = [...selectedYears].sort((a, b) => a - b);
+      const process = document.getElementById('filter-processo').value;
+      const indicator = document.getElementById('filter-indicador').value;
+
+      let data = db;
+      if (process !== 'all') data = data.filter((item) => item.processo === process);
+      if (indicator !== 'all') data = data.filter((item) => item.indicador === indicator);
+
+      updateKpiCards(data, years);
+      updateChartsData(data, years);
+    }
+
+    function updateKpiCards(data, years) {
+      setCardFromMatch('kpi-vol-negocios', 'kpi-vol-negocios-meta', data, ['A3'], /volume\s+de\s+negocios/i, years);
+      setCardFromMatch('kpi-margem', 'kpi-margem-meta', data, ['A4'], /^margem$/i, years);
+      setCardFromMatch('kpi-oportunidades', 'kpi-oportunidades-meta', data, ['B1'], /novas\s+oportunidades/i, years);
+      setCardFromMatch('kpi-maquinas', 'kpi-maquinas-meta', data, ['B3'], /maquinas\s+vendidas/i, years);
+    }
+
+    function setCardFromMatch(valueId, metaId, data, preferredIds, pattern, years) {
+      const clean = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const entry = findCardEntry(data, preferredIds, pattern, clean);
+
+      const valueEl = document.getElementById(valueId);
+      const metaEl = document.getElementById(metaId);
+
+      if (!entry) {
+        valueEl.textContent = '-';
+        metaEl.textContent = 'Meta: -';
+        return;
+      }
+
+      const val = getLatestSelectedValue(entry.values, years);
+      valueEl.textContent = val === null || val === undefined ? '-' : formatNumber(val, entry.un);
+      metaEl.textContent = entry.meta === null || entry.meta === undefined
+        ? 'Meta: -'
+        : `Meta (${entry.goal || '≥'}): ${formatNumber(entry.meta, entry.un)}`;
+    }
+
+    function findCardEntry(data, preferredIds, pattern, cleaner) {
+      const byId = data.find((item) => preferredIds.includes((item.id || '').trim()));
+      if (byId) return byId;
+      return data.find((item) => pattern.test(cleaner(item.indicador)));
+    }
+
+    function getLatestSelectedValue(valuesObj, selectedYearsList) {
+      const sorted = [...selectedYearsList].sort((a, b) => b - a);
+      for (const year of sorted) {
+        const value = valuesObj[year];
+        if (value !== null && value !== undefined) {
+          return value;
+        }
+      }
+      return null;
+    }
+
+    function getLastMonthlyValueFromGviz(cols, startIndex, endIndex) {
+      for (let idx = endIndex; idx >= startIndex; idx--) {
+        const parsed = getNumericCell(cols, idx);
+        if (parsed !== null) return parsed;
+      }
+      return null;
+    }
+
+    function updateChartsData(data, years) {
+      if (years.length === 0 || data.length === 0) {
+        chartEvolucao.data.labels = [];
+        chartEvolucao.data.datasets = [];
+        chartEvolucao.update();
+        chartMetas.data.datasets[0].data = [0, 0];
+        chartMetas.update();
+        document.getElementById('metas-met-count').textContent = '0';
+        document.getElementById('metas-unmet-count').textContent = '0';
+        return;
+      }
+
+      if (data.length === 1) {
+        const item = data[0];
+        document.getElementById('chart-evolution-title').textContent = `Evolucao Historica: ${item.indicador}`;
+        chartEvolucao.data.labels = years.map((y) => String(y));
+        chartEvolucao.data.datasets = [
+          {
+            label: 'Valor Real',
+            data: years.map((y) => item.values[y] ?? null),
+            backgroundColor: '#059669',
+            borderRadius: 6,
+            maxBarThickness: 45
+          },
+          {
+            label: `Meta (${item.goal || '≥'} ${item.meta ?? '-'})`,
+            data: years.map(() => item.meta ?? null),
+            borderColor: '#f43f5e',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            type: 'line',
+            fill: false,
+            pointRadius: 4
+          }
+        ];
+      } else {
+        document.getElementById('chart-evolution-title').textContent = 'Evolucao do Desempenho Anual Comparado';
+        chartEvolucao.data.labels = data.map((item) => item.indicador.length > 28 ? item.indicador.slice(0, 28) + '...' : item.indicador);
+        chartEvolucao.data.datasets = years.map((year) => ({
+          label: String(year),
+          data: data.map((item) => item.values[year] ?? null),
+          backgroundColor: yearColorPalette[year] || '#cbd5e1',
+          borderRadius: 4
+        }));
+      }
+      chartEvolucao.update();
+
+      let metCount = 0;
+      let unmetCount = 0;
+      data.forEach((item) => {
+        years.forEach((year) => {
+          const val = item.values[year];
+          if (val === undefined || val === null || item.meta === null || item.meta === undefined) return;
+          const isMet = item.goal === '≤' ? val <= item.meta : val >= item.meta;
+          if (isMet) metCount += 1; else unmetCount += 1;
+        });
+      });
+
+      chartMetas.data.datasets[0].data = [metCount, unmetCount];
+      chartMetas.update();
+      document.getElementById('metas-met-count').textContent = String(metCount);
+      document.getElementById('metas-unmet-count').textContent = String(unmetCount);
+    }
+
+    function formatNumber(value, unit) {
+      if (value === null || value === undefined || Number.isNaN(value)) return '-';
+      const abs = Math.abs(value);
+      const hasDecimals = abs < 100 ? 2 : 0;
+      const formatted = value.toLocaleString('pt-PT', {
+        minimumFractionDigits: hasDecimals,
+        maximumFractionDigits: hasDecimals
+      });
+
+      if ((unit || '').includes('%')) return `${formatted}%`;
+      if ((unit || '').includes('€')) return `${formatted} €`;
+      return unit ? `${formatted} ${unit}` : formatted;
+    }
+
+    function formatCompactValue(value, unit) {
+      if (value === null || value === undefined || Number.isNaN(value)) return '-';
+      const abs = Math.abs(value);
+
+      if ((unit || '').includes('%')) {
+        return `${value.toLocaleString('pt-PT', { minimumFractionDigits: abs < 100 ? 1 : 0, maximumFractionDigits: abs < 100 ? 1 : 0 })}%`;
+      }
+
+      if ((unit || '').includes('€')) {
+        if (abs >= 1000000) {
+          return `${(value / 1000000).toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M€`;
+        }
+        if (abs >= 1000) {
+          return `${(value / 1000).toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}k€`;
+        }
+        return `${value.toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}€`;
+      }
+
+      if (abs >= 1000) {
+        return value.toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+
+      return value.toLocaleString('pt-PT', { minimumFractionDigits: abs < 100 ? 1 : 0, maximumFractionDigits: abs < 100 ? 1 : 0 });
+    }
+
+    function inferDatasetUnit(chart, dataIndex) {
+      const indicatorLabel = chart.data.labels[dataIndex];
+      if (!indicatorLabel) return '';
+
+      const matched = db.find((item) => {
+        const shortLabel = item.indicador.length > 28 ? item.indicador.slice(0, 28) + '...' : item.indicador;
+        return shortLabel === indicatorLabel || item.indicador === indicatorLabel;
+      });
+
+      return matched ? matched.un : '';
+    }
+
+    function setStatus(text, isError = false) {
+      const el = document.getElementById('load-status');
+      el.textContent = text;
+      if (isError) {
+        el.classList.remove('text-slate-500');
+        el.classList.add('text-rose-600');
+      } else {
+        el.classList.remove('text-rose-600');
+        el.classList.add('text-slate-500');
+      }
+    }
+
+    function resetFilters() {
+      selectedYears = availableYears.slice(-3);
+      if (selectedYears.length === 0 && availableYears.length > 0) {
+        selectedYears = [availableYears[availableYears.length - 1]];
+      }
+      updateYearButtonsUI();
+      document.getElementById('filter-processo').value = 'all';
+      populateIndicatorsCascade();
+      document.getElementById('filter-indicador').value = 'all';
+      updateDashboard();
+    }
+  </script>
+</body>
+</html>
