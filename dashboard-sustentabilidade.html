@@ -1,0 +1,641 @@
+﻿<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Visual - KPI Sustentabilidade</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 0% 0%, #ecfeff 0%, #f8fafc 35%, #ecfccb 100%);
+    }
+
+    .dashboard-shell {
+      width: min(1500px, 100% - 2rem);
+      margin-inline: auto;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+  <header class="bg-gradient-to-r from-cyan-900 via-teal-900 to-lime-900 text-white px-6 py-4 border-b border-cyan-800/40 shadow-lg">
+    <div class="dashboard-shell flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3.5 min-w-0">
+        <div class="bg-cyan-600 p-2.5 rounded-2xl shadow-inner flex items-center justify-center border border-cyan-500/30">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v18m9-9H3"></path>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-lg font-extrabold tracking-tight flex items-center gap-2 flex-wrap">
+            Dashboard Visual
+            <span class="text-xs bg-cyan-500/30 text-cyan-100 font-bold px-2 py-0.5 rounded-full border border-cyan-400/20">KPI'S SUSTENTABILIDADE</span>
+          </h1>
+          <p class="text-[11px] text-cyan-200">Leitura direta do Google Sheets (Separador Indicadores)</p>
+        </div>
+      </div>
+      <a href="index.html" class="text-xs font-black bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl border border-white/20">Voltar ao Portal</a>
+    </div>
+  </header>
+
+  <div class="dashboard-shell flex-1 grid grid-cols-1 xl:grid-cols-12 gap-6 py-6">
+    <aside class="xl:col-span-3 bg-white border border-slate-200/85 rounded-2xl p-5 shadow-sm h-max xl:sticky xl:top-6 space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+          </svg>
+          Filtros
+        </h3>
+        <button onclick="resetFilters()" class="text-xs font-bold text-cyan-600 hover:text-cyan-700">Limpar</button>
+      </div>
+
+      <div class="space-y-2.5">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Anos em Comparacao</label>
+        <div class="grid grid-cols-3 gap-1.5 bg-slate-50 p-2 rounded-xl border border-slate-200/60" id="years-selector-container"></div>
+        <p class="text-[10px] text-slate-400">Selecione um ou mais anos para comparar.</p>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Processo</label>
+        <div class="relative">
+          <select id="filter-processo" onchange="onProcessChange()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer appearance-none">
+            <option value="all">Todos os Processos</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Indicador</label>
+        <div class="relative">
+          <select id="filter-indicador" onchange="updateDashboard()" class="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none focus:border-cyan-500 cursor-pointer appearance-none">
+            <option value="all">Todos os Indicadores</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div id="load-status" class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">A carregar dados...</div>
+    </aside>
+
+    <main class="xl:col-span-9 space-y-6 min-w-0">
+      <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-cyan-700 to-teal-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-cyan-100 uppercase tracking-wider">Consumo de Energia</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-energia">-</h3>
+          <p class="text-[9px] text-cyan-100 mt-2" id="kpi-energia-meta">Objetivo: -</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-sky-700 to-blue-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-sky-100 uppercase tracking-wider">Consumo de Agua/Equipamento</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-agua">-</h3>
+          <p class="text-[9px] text-sky-100 mt-2" id="kpi-agua-meta">Objetivo: -</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-700 to-lime-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-emerald-100 uppercase tracking-wider">Eficiencia Autoconsumo</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-autoconsumo">-</h3>
+          <p class="text-[9px] text-emerald-100 mt-2" id="kpi-autoconsumo-meta">Objetivo: -</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-amber-700 to-orange-700 rounded-2xl p-4 text-white shadow-md">
+          <p class="text-[10px] font-bold text-amber-100 uppercase tracking-wider">Residuos Papel/Cartao</p>
+          <h3 class="text-xl font-extrabold mt-1" id="kpi-residuos">-</h3>
+          <p class="text-[9px] text-amber-100 mt-2" id="kpi-residuos-meta">Objetivo: -</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 2xl:grid-cols-3 gap-6">
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm 2xl:col-span-2 flex flex-col justify-between min-w-0">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div>
+              <h4 class="text-sm font-bold text-slate-900" id="chart-evolution-title">Evolucao do Desempenho Anual</h4>
+              <p class="text-[11px] text-slate-500">Comparacao dos valores agregados por indicador e ano</p>
+            </div>
+          </div>
+          <div class="h-[420px] relative w-full">
+            <canvas id="chartEvolucaoAnos"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+          <div class="border-b border-slate-100 pb-3 mb-4">
+            <h4 class="text-sm font-bold text-slate-900">Cobertura de Dados</h4>
+            <p class="text-[11px] text-slate-500">Registos com valor face a registos sem leitura</p>
+          </div>
+          <div class="h-52 flex items-center justify-center relative">
+            <canvas id="chartMetasOverview"></canvas>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center text-xs border-t border-slate-100 pt-3 mt-4">
+            <div>
+              <span class="text-slate-400 block text-[9px] uppercase font-bold tracking-wider">Com Valor</span>
+              <span class="text-emerald-600 font-extrabold text-sm" id="metas-met-count">0</span>
+            </div>
+            <div class="border-l border-slate-150">
+              <span class="text-slate-400 block text-[9px] uppercase font-bold tracking-wider">Sem Valor</span>
+              <span class="text-rose-500 font-extrabold text-sm" id="metas-unmet-count">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const chartValueLabelsPlugin = {
+      id: 'chartValueLabelsPlugin',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        ctx.save();
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+          const meta = chart.getDatasetMeta(datasetIndex);
+          if (meta.hidden) return;
+          meta.data.forEach((element, index) => {
+            const value = dataset.data[index];
+            if (value === null || value === undefined) return;
+            const position = element.tooltipPosition();
+            const label = formatCompactValue(value, inferDatasetUnit(chart, index));
+            ctx.font = '700 10px "Plus Jakarta Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = '#0f172a';
+            ctx.fillText(label, position.x, position.y - 6);
+          });
+        });
+        ctx.restore();
+      }
+    };
+
+    const yearColorPalette = {
+      2022: '#06b6d4',
+      2023: '#0891b2',
+      2024: '#0ea5e9',
+      2025: '#14b8a6',
+      2026: '#10b981',
+      2027: '#84cc16'
+    };
+
+    let rawDb = [];
+    let db = [];
+    let selectedYears = [];
+    let availableYears = [];
+    let chartEvolucao;
+    let chartMetas;
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      initCharts();
+      await loadSustainabilityIndicators();
+    });
+
+    async function loadSustainabilityIndicators() {
+      try {
+        setStatus('A carregar dados do Google Sheets (Indicadores)...');
+        const sheetId = '1-EJldsPPuWbJcC-guH_Jn42H5VNGydwXZEDD52LYUbM';
+        const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=Indicadores&tq=${encodeURIComponent('select A,B,C,D,E,F,G,H,I')}`;
+        const response = await fetch(gvizUrl, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('Falha ao ler dados do separador Indicadores no Google Sheets');
+        }
+
+        const raw = await response.text();
+        const jsonStart = raw.indexOf('{');
+        const jsonEnd = raw.lastIndexOf('}');
+        if (jsonStart === -1 || jsonEnd === -1) {
+          throw new Error('Resposta GViz invalida');
+        }
+
+        const gviz = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+        const rows = gviz?.table?.rows || [];
+        if (!rows.length) {
+          throw new Error('Sem dados no separador Indicadores');
+        }
+
+        rawDb = rows.map((row) => {
+          const cols = row.c || [];
+          return {
+            ano: Number(getCellValue(cols, 0)),
+            mes: String(getCellText(cols, 1) || '').trim(),
+            valor: getNumericCell(cols, 2),
+            processo: String(getCellText(cols, 3) || 'Sem Processo').trim(),
+            indicador: String(getCellText(cols, 4) || '').trim(),
+            unidade: String(getCellText(cols, 5) || '').trim(),
+            objetivo: String(getCellText(cols, 6) || '').trim(),
+            valorObjetivo: parseLocaleNumber(getCellText(cols, 7)),
+            responsavel: String(getCellText(cols, 8) || '').trim()
+          };
+        }).filter((item) => Number.isFinite(item.ano) && item.indicador);
+
+        db = aggregateSustainabilityData(rawDb);
+        availableYears = getYearsFromDb(db);
+        selectedYears = availableYears.slice(-3);
+        if (selectedYears.length === 0 && availableYears.length > 0) {
+          selectedYears = [availableYears[availableYears.length - 1]];
+        }
+
+        renderYearButtons();
+        populateProcessFilter();
+        populateIndicatorsCascade();
+        updateDashboard();
+
+        setStatus(`Dados carregados: ${db.length} indicadores agregados com leitura valida.`);
+      } catch (error) {
+        console.error(error);
+        setStatus('Erro ao carregar dados: ' + error.message, true);
+      }
+    }
+
+    function aggregateSustainabilityData(records) {
+      const grouped = new Map();
+      records.forEach((record) => {
+        const key = [record.processo, record.indicador, record.unidade].join('||');
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            processo: record.processo,
+            indicador: record.indicador,
+            un: record.unidade,
+            objetivo: record.objetivo,
+            valorObjetivo: record.valorObjetivo,
+            values: {},
+            aggregationMode: inferAggregationMode(record)
+          });
+        }
+
+        const item = grouped.get(key);
+        if (record.objetivo) item.objetivo = record.objetivo;
+        if (record.valorObjetivo !== null) item.valorObjetivo = record.valorObjetivo;
+        if (record.valor === null || record.valor === undefined) return;
+
+        if (!item.values[record.ano]) {
+          item.values[record.ano] = { sum: 0, count: 0 };
+        }
+
+        item.values[record.ano].sum += record.valor;
+        item.values[record.ano].count += 1;
+      });
+
+      return Array.from(grouped.values()).map((item) => {
+        const finalValues = {};
+        Object.keys(item.values).forEach((year) => {
+          const bucket = item.values[year];
+          finalValues[year] = item.aggregationMode === 'average'
+            ? bucket.sum / bucket.count
+            : bucket.sum;
+        });
+
+        return {
+          processo: item.processo,
+          indicador: item.indicador,
+          un: item.un,
+          objetivo: item.objetivo,
+          valorObjetivo: item.valorObjetivo,
+          aggregationMode: item.aggregationMode,
+          values: finalValues
+        };
+      }).filter((item) => Object.keys(item.values).length > 0);
+    }
+
+    function inferAggregationMode(record) {
+      const indicador = normalizeText(record.indicador);
+      const unidade = normalizeText(record.unidade);
+      if (indicador.includes('/equipamento') || indicador.includes('/unidade') || unidade.includes('/un') || unidade === '%' || indicador.includes('eficiencia')) {
+        return 'average';
+      }
+      return 'sum';
+    }
+
+    function normalizeText(value) {
+      return (value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function getCellValue(cols, index) {
+      const cell = cols[index];
+      return cell && cell.v !== undefined ? cell.v : null;
+    }
+
+    function getCellText(cols, index) {
+      const cell = cols[index];
+      if (!cell) return '';
+      if (cell.f !== undefined && cell.f !== null && String(cell.f).trim() !== '') return String(cell.f);
+      if (cell.v !== undefined && cell.v !== null) return String(cell.v);
+      return '';
+    }
+
+    function getNumericCell(cols, index) {
+      const cell = cols[index];
+      if (!cell) return null;
+      if (typeof cell.v === 'number' && Number.isFinite(cell.v)) return cell.v;
+      return parseLocaleNumber(getCellText(cols, index));
+    }
+
+    function parseLocaleNumber(rawValue) {
+      if (rawValue === null || rawValue === undefined) return null;
+      let value = String(rawValue).trim();
+      if (!value || value === '-' || value.toUpperCase() === 'OK') return null;
+      value = value.replace(/\u00A0/g, ' ').replace(/[%]/g, '').replace(/\s+/g, '').replace(/[^0-9,.-]/g, '');
+      if (!value) return null;
+      const commaPos = value.lastIndexOf(',');
+      const dotPos = value.lastIndexOf('.');
+      if (commaPos > -1 && dotPos > -1) {
+        if (commaPos > dotPos) {
+          value = value.replace(/\./g, '').replace(',', '.');
+        } else {
+          value = value.replace(/,/g, '');
+        }
+      } else if (commaPos > -1) {
+        value = value.replace(',', '.');
+      }
+      const parsed = parseFloat(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function getYearsFromDb(data) {
+      const years = new Set();
+      data.forEach((item) => {
+        Object.keys(item.values).forEach((year) => years.add(parseInt(year, 10)));
+      });
+      return Array.from(years).filter(Number.isFinite).sort((a, b) => a - b);
+    }
+
+    function renderYearButtons() {
+      const container = document.getElementById('years-selector-container');
+      container.innerHTML = '';
+      availableYears.forEach((year) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.id = `btn-year-${year}`;
+        button.onclick = () => toggleYear(year);
+        button.textContent = year;
+        button.className = 'py-1.5 px-2 text-xs font-bold rounded-lg transition-all focus:outline-none text-center';
+        container.appendChild(button);
+      });
+      updateYearButtonsUI();
+    }
+
+    function toggleYear(year) {
+      const index = selectedYears.indexOf(year);
+      if (index > -1) {
+        if (selectedYears.length === 1) return;
+        selectedYears.splice(index, 1);
+      } else {
+        selectedYears.push(year);
+      }
+      updateYearButtonsUI();
+      populateProcessFilter();
+      populateIndicatorsCascade();
+      updateDashboard();
+    }
+
+    function updateYearButtonsUI() {
+      availableYears.forEach((year) => {
+        const btn = document.getElementById(`btn-year-${year}`);
+        if (!btn) return;
+        if (selectedYears.includes(year)) {
+          btn.className = 'py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all border border-cyan-600 bg-cyan-600 text-white shadow-sm hover:bg-cyan-700 focus:outline-none text-center';
+        } else {
+          btn.className = 'py-1.5 px-2 text-[11px] font-bold rounded-lg transition-all border border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200 focus:outline-none text-center';
+        }
+      });
+    }
+
+    function populateProcessFilter() {
+      const select = document.getElementById('filter-processo');
+      const currentValue = select.value;
+      const yearScopedDb = getDataForSelectedYears(db, selectedYears);
+      const processes = Array.from(new Set(yearScopedDb.map((item) => item.processo))).sort((a, b) => a.localeCompare(b));
+      select.innerHTML = '<option value="all">Todos os Processos</option>';
+      processes.forEach((process) => {
+        const option = document.createElement('option');
+        option.value = process;
+        option.textContent = process;
+        select.appendChild(option);
+      });
+      if (currentValue && Array.from(select.options).some((opt) => opt.value === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function populateIndicatorsCascade() {
+      const process = document.getElementById('filter-processo').value;
+      const select = document.getElementById('filter-indicador');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="all">Todos os Indicadores</option>';
+      const yearScopedDb = getDataForSelectedYears(db, selectedYears);
+      const filtered = process === 'all' ? yearScopedDb : yearScopedDb.filter((item) => item.processo === process);
+      const indicators = Array.from(new Set(filtered.map((item) => item.indicador))).sort((a, b) => a.localeCompare(b));
+      indicators.forEach((indicator) => {
+        const option = document.createElement('option');
+        option.value = indicator;
+        option.textContent = indicator;
+        select.appendChild(option);
+      });
+      if (currentValue && Array.from(select.options).some((opt) => opt.value === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    function onProcessChange() {
+      populateIndicatorsCascade();
+      updateDashboard();
+    }
+
+    function initCharts() {
+      const ctxEvolucao = document.getElementById('chartEvolucaoAnos').getContext('2d');
+      chartEvolucao = new Chart(ctxEvolucao, {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        plugins: [chartValueLabelsPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10, weight: 'bold' } } },
+            tooltip: { backgroundColor: '#0f172a' }
+          },
+          scales: {
+            y: { grid: { color: '#e2e8f0' }, ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' } },
+            x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' } }
+          }
+        }
+      });
+
+      const ctxMetas = document.getElementById('chartMetasOverview').getContext('2d');
+      chartMetas = new Chart(ctxMetas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Com Valor', 'Sem Valor'],
+          datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#f43f5e'], borderWidth: 0 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          cutout: '72%'
+        }
+      });
+    }
+
+    function updateDashboard() {
+      if (db.length === 0) return;
+      const years = [...selectedYears].sort((a, b) => a - b);
+      if (years.length === 0) return;
+      const process = document.getElementById('filter-processo').value;
+      const indicator = document.getElementById('filter-indicador').value;
+      let data = getDataForSelectedYears(db, years);
+      if (process !== 'all') data = data.filter((item) => item.processo === process);
+      if (indicator !== 'all') data = data.filter((item) => item.indicador === indicator);
+      updateKpiCards(data, years);
+      updateChartsData(data, years);
+      updateCoverageChart(process, indicator, years);
+    }
+
+    function getDataForSelectedYears(data, years) {
+      if (!Array.isArray(years) || years.length === 0) return [];
+      const selectedSet = new Set(years.map((year) => String(year)));
+      return data.filter((item) => Object.keys(item.values).some((year) => selectedSet.has(String(year)) && item.values[year] !== null && item.values[year] !== undefined));
+    }
+
+    function updateKpiCards(data, years) {
+      setCardFromIndicator('kpi-energia', 'kpi-energia-meta', data, /consumo de energia/i, years);
+      setCardFromIndicator('kpi-agua', 'kpi-agua-meta', data, /consumo de agua\/equipamento/i, years);
+      setCardFromIndicator('kpi-autoconsumo', 'kpi-autoconsumo-meta', data, /eficiencia autoconsumo/i, years);
+      setCardFromIndicator('kpi-residuos', 'kpi-residuos-meta', data, /residuos papel\/cartao/i, years);
+    }
+
+    function setCardFromIndicator(valueId, metaId, data, pattern, years) {
+      const entry = data.find((item) => pattern.test(normalizeText(item.indicador)));
+      const valueEl = document.getElementById(valueId);
+      const metaEl = document.getElementById(metaId);
+      if (!entry) {
+        valueEl.textContent = '-';
+        metaEl.textContent = 'Objetivo: -';
+        return;
+      }
+      const val = getLatestSelectedValue(entry.values, years);
+      valueEl.textContent = val === null || val === undefined ? '-' : formatNumber(val, entry.un);
+      const modeLabel = entry.aggregationMode === 'average' ? 'Media anual' : 'Acumulado anual';
+      metaEl.textContent = entry.objetivo ? `${modeLabel}: ${entry.objetivo}` : modeLabel;
+    }
+
+    function getLatestSelectedValue(valuesObj, years) {
+      const sorted = [...years].sort((a, b) => b - a);
+      for (const year of sorted) {
+        const value = valuesObj[year];
+        if (value !== null && value !== undefined) return value;
+      }
+      return null;
+    }
+
+    function updateChartsData(data, years) {
+      if (years.length === 0 || data.length === 0) {
+        chartEvolucao.data.labels = [];
+        chartEvolucao.data.datasets = [];
+        chartEvolucao.update();
+        return;
+      }
+
+      if (data.length === 1) {
+        const item = data[0];
+        document.getElementById('chart-evolution-title').textContent = `Evolucao Historica: ${item.indicador}`;
+        chartEvolucao.data.labels = years.map((year) => String(year));
+        chartEvolucao.data.datasets = [{
+          label: item.aggregationMode === 'average' ? 'Media anual' : 'Acumulado anual',
+          data: years.map((year) => item.values[year] ?? null),
+          backgroundColor: '#0891b2',
+          borderRadius: 6,
+          maxBarThickness: 45
+        }];
+      } else {
+        document.getElementById('chart-evolution-title').textContent = 'Evolucao do Desempenho Anual Comparado';
+        chartEvolucao.data.labels = data.map((item) => item.indicador.length > 28 ? item.indicador.slice(0, 28) + '...' : item.indicador);
+        chartEvolucao.data.datasets = years.map((year) => ({
+          label: String(year),
+          data: data.map((item) => item.values[year] ?? null),
+          backgroundColor: yearColorPalette[year] || '#67e8f9',
+          borderRadius: 4
+        }));
+      }
+      chartEvolucao.update();
+    }
+
+    function updateCoverageChart(process, indicator, years) {
+      const yearSet = new Set(years.map(String));
+      const filtered = rawDb.filter((item) => {
+        if (!yearSet.has(String(item.ano))) return false;
+        if (process !== 'all' && item.processo !== process) return false;
+        if (indicator !== 'all' && item.indicador !== indicator) return false;
+        return true;
+      });
+      const withValue = filtered.filter((item) => item.valor !== null && item.valor !== undefined).length;
+      const withoutValue = filtered.length - withValue;
+      chartMetas.data.datasets[0].data = [withValue, withoutValue];
+      chartMetas.update();
+      document.getElementById('metas-met-count').textContent = String(withValue);
+      document.getElementById('metas-unmet-count').textContent = String(withoutValue);
+    }
+
+    function formatNumber(value, unit) {
+      if (value === null || value === undefined || Number.isNaN(value)) return '-';
+      const abs = Math.abs(value);
+      const decimals = abs < 100 ? 2 : 0;
+      const formatted = value.toLocaleString('pt-PT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+      if ((unit || '').includes('%')) return `${formatted}%`;
+      return unit ? `${formatted} ${unit}` : formatted;
+    }
+
+    function formatCompactValue(value, unit) {
+      if (value === null || value === undefined || Number.isNaN(value)) return '-';
+      const abs = Math.abs(value);
+      if ((unit || '').includes('%')) {
+        return `${value.toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+      }
+      if (abs >= 1000) {
+        return value.toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      return value.toLocaleString('pt-PT', { minimumFractionDigits: abs < 100 ? 1 : 0, maximumFractionDigits: abs < 100 ? 1 : 0 });
+    }
+
+    function inferDatasetUnit(chart, dataIndex) {
+      const label = chart.data.labels[dataIndex];
+      if (!label) return '';
+      const matched = db.find((item) => {
+        const shortLabel = item.indicador.length > 28 ? item.indicador.slice(0, 28) + '...' : item.indicador;
+        return shortLabel === label || item.indicador === label;
+      });
+      return matched ? matched.un : '';
+    }
+
+    function setStatus(text, isError = false) {
+      const el = document.getElementById('load-status');
+      el.textContent = text;
+      if (isError) {
+        el.classList.remove('text-slate-500');
+        el.classList.add('text-rose-600');
+      } else {
+        el.classList.remove('text-rose-600');
+        el.classList.add('text-slate-500');
+      }
+    }
+
+    function resetFilters() {
+      selectedYears = availableYears.slice(-3);
+      if (selectedYears.length === 0 && availableYears.length > 0) {
+        selectedYears = [availableYears[availableYears.length - 1]];
+      }
+      updateYearButtonsUI();
+      populateProcessFilter();
+      document.getElementById('filter-processo').value = 'all';
+      populateIndicatorsCascade();
+      document.getElementById('filter-indicador').value = 'all';
+      updateDashboard();
+    }
+  </script>
+</body>
+</html>
