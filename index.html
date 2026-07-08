@@ -431,6 +431,198 @@
     .toggle-alerts-btn:hover {
       transform: scale(1.2);
     }
+
+    /* ✅ CALENDÁRIO VISUAL */
+    .plan-calendar {
+      font-family: inherit;
+    }
+
+    .plan-cal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .plan-cal-title {
+      font-weight: 900;
+      font-size: 1.5rem;
+    }
+
+    .plan-cal-nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .plan-week {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .plan-week-day {
+      text-align: center;
+      font-weight: 700;
+      color: #64748b;
+      padding: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.25rem;
+      min-height: 400px;
+    }
+
+    .plan-day {
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      background: #ffffff;
+      min-height: 80px;
+      position: relative;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .plan-day:hover {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: #f8fafc;
+    }
+
+    .plan-day.empty {
+      background: #f1f5f9;
+      border: none;
+      cursor: default;
+    }
+
+    .plan-day.empty:hover {
+      box-shadow: none;
+      background: #f1f5f9;
+    }
+
+    .plan-day.today {
+      background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%);
+      border: 2px solid #f59e0b;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+
+    .plan-day.has-audits {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border: 2px solid #10b981;
+    }
+
+    .plan-day-num {
+      font-weight: 700;
+      font-size: 0.875rem;
+      color: #334155;
+      margin-bottom: 0.25rem;
+    }
+
+    .plan-day.today .plan-day-num {
+      color: #b45309;
+      font-size: 1rem;
+    }
+
+    .plan-status {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .plan-status.pending {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .plan-status.done {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .plan-check {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.875rem;
+    }
+
+    .plan-check input[type="checkbox"] {
+      cursor: pointer;
+      width: 1.125rem;
+      height: 1.125rem;
+      accent-color: #10b981;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-ghost:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    .btn-dark {
+      background: #1e293b;
+      color: white;
+      border: 1px solid #0f172a;
+    }
+
+    .btn-dark:hover {
+      background: #0f172a;
+    }
+
+    .btn-danger-ghost {
+      background: transparent;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .btn-danger-ghost:hover {
+      background: #fee2e2;
+      border-color: #dc2626;
+    }
   </style>
 </head>
 
@@ -838,6 +1030,62 @@
       <div>
         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Observações</label>
         <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg min-h-[60px]" id="partesAcaoModalObservacoes">-</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Agendamento de Auditoria -->
+  <div id="planModalAuditoria" class="fixed inset-0 hidden z-[120] items-center justify-center bg-slate-900/60 backdrop-blur-sm" onclick="closePlanModal(event)">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-96 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-black text-slate-800">Agendar Auditoria</h2>
+        <button onclick="closePlanModal()" class="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">ID da Auditoria</label>
+          <input type="text" id="planAuditId" placeholder="ex: AUD-20260612-010" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo (Departamento)</label>
+          <input type="text" id="planAuditType" placeholder="ex: DGR, DATLOG" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Auditor Coordenador</label>
+          <select id="planAuditCoord" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+            <option value="">Selecione...</option>
+            <option value="Mário Fragoso">Mário Fragoso</option>
+            <option value="Joni Regalado">Joni Regalado</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Auditor</label>
+          <input type="text" id="planAuditAuditor" placeholder="Opcional" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Data</label>
+          <input type="date" id="planAuditDate" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Documentos</label>
+          <textarea id="planAuditDocs" placeholder="ex: Fluxograma do Processo; Procedimento do Processo" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" rows="3"></textarea>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Requisitos</label>
+          <textarea id="planAuditRequisitos" placeholder="ex: ISO 9001; ISO 14001" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" rows="2"></textarea>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 mt-8">
+        <button onclick="closePlanModal()" class="flex-1 px-4 py-2 border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50">Cancelar</button>
+        <button onclick="salvarNovaAuditoria()" class="flex-1 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700">Agendar</button>
       </div>
     </div>
   </div>
@@ -1723,6 +1971,51 @@
       </div>
     </div>
 
+    <!-- CONTEÚDO: CALENDÁRIO DE AUDITORIAS -->
+    <div id="view-planning-calendar" class="hidden space-y-6">
+      <!-- Cabeçalho -->
+      <div class="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white p-8 rounded-2xl shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <button onclick="switchPlanningView('main')" class="text-emerald-200 hover:text-white transition-colors text-sm font-semibold mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+              Voltar
+            </button>
+            <h1 class="text-3xl font-black tracking-tight">CALENDÁRIO DE AUDITORIAS</h1>
+            <p class="text-emerald-200 text-sm mt-2">Visualização mensal - Clique em uma auditoria para editar</p>
+          </div>
+          <button class="btn btn-dark" onclick="openPlanModal()">+ Agendar Auditoria</button>
+        </div>
+      </div>
+
+      <!-- Calendário Visual -->
+      <div id="calIntro">
+        <div class="plan-calendar bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+          <div class="plan-cal-head flex justify-between items-center mb-6">
+            <div class="plan-cal-title text-2xl font-black text-slate-900"></div>
+            <div class="plan-cal-nav flex gap-2">
+              <button class="btn btn-ghost btn-sm" onclick="alterarMesPlaneamento(-1)">←</button>
+              <button class="btn btn-ghost btn-sm" onclick="irMesAtualPlaneamento()">Hoje</button>
+              <button class="btn btn-ghost btn-sm" onclick="alterarMesPlaneamento(1)">→</button>
+            </div>
+          </div>
+          <div class="plan-week grid grid-cols-7 gap-1 mb-2">
+            <div class="plan-week-day font-bold text-center text-sm text-slate-600 p-2">Seg</div>
+            <div class="plan-week-day font-bold text-center text-sm text-slate-600 p-2">Ter</div>
+            <div class="plan-week-day font-bold text-center text-sm text-slate-600 p-2">Qua</div>
+            <div class="plan-week-day font-bold text-center text-sm text-slate-600 p-2">Qui</div>
+            <div class="plan-week-day font-bold text-center text-sm text-slate-600 p-2">Sex</div>
+            <div class="plan-week-day font-bold text-center text-sm text-slate-600 p-2">Sáb</div>
+            <div class="plan-week-day font-bold text-center text-sm text-slate-600 p-2">Dom</div>
+          </div>
+          <div class="plan-grid grid grid-cols-7 gap-1"></div>
+        </div>
+      </div>
+
+      <!-- Lista de Auditorias -->
+      <div id="listaIntro" class="space-y-4"></div>
+    </div>
+
     <!-- CONTEÚDO: PLANEAMENTO -->
     <div id="view-planning" class="hidden space-y-8">
       <!-- Cabeçalho do Planeamento -->
@@ -1763,7 +2056,7 @@
           </div>
         </button>
 
-        <!-- Card Auditorias -->
+        <!-- Card Auditorias (Tabela) -->
         <button onclick="switchPlanningView('audits')" class="group bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200 rounded-2xl p-8 hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer">
           <div class="flex flex-col items-center text-center gap-4">
             <div class="bg-amber-600 p-4 rounded-full group-hover:bg-amber-700 transition-colors shadow-lg">
@@ -1777,11 +2070,37 @@
                 Plano de auditorias internas e externas conforme calendário anual
               </p>
               <p class="text-xs text-amber-600 font-semibold">
-                13 auditorias agendadas
+                13 auditorias agendadas (Tabela Anual)
               </p>
             </div>
             <div class="flex items-center gap-2 text-amber-600 font-semibold group-hover:gap-3 transition-all mt-4">
-              Ver Calendário
+              Ver Tabela
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        </button>
+
+        <!-- Card Calendário de Auditorias -->
+        <button onclick="switchPlanningView('calendar')" class="group bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-emerald-200 rounded-2xl p-8 hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer">
+          <div class="flex flex-col items-center text-center gap-4">
+            <div class="bg-emerald-600 p-4 rounded-full group-hover:bg-emerald-700 transition-colors shadow-lg">
+              <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-emerald-900 mb-2">CALENDÁRIO VISUAL</h2>
+              <p class="text-emerald-700 text-sm mb-4">
+                Visualização mensal com auditorias agendadas e realizadas
+              </p>
+              <p class="text-xs text-emerald-600 font-semibold">
+                Navegação por mês - Clique para gerenciar
+              </p>
+            </div>
+            <div class="flex items-center gap-2 text-emerald-600 font-semibold group-hover:gap-3 transition-all mt-4">
+              Abrir Calendário
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
               </svg>
@@ -2362,6 +2681,25 @@
     ];
 
     const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const monthsLong = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+    // Auditorias em formato "Intro" (calendário visual)
+    let introData = [
+      { id: "AUD-20260612-006", type: "DGR", coordAuditor: "Mário Fragoso", auditor: "", date: new Date(2026, 6, 10), status: "pending", docs: "Fluxograma do Processo; Procedimento do Processo; Modelos", requisitos: "ISO 9001; ISO 14001", realizedDate: null },
+      { id: "AUD-20260612-007", type: "DEN", coordAuditor: "Mário Fragoso", auditor: "", date: new Date(2026, 6, 10), status: "pending", docs: "Fluxograma do Processo; Procedimento do Processo; Modelos", requisitos: "ISO 9001; ISO 14001", realizedDate: null },
+      { id: "AUD-20260612-004", type: "DATLOG", coordAuditor: "Mário Fragoso", auditor: "Joni Regalado", date: new Date(2026, 6, 9), status: "pending", docs: "Fluxograma do Processo; Procedimento do Processo; Modelos", requisitos: "ISO 9001; ISO 14001", realizedDate: null },
+      { id: "AUD-20260612-005", type: "DATTECH", coordAuditor: "Mário Fragoso", auditor: "Joni Regalado", date: new Date(2026, 6, 9), status: "pending", docs: "Fluxograma do Processo; Procedimento do Processo; Modelos", requisitos: "ISO 9001; ISO 14001", realizedDate: null },
+      { id: "AUD-20260612-008", type: "DGN", coordAuditor: "Mário Fragoso", auditor: "Joni Regalado", date: new Date(2026, 6, 7), status: "done", docs: "Fluxograma do Processo; Procedimento do Processo", requisitos: "ISO 9001; ISO 14001", realizedDate: "07/07/2026, 11:22:51" },
+      { id: "AUD-20260612-009", type: "DSQA", coordAuditor: "Joni Regalado", auditor: "", date: new Date(2026, 6, 7), status: "done", docs: "Fluxograma do Processo; Procedimento do Processo; Instruções de Trabalho; Modelos; Manuais", requisitos: "ISO 9001; ISO 14001", realizedDate: "07/07/2026, 11:22:56" },
+      { id: "AUD-20260612-001", type: "DCO", coordAuditor: "Mário Fragoso", auditor: "Joni Regalado", date: new Date(2026, 6, 8), status: "pending", docs: "Fluxograma do Processo; Procedimento do Processo; Modelos", requisitos: "ISO 9001; ISO 14001", realizedDate: null },
+      { id: "AUD-20260612-002", type: "DPR", coordAuditor: "Mário Fragoso", auditor: "Joni Regalado", date: new Date(2026, 6, 8), status: "pending", docs: "Fluxograma do Processo; Instruções de Trabalho; Instruções Operatórias; Modelos", requisitos: "ISO 9001; ISO 14001", realizedDate: null },
+      { id: "AUD-20260612-003", type: "DLO", coordAuditor: "Mário Fragoso", auditor: "Joni Regalado", date: new Date(2026, 6, 8), status: "pending", docs: "Fluxograma do Processo; Procedimento do Processo; Modelos", requisitos: "ISO 9001; ISO 14001", realizedDate: null },
+    ];
+
+    // Variáveis globais para calendário
+    let currentCalendarMonth = new Date().getMonth();
+    let currentCalendarYear = new Date().getFullYear();
 
     // =========
     // Normalização
@@ -2753,6 +3091,8 @@
       document.getElementById('view-planning').classList.add('hidden');
       document.getElementById('view-planning-meetings').classList.add('hidden');
       document.getElementById('view-planning-audits').classList.add('hidden');
+      const calendarView = document.getElementById('view-planning-calendar');
+      if(calendarView) calendarView.classList.add('hidden');
 
       if(view === 'main') {
         document.getElementById('view-planning').classList.remove('hidden');
@@ -2762,6 +3102,12 @@
       } else if(view === 'audits') {
         document.getElementById('view-planning-audits').classList.remove('hidden');
         renderAuditsTable();
+      } else if(view === 'calendar') {
+        if(calendarView) {
+          calendarView.classList.remove('hidden');
+          renderizarCalendario();
+          renderizarListaIntro();
+        }
       }
     }
 
@@ -8564,6 +8910,290 @@
         });
       });
     }
+
+    // =========
+    // ✅ FUNÇÕES DE CALENDÁRIO DE AUDITORIAS
+    // =========
+
+    function renderizarCalendario() {
+      const month = currentCalendarMonth;
+      const year = currentCalendarYear;
+      
+      // Atualizar título
+      const titleEl = document.querySelector('.plan-cal-title');
+      if(titleEl) {
+        titleEl.textContent = `Calendário ${monthsLong[month]} de ${year}`;
+      }
+      
+      // Obter primeiro dia e número de dias
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const hoje = new Date();
+      const isCurrentMonth = hoje.getMonth() === month && hoje.getFullYear() === year;
+      
+      // Ajustar para semana que começa em Segunda (0=Seg, 6=Dom)
+      let firstDayAdjusted = (firstDay + 6) % 7;
+      
+      let html = '';
+      
+      // Dias vazios no início
+      for(let i = 0; i < firstDayAdjusted; i++) {
+        html += '<div class="plan-day empty"></div>';
+      }
+      
+      // Dias do mês
+      for(let day = 1; day <= daysInMonth; day++) {
+        const isToday = isCurrentMonth && day === hoje.getDate();
+        const dateObj = new Date(year, month, day);
+        const auditsForDay = introData.filter(a => {
+          const aDate = new Date(a.date);
+          return aDate.getDate() === day && aDate.getMonth() === month && aDate.getFullYear() === year;
+        });
+        
+        let dayClass = 'plan-day';
+        if(isToday) dayClass += ' today';
+        if(auditsForDay.length > 0) dayClass += ' has-audits';
+        
+        html += `<div class="${dayClass}" style="cursor: pointer;" onclick="mostrarDetalhesAuditorias(${day}, ${month}, ${year})">`;
+        html += `<div class="plan-day-num">${day}</div>`;
+        
+        // Mostrar indicadores de auditorias
+        if(auditsForDay.length > 0) {
+          auditsForDay.forEach(audit => {
+            const statusClass = audit.status === 'done' ? 'bg-green-500' : 'bg-amber-500';
+            html += `<div class="text-xs p-1 rounded mb-1 text-white truncate ${statusClass}">${audit.id}</div>`;
+          });
+        }
+        
+        html += '</div>';
+      }
+      
+      const gridEl = document.querySelector('.plan-grid');
+      if(gridEl) {
+        gridEl.innerHTML = html;
+      }
+    }
+
+    function renderizarListaIntro() {
+      const month = currentCalendarMonth;
+      const year = currentCalendarYear;
+      
+      // Filtrar auditorias do mês
+      const auditsForMonth = introData.filter(a => {
+        const aDate = new Date(a.date);
+        return aDate.getMonth() === month && aDate.getFullYear() === year;
+      }).sort((a, b) => a.date - b.date);
+      
+      let html = '';
+      
+      if(auditsForMonth.length === 0) {
+        html = '<div class="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center"><p class="text-slate-600">Nenhuma auditoria agendada para este mês</p></div>';
+      } else {
+        auditsForMonth.forEach(audit => {
+          const statusBadgeClass = audit.status === 'done' ? 'plan-status done' : 'plan-status pending';
+          const statusLabel = audit.status === 'done' ? 'Realizada' : 'Planeada';
+          const dataFormatada = audit.date.toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+          
+          html += `<div class="card" style="padding:1.5rem;margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+              <div style="flex:1">
+                <div style="font-weight:900;font-size:15px;margin-bottom:.5rem">${audit.id} - ${audit.type}</div>
+                <div style="font-size:12px;color:var(--slate500)">
+                  <div><strong>Auditor Coord:</strong> ${audit.coordAuditor}</div>
+                  <div><strong>Auditor:</strong> ${audit.auditor || '-'}</div>
+                  <div><strong>Data:</strong> — ${dataFormatada}</div>
+                  ${audit.realizedDate ? `<div><strong>Confirmada em:</strong> ${audit.realizedDate}</div>` : ''}
+                </div>
+              </div>
+              <div style="display:flex;gap:.5rem">
+                <span class="${statusBadgeClass}">${statusLabel}</span>
+                <button class="btn btn-ghost btn-sm" onclick="editarIntro('${audit.id}')">✎</button>
+                <button class="btn btn-danger-ghost btn-sm" onclick="removerIntro('${audit.id}')">🗑</button>
+              </div>
+            </div>
+            <div style="margin-bottom:.75rem">
+              <label class="plan-check">
+                <input type="checkbox" ${audit.status === 'done' ? 'checked' : ''} onchange="togglePlaneamentoRealizado('${audit.id}', this.checked)">
+                Confirmar como realizada
+              </label>
+            </div>
+            <div style="margin-bottom:.75rem"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--slate400)">Documentos:</strong><p style="font-size:11px;color:var(--slate600);margin:.3rem 0 0 0">${audit.docs}</p></div>
+            <div><strong style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--slate400)">Requisitos:</strong><p style="font-size:11px;color:var(--slate600);margin:.3rem 0 0 0">${audit.requisitos}</p></div>
+          </div>`;
+        });
+      }
+      
+      const listaEl = document.getElementById('listaIntro');
+      if(listaEl) {
+        listaEl.innerHTML = html;
+      }
+    }
+
+    function alterarMesPlaneamento(direcao) {
+      currentCalendarMonth += direcao;
+      
+      if(currentCalendarMonth > 11) {
+        currentCalendarMonth = 0;
+        currentCalendarYear++;
+      } else if(currentCalendarMonth < 0) {
+        currentCalendarMonth = 11;
+        currentCalendarYear--;
+      }
+      
+      renderizarCalendario();
+      renderizarListaIntro();
+    }
+
+    function irMesAtualPlaneamento() {
+      const hoje = new Date();
+      currentCalendarMonth = hoje.getMonth();
+      currentCalendarYear = hoje.getFullYear();
+      renderizarCalendario();
+      renderizarListaIntro();
+    }
+
+    function togglePlaneamentoRealizado(id, checked) {
+      const audit = introData.find(a => a.id === id);
+      if(audit) {
+        if(checked) {
+          audit.status = 'done';
+          const now = new Date();
+          audit.realizedDate = now.toLocaleDateString('pt-PT') + ', ' + now.toLocaleTimeString('pt-PT');
+        } else {
+          audit.status = 'pending';
+          audit.realizedDate = null;
+        }
+        salvarIntroData();
+        renderizarListaIntro();
+        renderizarCalendario();
+      }
+    }
+
+    function removerIntro(id) {
+      if(confirm(`Tem a certeza que deseja remover a auditoria ${id}?`)) {
+        introData = introData.filter(a => a.id !== id);
+        salvarIntroData();
+        renderizarListaIntro();
+        renderizarCalendario();
+      }
+    }
+
+    function editarIntro(id) {
+      window.alert('Editar em construção');
+    }
+
+    function mostrarDetalhesAuditorias(day, month, year) {
+      const auditsForDay = introData.filter(a => {
+        const aDate = new Date(a.date);
+        return aDate.getDate() === day && aDate.getMonth() === month && aDate.getFullYear() === year;
+      });
+      
+      if(auditsForDay.length === 0) {
+        window.alert('Nenhuma auditoria neste dia');
+        return;
+      }
+      
+      let msg = `Auditorias de ${day}/${month + 1}/${year}:\n\n`;
+      auditsForDay.forEach(a => {
+        msg += `${a.id} (${a.type}) - ${a.status === 'done' ? 'Realizada' : 'Planeada'}\n`;
+      });
+      window.alert(msg);
+    }
+
+    function openPlanModal() {
+      const modal = document.getElementById('planModalAuditoria');
+      if(modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closePlanModal(event) {
+      const modal = document.getElementById('planModalAuditoria');
+      if(!modal) return;
+      
+      if(event && event.target !== modal) return;
+      
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
+
+    function salvarNovaAuditoria() {
+      const id = document.getElementById('planAuditId').value.trim();
+      const type = document.getElementById('planAuditType').value.trim();
+      const coordAuditor = document.getElementById('planAuditCoord').value;
+      const auditor = document.getElementById('planAuditAuditor').value.trim();
+      const dateStr = document.getElementById('planAuditDate').value;
+      const docs = document.getElementById('planAuditDocs').value.trim();
+      const requisitos = document.getElementById('planAuditRequisitos').value.trim();
+      
+      if(!id || !type || !coordAuditor || !dateStr) {
+        window.alert('Por favor preencha todos os campos obrigatórios');
+        return;
+      }
+      
+      const newAudit = {
+        id: id,
+        type: type,
+        coordAuditor: coordAuditor,
+        auditor: auditor,
+        date: new Date(dateStr),
+        status: 'pending',
+        docs: docs || 'Não especificado',
+        requisitos: requisitos || 'ISO 9001; ISO 14001',
+        realizedDate: null
+      };
+      
+      // Verificar se já existe uma auditoria com este ID
+      if(introData.find(a => a.id === id)) {
+        window.alert('Já existe uma auditoria com este ID');
+        return;
+      }
+      
+      introData.push(newAudit);
+      salvarIntroData();
+      
+      // Limpar formulário e fechar modal
+      document.getElementById('planAuditId').value = '';
+      document.getElementById('planAuditType').value = '';
+      document.getElementById('planAuditCoord').value = '';
+      document.getElementById('planAuditAuditor').value = '';
+      document.getElementById('planAuditDate').value = '';
+      document.getElementById('planAuditDocs').value = '';
+      document.getElementById('planAuditRequisitos').value = '';
+      
+      closePlanModal();
+      
+      // Renderizar novamente se estiver no calendário
+      const calendarView = document.getElementById('view-planning-calendar');
+      if(calendarView && !calendarView.classList.contains('hidden')) {
+        renderizarCalendario();
+        renderizarListaIntro();
+      }
+      
+      window.alert('Auditoria agendada com sucesso!');
+    }
+
+    function salvarIntroData() {
+      localStorage.setItem('introData', JSON.stringify(introData));
+    }
+
+    function carregarIntroData() {
+      const saved = localStorage.getItem('introData');
+      if(saved) {
+        const data = JSON.parse(saved);
+        introData.forEach((intro, idx) => {
+          if(data[idx]) {
+            intro.status = data[idx].status || intro.status;
+            intro.realizedDate = data[idx].realizedDate || intro.realizedDate;
+          }
+        });
+      }
+    }
+
+    // Carregar dados ao iniciar
+    carregarIntroData();
+
   </script>
 </body>
 </html>
