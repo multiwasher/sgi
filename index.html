@@ -2145,7 +2145,8 @@
           <p class="text-slate-500 text-sm">Planeamento, Execução, Verificação e Ação Corretiva</p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- Menu de Ferramentas PDCA (condicional para auditorias) -->
+        <div id="pdcaAuditMenu" class="hidden flex items-center gap-2">
           <a
             href="https://docs.google.com/spreadsheets/d/1kep8pBEA2ZS0e-dKZKhrvJeOd-BghpZiXRJ2_WSFmzM/edit?usp=sharing"
             target="_blank"
@@ -2178,7 +2179,22 @@
             </svg>
             TENDÊNCIAS
           </a>
+        </div>
+      </div>
 
+      <!-- Insights de Auditoria (condicional) -->
+      <div id="pdcaAuditInsights" class="hidden glass-card p-6 border-l-4 border-emerald-600 bg-gradient-to-r from-emerald-50 to-white">
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zm-11-1a1 1 0 11-2 0 1 1 0 012 0zm3 0a1 1 0 11-2 0 1 1 0 012 0zm3 0a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd"></path>
+            </svg>
+            <h3 class="text-sm font-black text-emerald-900 uppercase tracking-widest">Insights da Auditoria</h3>
+          </div>
+          
+          <div id="pdcaInsightsContent" class="space-y-6">
+            <!-- Conteúdo dinâmico será preenchido aqui -->
+          </div>
         </div>
       </div>
 
@@ -2194,9 +2210,16 @@
 
           <!-- Busca por Origem -->
           <div class="flex items-center gap-3">
-            <span class="text-[10px] font-bold uppercase text-slate-400 whitespace-nowrap">Origem:</span>
+            <span class="text-[10px] font-bold uppercase text-slate-400 whitespace-nowrap">Origem (Busca):</span>
             <input type="text" id="searchOrigemPdca" onkeyup="filterPdcaBySearch('origem')" placeholder="Pesquisar origem..." class="flex-1 bg-slate-50 border border-slate-200 pl-3 pr-4 py-2 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
             <button onclick="clearPdcaSearch('origem')" class="text-[10px] font-black text-slate-500 hover:text-slate-700 px-2 py-1">✕</button>
+          </div>
+
+          <!-- Filtros Pré-definidos: ORIGEM -->
+          <div class="flex flex-wrap gap-2 items-center text-[10px] font-bold uppercase text-slate-400 overflow-x-auto pb-2 md:pb-0">
+            <span class="mr-2 whitespace-nowrap">Origem (Filtros):</span>
+            <button onclick="setPdcaFilter('origem', 'TODOS')" id="filter-pdca-origem-TODOS" class="pdca-filter-btn active px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">TODOS</button>
+            <div id="pdca-origem-filters" class="flex flex-wrap gap-2"></div>
           </div>
 
           <!-- Filtro Expandível: PROCESSO -->
@@ -2625,6 +2648,7 @@
     let planoAcaoData = [];
     let currentPdcaFilters = {
       ano: [],
+      origem: [],
       processo: [],
       status: [],
       eficacia: []
@@ -4195,6 +4219,7 @@
       // Recolher valores únicos para cada filtro
       const valores = {
         ano: new Set(),
+        origem: new Set(),
         processo: new Set(),
         status: new Set(),
         eficacia: new Set()
@@ -4202,15 +4227,27 @@
 
       pdcaData.forEach(item => {
         const ano = getAny(item, ['Ano', 'ano', 'ANO']) || '';
+        const origem = getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '';
         const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
         const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
         const eficacia = getAny(item, ['Análise da Eficácia']) || '';
 
         if (ano) valores.ano.add(String(ano).trim());
+        if (origem) valores.origem.add(String(origem).trim());
         if (processo) valores.processo.add(String(processo).trim());
         if (status) valores.status.add(String(status).trim());
         if (eficacia) valores.eficacia.add(String(eficacia).trim());
       });
+
+      // Adicionar filtros pré-definidos de auditoria ao processo
+      valores.processo.add('AUDITORIA INTERNA');
+      valores.processo.add('Auditoria Externa - APCER');
+      valores.processo.add('AUDITORIA EXTERNA - AMBIGLOBAL');
+
+      // Adicionar filtros pré-definidos de auditoria à origem
+      valores.origem.add('AUDITORIA INTERNA');
+      valores.origem.add('Auditoria Externa - APCER');
+      valores.origem.add('AUDITORIA EXTERNA - AMBIGLOBAL');
 
       // Criar botões para ANO
       const anoContainer = document.getElementById('pdca-ano-filters');
@@ -4219,6 +4256,17 @@
         anoContainer.innerHTML = anoSorted.map(val => `
           <button onclick="setPdcaFilter('ano', '${escapeHtml(val)}')" 
                   id="filter-pdca-ano-${escapeHtml(val).replace(/\s+/g, '_')}" 
+                  class="pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
+        `).join('');
+      }
+
+      // Criar botões para ORIGEM
+      const origemContainer = document.getElementById('pdca-origem-filters');
+      if (origemContainer) {
+        const origemSorted = Array.from(valores.origem).sort();
+        origemContainer.innerHTML = origemSorted.map(val => `
+          <button onclick="setPdcaFilter('origem', '${escapeHtml(val)}')"
+                  id="filter-pdca-origem-${escapeHtml(val).replace(/\s+/g, '_')}"
                   class="pdca-filter-btn px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-[10px]">${escapeHtml(val)}</button>
         `).join('');
       }
@@ -4306,7 +4354,7 @@
     }
 
     function updatePdcaFilterButtonStates() {
-      const categories = ['ano', 'processo', 'status', 'eficacia'];
+      const categories = ['ano', 'origem', 'processo', 'status', 'eficacia'];
       
       categories.forEach(category => {
         // Atualizar estado do botão TODOS
@@ -4350,13 +4398,26 @@
         });
       }
 
-      // Filtro por ORIGEM (busca sensível a variações)
+      // Filtro por ORIGEM (busca + botões cumulativos)
       const origemSearch = document.getElementById('searchOrigemPdca').value.trim();
+      const origemFilter = currentPdcaFilters['origem'];
+      
+      // Aplicar filtro de busca de texto
       if (origemSearch) {
         const origemNorm = normalizeText(origemSearch);
         filtered = filtered.filter(item => {
           const origem = getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '';
           return normalizeText(origem).includes(origemNorm);
+        });
+      }
+      
+      // Aplicar filtro de botões (cumulativo)
+      if (origemFilter && origemFilter.length > 0) {
+        filtered = filtered.filter(item => {
+          const origem = getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '';
+          const origemNorm = normalizeText(origem);
+          const filterNorm = origemFilter.map(f => normalizeText(f));
+          return filterNorm.some(fn => fn === origemNorm);
         });
       }
 
@@ -4400,7 +4461,225 @@
       }
 
       updatePdcaFilterButtonStates();
+      updatePdcaAuditMenu(filtered);
       renderPdca(filtered);
+    }
+
+    function updatePdcaAuditMenu(filteredData) {
+      const origemSearch = document.getElementById('searchOrigemPdca').value.trim().toLowerCase();
+      const origemFilter = currentPdcaFilters['origem'] || [];
+      
+      // Verificar se há busca por auditoria ou filtro de botão de auditoria selecionado
+      const hasAuditSearch = origemSearch.includes('auditoria interna') || origemSearch.includes('auditoria externa');
+      const hasAuditFilter = origemFilter.some(val => 
+        val.toLowerCase().includes('auditoria interna') || 
+        val.toLowerCase().includes('auditoria externa') ||
+        val.toLowerCase().includes('ambiglobal') ||
+        val.toLowerCase().includes('apcer')
+      );
+      const isAuditFilter = hasAuditSearch || hasAuditFilter;
+      
+      const auditMenu = document.getElementById('pdcaAuditMenu');
+      const auditInsights = document.getElementById('pdcaAuditInsights');
+      
+      if (isAuditFilter && filteredData.length > 0) {
+        // Mostrar menu e insights
+        auditMenu.classList.remove('hidden');
+        auditInsights.classList.remove('hidden');
+        
+        // Calcular insights
+        generatePdcaAuditInsights(filteredData, origemSearch);
+      } else {
+        // Ocultar menu e insights
+        auditMenu.classList.add('hidden');
+        auditInsights.classList.add('hidden');
+      }
+    }
+
+    function generatePdcaAuditInsights(data, auditType) {
+      const insightsContent = document.getElementById('pdcaInsightsContent');
+      
+      // Separar dados por tipo de processo
+      const dataAmbiental = data.filter(item => {
+        const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
+        return processo.trim().toUpperCase() === 'AMBIENTAL';
+      });
+      
+      const dataOutros = data.filter(item => {
+        const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
+        return processo.trim().toUpperCase() !== 'AMBIENTAL';
+      });
+      
+      // Função helper para calcular métricas
+      const calcularMetricas = (dataSet) => {
+        const total = dataSet.length;
+        const concluidas = dataSet.filter(item => {
+          const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
+          return status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido');
+        }).length;
+        
+        const emCurso = dataSet.filter(item => {
+          const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
+          return status.toLowerCase().includes('em curso') || status.toLowerCase().includes('em cursos');
+        }).length;
+        
+        const eficazes = dataSet.filter(item => {
+          const eficacia = getAny(item, ['Análise da Eficácia']) || '';
+          return eficacia.toLowerCase().includes('eficaz');
+        }).length;
+        
+        const percConcluidas = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+        const percEficazes = total > 0 ? Math.round((eficazes / total) * 100) : 0;
+        
+        return { total, concluidas, emCurso, eficazes, percConcluidas, percEficazes };
+      };
+      
+      // Função para calcular tendências entre anos
+      const calcularTendencias = (dataSet, tipo) => {
+        // Agrupar dados por ano
+        const porAno = {};
+        dataSet.forEach(item => {
+          const ano = getAny(item, ['Ano', 'ano', 'ANO']) || String(new Date().getFullYear());
+          if (!porAno[ano]) porAno[ano] = [];
+          porAno[ano].push(item);
+        });
+        
+        const anos = Object.keys(porAno).sort().reverse(); // Ordenar em decrescente (anos mais recentes primeiro)
+        const anoAtual = anos[0];
+        const anoPrevio = anos[1];
+        
+        const metricas = {};
+        const tendencias = {};
+        
+        anos.forEach(ano => {
+          metricas[ano] = calcularMetricas(porAno[ano]);
+        });
+        
+        // Calcular tendências
+        if (anoAtual && anoPrevio && metricas[anoPrevio]) {
+          const atual = metricas[anoAtual];
+          const previo = metricas[anoPrevio];
+          
+          tendencias.total = {
+            valor: atual.total - previo.total,
+            direcao: atual.total > previo.total ? 'up' : atual.total < previo.total ? 'down' : 'equal'
+          };
+          
+          tendencias.percConcluidas = {
+            valor: atual.percConcluidas - previo.percConcluidas,
+            direcao: atual.percConcluidas > previo.percConcluidas ? 'up' : atual.percConcluidas < previo.percConcluidas ? 'down' : 'equal'
+          };
+          
+          tendencias.percEficazes = {
+            valor: atual.percEficazes - previo.percEficazes,
+            direcao: atual.percEficazes > previo.percEficazes ? 'up' : atual.percEficazes < previo.percEficazes ? 'down' : 'equal'
+          };
+        }
+        
+        return { metricas, anos: anos.slice(0, 2), tendencias, anoAtual, anoPrevio };
+      };
+      
+      // Função para renderizar ícone de tendência
+      const renderTendenciaIcone = (tendencia) => {
+        if (!tendencia || !tendencia.direcao) return '→';
+        if (tendencia.direcao === 'up') return '↑';
+        if (tendencia.direcao === 'down') return '↓';
+        return '→';
+      };
+      
+      // Função para cor de tendência
+      const getTendenciaColor = (tendencia, metrica) => {
+        if (!tendencia || !tendencia.direcao) return 'text-slate-400';
+        // Para conclusão e eficácia: subir é bom (verde), descer é mau (vermelho)
+        if (tendencia.direcao === 'up') return 'text-green-600';
+        if (tendencia.direcao === 'down') return 'text-red-600';
+        return 'text-slate-400';
+      };
+      
+      const ambientalTend = calcularTendencias(dataAmbiental, 'AMBIENTAL');
+      const outrosTend = calcularTendencias(dataOutros, 'OUTROS');
+      
+      const metricasAmbiental = ambientalTend.metricas[ambientalTend.anoAtual] || calcularMetricas(dataAmbiental);
+      const metricasOutros = outrosTend.metricas[outrosTend.anoAtual] || calcularMetricas(dataOutros);
+      
+      // Renderizar insights
+      let html = '';
+      
+      // Seção AMBIENTAL
+      if (metricasAmbiental.total > 0) {
+        html += `
+          <div>
+            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 10.5a1.5 1.5 0 113 0v-6a1.5 1.5 0 01-3 0v6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 00.956-.216l.294-.148a2 2 0 001.106-1.79v-5.43m-13-6a2 2 0 011.106-1.79l.05-.025A4 4 0 007.943 2h5.416a2 2 0 00.956.216l.294.148a2 2 0 001.106 1.79v5.43m-13-6v6a2 2 0 001.894 1.995l.5.05h9.612a2 2 0 001.894-1.995v-6m0 0V5.5A2.5 2.5 0 0016.5 3h-1A2.5 2.5 0 0013 5.5v.5m3 4.5v5.5A2.5 2.5 0 0113.5 18h-8A2.5 2.5 0 013 15.5V10m10 0h.008v.008H13V10z"></path>
+              </svg>
+              Processo Ambiental
+            </h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="bg-green-50 rounded-lg p-3 border border-green-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Ações Identificadas</p>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-2xl font-black text-green-600">${metricasAmbiental.total}</h4>
+                  ${ambientalTend.tendencias.total ? `<span class="text-lg ${getTendenciaColor(ambientalTend.tendencias.total, 'total')}">${renderTendenciaIcone(ambientalTend.tendencias.total)}</span><span class="text-[8px] text-slate-500">${ambientalTend.tendencias.total.valor > 0 ? '+' : ''}${ambientalTend.tendencias.total.valor}</span>` : ''}
+                </div>
+              </div>
+              <div class="bg-blue-50 rounded-lg p-3 border border-blue-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Concluídas</p>
+                <h4 class="text-2xl font-black text-blue-600">${metricasAmbiental.concluidas}</h4>
+                <div class="flex items-center gap-1 mt-1">
+                  <p class="text-[9px] text-slate-500">${metricasAmbiental.percConcluidas}%</p>
+                  ${ambientalTend.tendencias.percConcluidas ? `<span class="text-sm ${getTendenciaColor(ambientalTend.tendencias.percConcluidas, 'perc')}">${renderTendenciaIcone(ambientalTend.tendencias.percConcluidas)}</span><span class="text-[8px] text-slate-500">${ambientalTend.tendencias.percConcluidas.valor > 0 ? '+' : ''}${ambientalTend.tendencias.percConcluidas.valor}%</span>` : ''}
+                </div>
+              </div>
+              <div class="bg-amber-50 rounded-lg p-3 border border-amber-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Em Curso</p>
+                <h4 class="text-2xl font-black text-amber-600">${metricasAmbiental.emCurso}</h4>
+              </div>
+              <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Eficazes</p>
+                <h4 class="text-2xl font-black text-emerald-600">${metricasAmbiental.eficazes}</h4>
+                <p class="text-[9px] text-slate-500 mt-1">${metricasAmbiental.percEficazes}%</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Seção OUTROS PROCESSOS
+      if (metricasOutros.total > 0) {
+        html += `
+          <div>
+            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <svg class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v2a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a2 2 0 00-2-2h-1V3a1 1 0 00-1-1zM14 7a1 1 0 00-1 1v1h-1a2 2 0 00-2 2v2a1 1 0 001 1h.05a2.5 2.5 0 014.9 0H16a1 1 0 001-1v-2a2 2 0 00-2-2h-1V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              Outros Processos
+            </h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="bg-slate-50 rounded-lg p-3 border border-slate-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Ações</p>
+                <h4 class="text-2xl font-black text-slate-600">${metricasOutros.total}</h4>
+              </div>
+              <div class="bg-indigo-50 rounded-lg p-3 border border-indigo-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Concluídas</p>
+                <h4 class="text-2xl font-black text-indigo-600">${metricasOutros.concluidas}</h4>
+                <p class="text-[9px] text-slate-500 mt-1">${metricasOutros.percConcluidas}%</p>
+              </div>
+              <div class="bg-orange-50 rounded-lg p-3 border border-orange-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Em Curso</p>
+                <h4 class="text-2xl font-black text-orange-600">${metricasOutros.emCurso}</h4>
+              </div>
+              <div class="bg-cyan-50 rounded-lg p-3 border border-cyan-200 shadow-sm">
+                <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Eficazes</p>
+                <h4 class="text-2xl font-black text-cyan-600">${metricasOutros.eficazes}</h4>
+                <p class="text-[9px] text-slate-500 mt-1">${metricasOutros.percEficazes}%</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      insightsContent.innerHTML = html;
     }
 
     // =========
