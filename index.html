@@ -336,6 +336,11 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
+    .tab-btn {
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
     /* Mobile Menu Styles */
     #mobile-menu {
       min-width: 200px;
@@ -869,7 +874,7 @@
       </button>
 
       <!-- Menu Desktop (hidden on mobile) -->
-      <div class="hidden md:flex bg-black/20 p-1 rounded-xl gap-1">
+      <div class="hidden md:flex flex-wrap bg-black/20 p-1 rounded-xl gap-1 flex-1 min-w-0">
         <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn active px-3 py-1 rounded-lg text-xs font-bold transition-all">DOCUMENTAÇÃO</button>
         <button onclick="switchTab('swot')" id="tab-swot" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">ANÁLISE SWOT</button>
         <button onclick="switchTab('ro')" id="tab-ro" class="tab-btn px-3 py-1 rounded-lg text-xs font-bold transition-all">R&O</button>
@@ -4574,8 +4579,13 @@
             valor: atual.percEficazes - previo.percEficazes,
             direcao: atual.percEficazes > previo.percEficazes ? 'up' : atual.percEficazes < previo.percEficazes ? 'down' : 'equal'
           };
+
+          tendencias.emCurso = {
+            valor: atual.emCurso - previo.emCurso,
+            direcao: atual.emCurso > previo.emCurso ? 'up' : atual.emCurso < previo.emCurso ? 'down' : 'equal'
+          };
         }
-        
+
         return { metricas, anos: anos.slice(0, 2), tendencias, anoAtual, anoPrevio };
       };
       
@@ -4598,29 +4608,43 @@
       
       const ambientalTend = calcularTendencias(dataAmbiental, 'AMBIENTAL');
       const outrosTend = calcularTendencias(dataOutros, 'OUTROS');
-      
+
       const metricasAmbiental = ambientalTend.metricas[ambientalTend.anoAtual] || calcularMetricas(dataAmbiental);
       const metricasOutros = outrosTend.metricas[outrosTend.anoAtual] || calcularMetricas(dataOutros);
-      
+
+      // Renderiza o selo com o intervalo de anos comparado (ex: "2026 vs 2025")
+      const renderYearBadge = (tend) => {
+        if (!tend.anoAtual || !tend.anoPrevio) return '';
+        return `<span class="text-[9px] font-bold text-slate-500 normal-case tracking-normal bg-white px-2 py-0.5 rounded-full border border-slate-200">Tendência: ${tend.anoAtual} vs ${tend.anoPrevio}</span>`;
+      };
+
+      // Renderiza a variação (seta + valor) de uma métrica, ou "—" quando não há ano anterior para comparar
+      const renderTendenciaChip = (tend, chave, sufixo = '') => {
+        const t = tend.tendencias[chave];
+        if (!t) return `<span class="text-[8px] text-slate-400">— sem ano anterior</span>`;
+        return `<span class="text-sm ${getTendenciaColor(t, chave)}">${renderTendenciaIcone(t)}</span><span class="text-[8px] text-slate-500">${t.valor > 0 ? '+' : ''}${t.valor}${sufixo}</span>`;
+      };
+
       // Renderizar insights
       let html = '';
-      
+
       // Seção AMBIENTAL
       if (metricasAmbiental.total > 0) {
         html += `
           <div>
-            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2 flex-wrap">
               <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 10.5a1.5 1.5 0 113 0v-6a1.5 1.5 0 01-3 0v6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 00.956-.216l.294-.148a2 2 0 001.106-1.79v-5.43m-13-6a2 2 0 011.106-1.79l.05-.025A4 4 0 007.943 2h5.416a2 2 0 00.956.216l.294.148a2 2 0 001.106 1.79v5.43m-13-6v6a2 2 0 001.894 1.995l.5.05h9.612a2 2 0 001.894-1.995v-6m0 0V5.5A2.5 2.5 0 0016.5 3h-1A2.5 2.5 0 0013 5.5v.5m3 4.5v5.5A2.5 2.5 0 0113.5 18h-8A2.5 2.5 0 013 15.5V10m10 0h.008v.008H13V10z"></path>
               </svg>
               Processo Ambiental
+              ${renderYearBadge(ambientalTend)}
             </h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div class="bg-green-50 rounded-lg p-3 border border-green-200 shadow-sm">
                 <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Ações Identificadas</p>
                 <div class="flex items-center gap-2">
                   <h4 class="text-2xl font-black text-green-600">${metricasAmbiental.total}</h4>
-                  ${ambientalTend.tendencias.total ? `<span class="text-lg ${getTendenciaColor(ambientalTend.tendencias.total, 'total')}">${renderTendenciaIcone(ambientalTend.tendencias.total)}</span><span class="text-[8px] text-slate-500">${ambientalTend.tendencias.total.valor > 0 ? '+' : ''}${ambientalTend.tendencias.total.valor}</span>` : ''}
+                  ${renderTendenciaChip(ambientalTend, 'total')}
                 </div>
               </div>
               <div class="bg-blue-50 rounded-lg p-3 border border-blue-200 shadow-sm">
@@ -4628,57 +4652,76 @@
                 <h4 class="text-2xl font-black text-blue-600">${metricasAmbiental.concluidas}</h4>
                 <div class="flex items-center gap-1 mt-1">
                   <p class="text-[9px] text-slate-500">${metricasAmbiental.percConcluidas}%</p>
-                  ${ambientalTend.tendencias.percConcluidas ? `<span class="text-sm ${getTendenciaColor(ambientalTend.tendencias.percConcluidas, 'perc')}">${renderTendenciaIcone(ambientalTend.tendencias.percConcluidas)}</span><span class="text-[8px] text-slate-500">${ambientalTend.tendencias.percConcluidas.valor > 0 ? '+' : ''}${ambientalTend.tendencias.percConcluidas.valor}%</span>` : ''}
+                  ${renderTendenciaChip(ambientalTend, 'percConcluidas', '%')}
                 </div>
               </div>
               <div class="bg-amber-50 rounded-lg p-3 border border-amber-200 shadow-sm">
                 <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Em Curso</p>
-                <h4 class="text-2xl font-black text-amber-600">${metricasAmbiental.emCurso}</h4>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-2xl font-black text-amber-600">${metricasAmbiental.emCurso}</h4>
+                  ${renderTendenciaChip(ambientalTend, 'emCurso')}
+                </div>
               </div>
               <div class="bg-emerald-50 rounded-lg p-3 border border-emerald-200 shadow-sm">
                 <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Eficazes</p>
                 <h4 class="text-2xl font-black text-emerald-600">${metricasAmbiental.eficazes}</h4>
-                <p class="text-[9px] text-slate-500 mt-1">${metricasAmbiental.percEficazes}%</p>
+                <div class="flex items-center gap-1 mt-1">
+                  <p class="text-[9px] text-slate-500">${metricasAmbiental.percEficazes}%</p>
+                  ${renderTendenciaChip(ambientalTend, 'percEficazes', '%')}
+                </div>
               </div>
             </div>
           </div>
         `;
       }
-      
+
       // Seção OUTROS PROCESSOS
       if (metricasOutros.total > 0) {
         html += `
           <div>
-            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2 flex-wrap">
               <svg class="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v2a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a2 2 0 00-2-2h-1V3a1 1 0 00-1-1zM14 7a1 1 0 00-1 1v1h-1a2 2 0 00-2 2v2a1 1 0 001 1h.05a2.5 2.5 0 014.9 0H16a1 1 0 001-1v-2a2 2 0 00-2-2h-1V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
               </svg>
               Outros Processos
+              ${renderYearBadge(outrosTend)}
             </h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div class="bg-slate-50 rounded-lg p-3 border border-slate-200 shadow-sm">
                 <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Ações</p>
-                <h4 class="text-2xl font-black text-slate-600">${metricasOutros.total}</h4>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-2xl font-black text-slate-600">${metricasOutros.total}</h4>
+                  ${renderTendenciaChip(outrosTend, 'total')}
+                </div>
               </div>
               <div class="bg-indigo-50 rounded-lg p-3 border border-indigo-200 shadow-sm">
                 <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Concluídas</p>
                 <h4 class="text-2xl font-black text-indigo-600">${metricasOutros.concluidas}</h4>
-                <p class="text-[9px] text-slate-500 mt-1">${metricasOutros.percConcluidas}%</p>
+                <div class="flex items-center gap-1 mt-1">
+                  <p class="text-[9px] text-slate-500">${metricasOutros.percConcluidas}%</p>
+                  ${renderTendenciaChip(outrosTend, 'percConcluidas', '%')}
+                </div>
               </div>
               <div class="bg-orange-50 rounded-lg p-3 border border-orange-200 shadow-sm">
                 <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Em Curso</p>
-                <h4 class="text-2xl font-black text-orange-600">${metricasOutros.emCurso}</h4>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-2xl font-black text-orange-600">${metricasOutros.emCurso}</h4>
+                  ${renderTendenciaChip(outrosTend, 'emCurso')}
+                </div>
               </div>
               <div class="bg-cyan-50 rounded-lg p-3 border border-cyan-200 shadow-sm">
                 <p class="text-[9px] text-slate-600 uppercase font-bold tracking-wider mb-2">Eficazes</p>
                 <h4 class="text-2xl font-black text-cyan-600">${metricasOutros.eficazes}</h4>
-                <p class="text-[9px] text-slate-500 mt-1">${metricasOutros.percEficazes}%</p>
+                <div class="flex items-center gap-1 mt-1">
+                  <p class="text-[9px] text-slate-500">${metricasOutros.percEficazes}%</p>
+                  ${renderTendenciaChip(outrosTend, 'percEficazes', '%')}
+                </div>
               </div>
             </div>
           </div>
         `;
       }
-      
+
       insightsContent.innerHTML = html;
     }
 
