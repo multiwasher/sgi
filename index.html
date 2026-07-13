@@ -2200,6 +2200,37 @@
           <div id="pdcaInsightsContent" class="space-y-6">
             <!-- Conteúdo dinâmico será preenchido aqui -->
           </div>
+
+          <div class="pt-4 border-t border-emerald-100">
+            <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2 flex-wrap">
+              <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+              </svg>
+              Detalhe por Processo
+              <span id="pdcaProcessoChartYearBadge" class="text-[9px] font-bold text-slate-500 normal-case tracking-normal bg-white px-2 py-0.5 rounded-full border border-slate-200"></span>
+            </h4>
+
+            <!-- Ano único selecionado (ou nenhum filtro de ano): 1 gráfico, 3 métricas por processo -->
+            <div id="pdcaProcessoChartSingleWrap" class="bg-white rounded-lg border border-slate-200 p-4" style="height: 320px;">
+              <canvas id="pdcaProcessoChart"></canvas>
+            </div>
+
+            <!-- 2+ anos selecionados: comparação ano a ano, por processo, para cada métrica -->
+            <div id="pdcaProcessoChartMultiWrap" class="hidden space-y-4">
+              <div class="bg-white rounded-lg border border-slate-200 p-4" style="height: 260px;">
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ações Identificadas por Processo e Ano</p>
+                <canvas id="pdcaProcessoChartAcoes"></canvas>
+              </div>
+              <div class="bg-white rounded-lg border border-slate-200 p-4" style="height: 260px;">
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">% Concluídas por Processo e Ano</p>
+                <canvas id="pdcaProcessoChartConcluidas"></canvas>
+              </div>
+              <div class="bg-white rounded-lg border border-slate-200 p-4" style="height: 260px;">
+                <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">% Eficazes por Processo e Ano</p>
+                <canvas id="pdcaProcessoChartEficazes"></canvas>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2651,6 +2682,10 @@
     let partesData = [];
     let pdcaData = [];
     let planoAcaoData = [];
+    let pdcaProcessoChartInstance = null;
+    let pdcaProcessoChartAcoesInstance = null;
+    let pdcaProcessoChartConcluidasInstance = null;
+    let pdcaProcessoChartEficazesInstance = null;
     let currentPdcaFilters = {
       ano: [],
       origem: [],
@@ -4723,6 +4758,168 @@
       }
 
       insightsContent.innerHTML = html;
+
+      renderPdcaProcessoChart(data);
+    }
+
+    // Gráfico "Detalhe por Processo" dos Insights da Auditoria PDCA.
+    // Recebe o mesmo dataset já filtrado (ano/origem/processo/status/eficácia/pesquisa)
+    // usado pelo resto dos insights, e agrupa pelo valor real de "Processo"
+    // (não apenas AMBIENTAL vs Outros). Com 2+ anos presentes nos dados filtrados,
+    // muda para 3 gráficos (um por métrica) agrupados por Ano dentro de cada Processo,
+    // para a comparação entre anos ficar clara em vez de somada/escondida.
+    const PDCA_PROCESSO_YEAR_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
+
+    function calcularMetricasProcesso(itens) {
+      const total = itens.length;
+      const concluidas = itens.filter(item => {
+        const status = getAny(item, ['Status das Ações', 'status das acoes', 'STATUS DAS AÇÕES', 'Status', 'status', 'ESTADO']) || '';
+        return status.toLowerCase().includes('concluído') || status.toLowerCase().includes('concluido');
+      }).length;
+      const eficazes = itens.filter(item => {
+        const eficacia = getAny(item, ['Análise da Eficácia']) || '';
+        return eficacia.toLowerCase().includes('eficaz');
+      }).length;
+      return {
+        total, concluidas, eficazes,
+        percConcluidas: total > 0 ? Math.round((concluidas / total) * 100) : 0,
+        percEficazes: total > 0 ? Math.round((eficazes / total) * 100) : 0
+      };
+    }
+
+    function renderPdcaProcessoChart(data) {
+      if (typeof Chart === 'undefined') return;
+
+      const singleWrap = document.getElementById('pdcaProcessoChartSingleWrap');
+      const multiWrap = document.getElementById('pdcaProcessoChartMultiWrap');
+      const yearBadge = document.getElementById('pdcaProcessoChartYearBadge');
+
+      // Agrupar por Processo e, dentro de cada um, por Ano
+      const porProcessoAno = {};
+      const anosSet = new Set();
+      data.forEach(item => {
+        const processo = (getAny(item, ['Processo', 'processo', 'PROCESSO']) || '').trim() || 'Não definido';
+        const ano = String(getAny(item, ['Ano', 'ano', 'ANO']) || '').trim() || 'Sem Ano';
+        anosSet.add(ano);
+        if (!porProcessoAno[processo]) porProcessoAno[processo] = {};
+        if (!porProcessoAno[processo][ano]) porProcessoAno[processo][ano] = [];
+        porProcessoAno[processo][ano].push(item);
+      });
+
+      const processos = Object.keys(porProcessoAno).sort();
+      const anos = Array.from(anosSet).sort();
+      const multiAno = anos.length > 1;
+
+      if (!multiAno) {
+        // Um único ano nos dados filtrados: 1 gráfico, 3 métricas por processo
+        if (multiWrap) multiWrap.classList.add('hidden');
+        if (singleWrap) singleWrap.classList.remove('hidden');
+        if (yearBadge) yearBadge.textContent = '';
+
+        [pdcaProcessoChartAcoesInstance, pdcaProcessoChartConcluidasInstance, pdcaProcessoChartEficazesInstance].forEach(c => c && c.destroy());
+        pdcaProcessoChartAcoesInstance = pdcaProcessoChartConcluidasInstance = pdcaProcessoChartEficazesInstance = null;
+
+        const canvas = document.getElementById('pdcaProcessoChart');
+        if (!canvas) return;
+
+        const totais = [], concluidas = [], eficazes = [];
+        processos.forEach(p => {
+          const itens = Object.values(porProcessoAno[p]).flat();
+          const m = calcularMetricasProcesso(itens);
+          totais.push(m.total);
+          concluidas.push(m.concluidas);
+          eficazes.push(m.eficazes);
+        });
+
+        if (pdcaProcessoChartInstance) pdcaProcessoChartInstance.destroy();
+        pdcaProcessoChartInstance = new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: processos,
+            datasets: [
+              { label: 'Ações Identificadas', data: totais, backgroundColor: '#10b981' },
+              { label: 'Concluídas', data: concluidas, backgroundColor: '#3b82f6' },
+              { label: 'Eficazes', data: eficazes, backgroundColor: '#059669' }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 12 } }
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { precision: 0 } },
+              x: { ticks: { font: { size: 10 } } }
+            }
+          }
+        });
+        return;
+      }
+
+      // 2+ anos nos dados filtrados: comparação ano a ano, por processo, uma métrica por gráfico
+      if (singleWrap) singleWrap.classList.add('hidden');
+      if (multiWrap) multiWrap.classList.remove('hidden');
+      if (yearBadge) yearBadge.textContent = `Comparação: ${anos.join(' vs ')}`;
+
+      if (pdcaProcessoChartInstance) { pdcaProcessoChartInstance.destroy(); pdcaProcessoChartInstance = null; }
+
+      const metricasPorProcessoAno = {};
+      processos.forEach(p => {
+        metricasPorProcessoAno[p] = {};
+        anos.forEach(ano => {
+          metricasPorProcessoAno[p][ano] = calcularMetricasProcesso(porProcessoAno[p][ano] || []);
+        });
+      });
+
+      const buildYearDatasets = (metricKey) => anos.map((ano, idx) => ({
+        label: ano,
+        backgroundColor: PDCA_PROCESSO_YEAR_COLORS[idx % PDCA_PROCESSO_YEAR_COLORS.length],
+        data: processos.map(p => metricasPorProcessoAno[p][ano][metricKey])
+      }));
+
+      const baseOptions = (percentual) => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'top', labels: { font: { size: 10 }, boxWidth: 12 } },
+          tooltip: percentual ? { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}%` } } : undefined
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0, callback: v => percentual ? `${v}%` : v }, max: percentual ? 100 : undefined },
+          x: { ticks: { font: { size: 10 } } }
+        }
+      });
+
+      const canvasAcoes = document.getElementById('pdcaProcessoChartAcoes');
+      if (canvasAcoes) {
+        if (pdcaProcessoChartAcoesInstance) pdcaProcessoChartAcoesInstance.destroy();
+        pdcaProcessoChartAcoesInstance = new Chart(canvasAcoes.getContext('2d'), {
+          type: 'bar',
+          data: { labels: processos, datasets: buildYearDatasets('total') },
+          options: baseOptions(false)
+        });
+      }
+
+      const canvasConcluidas = document.getElementById('pdcaProcessoChartConcluidas');
+      if (canvasConcluidas) {
+        if (pdcaProcessoChartConcluidasInstance) pdcaProcessoChartConcluidasInstance.destroy();
+        pdcaProcessoChartConcluidasInstance = new Chart(canvasConcluidas.getContext('2d'), {
+          type: 'bar',
+          data: { labels: processos, datasets: buildYearDatasets('percConcluidas') },
+          options: baseOptions(true)
+        });
+      }
+
+      const canvasEficazes = document.getElementById('pdcaProcessoChartEficazes');
+      if (canvasEficazes) {
+        if (pdcaProcessoChartEficazesInstance) pdcaProcessoChartEficazesInstance.destroy();
+        pdcaProcessoChartEficazesInstance = new Chart(canvasEficazes.getContext('2d'), {
+          type: 'bar',
+          data: { labels: processos, datasets: buildYearDatasets('percEficazes') },
+          options: baseOptions(true)
+        });
+      }
     }
 
     // =========
