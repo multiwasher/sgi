@@ -2416,6 +2416,7 @@
 
         <div class="flex items-center gap-2">
           <a
+            id="kpi-doc-link"
             href="https://docs.google.com/spreadsheets/d/1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU/edit?usp=sharing"
             target="_blank"
             rel="noopener"
@@ -6505,7 +6506,8 @@
       
       document.getElementById('kpi-title').textContent = 'KPI\'s Estratégicos';
       document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores Estratégicos';
-      
+      document.getElementById('kpi-doc-link').href = 'https://docs.google.com/spreadsheets/d/1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU/edit?usp=sharing';
+
       // Atualizar cabeçalhos da tabela
       updateKpiTableHeaders();
       
@@ -6708,7 +6710,8 @@
       
       document.getElementById('kpi-title').textContent = 'KPI\'s Sustentabilidade';
       document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores de Sustentabilidade Ambiental';
-      
+      document.getElementById('kpi-doc-link').href = 'https://docs.google.com/spreadsheets/d/1-EJldsPPuWbJcC-guH_Jn42H5VNGydwXZEDD52LYUbM/edit?usp=sharing';
+
       // Atualizar cabeçalhos da tabela
       updateKpiTableHeaders();
       
@@ -6895,7 +6898,8 @@
       
       document.getElementById('kpi-title').textContent = 'Proposta KPI\'s Sustentabilidade';
       document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores de Sustentabilidade Ambiental (Proposta)';
-      
+      document.getElementById('kpi-doc-link').href = 'https://docs.google.com/spreadsheets/d/1-EJldsPPuWbJcC-guH_Jn42H5VNGydwXZEDD52LYUbM/edit?usp=sharing';
+
       // Atualizar cabeçalhos da tabela
       updateKpiTableHeaders();
       
@@ -7054,7 +7058,8 @@
       
       document.getElementById('kpi-title').textContent = 'Proposta KPI\'s Estratégicos';
       document.getElementById('kpi-subtitle').textContent = 'Dashboard de Indicadores Estratégicos (Proposta)';
-      
+      document.getElementById('kpi-doc-link').href = 'https://docs.google.com/spreadsheets/d/1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU/edit?usp=sharing';
+
       // Atualizar cabeçalhos da tabela
       updateKpiTableHeaders();
       
@@ -8405,7 +8410,13 @@
           const valorObjetivoDisplay = d.valorObjetivo === null ? '—' : d.valorObjetivo;
           const hasCumprimento = d.valor !== null && d.valorObjetivo !== null && d.valorObjetivo > 0;
           const cumprimento = hasCumprimento ? ((d.valor / d.valorObjetivo) * 100).toFixed(1) : '—';
-          const cumprimentoClass = hasCumprimento && d.valor >= d.valorObjetivo ? 'text-green-600' : hasCumprimento && d.valor < d.valorObjetivo * 0.8 ? 'text-red-600' : 'text-amber-600';
+          const objetivoLower = (d.objetivo || '').toLowerCase();
+          const isObjetivoReducao = objetivoLower.includes('reduzir') && objetivoLower.trim() !== 'reduzir';
+          const cumprimentoClass = !hasCumprimento
+            ? 'text-amber-600'
+            : isObjetivoReducao
+              ? (d.valor <= d.valorObjetivo ? 'text-green-600' : 'text-orange-600')
+              : (d.valor >= d.valorObjetivo ? 'text-green-600' : d.valor < d.valorObjetivo * 0.8 ? 'text-red-600' : 'text-amber-600');
           
           return `
             <tr class="hover:bg-slate-50 transition-colors">
