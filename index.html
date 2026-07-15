@@ -7415,7 +7415,7 @@
         });
       }
       
-      const taxaCumprimento = kpisValidos > 0 ? ((Math.max(totalRealizado, 0) / Math.max(totalMeta, 1)) * 100).toFixed(1) : 0;
+      const taxaCumprimento = kpisValidos > 0 ? Math.min((Math.max(totalRealizado, 0) / Math.max(totalMeta, 1)) * 100, 100).toFixed(1) : 0;
       
       // Calcular tendência (comparando média dos últimos vs anteriores)
       const anos = [...new Set(data.map(d => d.ano).filter(Boolean))].sort((a, b) => parseInt(b) - parseInt(a));
