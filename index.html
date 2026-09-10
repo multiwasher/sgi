@@ -2378,10 +2378,11 @@
                 <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Status das Ações</th>
                 <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Análise da Eficácia</th>
                 <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Observações</th>
+                <th class="px-2 py-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Justificação Estratégica (ISO 9001:2026)</th>
               </tr>
             </thead>
             <tbody id="planoAcaoTableBody" class="divide-y divide-slate-50">
-              <tr><td colspan="11" class="px-8 py-20 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
+              <tr><td colspan="12" class="px-8 py-20 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -3510,12 +3511,12 @@
     // =========
     function fetchPlanoAcao() {
       showLoading('A carregar Plano de Ação...');
-      document.getElementById('planoAcaoTableBody').innerHTML = '<tr><td colspan="11" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>';
+      document.getElementById('planoAcaoTableBody').innerHTML = '<tr><td colspan="12" class="px-8 py-10 text-center"><div class="flex justify-center items-center gap-3"><div class="loading-spinner"></div><span class="text-slate-400 font-bold uppercase text-[10px]">A carregar dados...</span></div></td></tr>';
 
       const callbackName = `cb_plano_acao_${Date.now()}`;
       window[callbackName] = (data) => {
         if (data && data.ok === false) {
-          const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro Plano de Ação: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
+          const msg = `<tr><td colspan="12" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro Plano de Ação: ${escapeHtml(data.error || 'desconhecido')}</td></tr>`;
           document.getElementById('planoAcaoTableBody').innerHTML = msg;
           hideLoading();
           delete window[callbackName];
@@ -3533,7 +3534,7 @@
       script.src = `${PLANO_ACAO_APPS_SCRIPT_URL}?sheet=Plano%20de%20Interven%C3%A7%C3%A3o&callback=${callbackName}&t=${Date.now()}`;
       script.onload = () => script.remove();
       script.onerror = () => {
-        const msg = `<tr><td colspan="11" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script Plano de Ação.</td></tr>`;
+        const msg = `<tr><td colspan="12" class="px-8 py-10 text-center text-red-600 font-bold text-[10px]">Erro a carregar o script Plano de Ação.</td></tr>`;
         document.getElementById('planoAcaoTableBody').innerHTML = msg;
         hideLoading();
         script.remove();
@@ -3677,7 +3678,7 @@
     function renderPlanoAcao(data) {
       const body = document.getElementById('planoAcaoTableBody');
       if (!data || data.length === 0) {
-        body.innerHTML = '<tr><td colspan="11" class="px-8 py-4 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados</td></tr>';
+        body.innerHTML = '<tr><td colspan="12" class="px-8 py-4 text-center text-slate-400 font-bold uppercase text-[10px]">Sem resultados</td></tr>';
         return;
       }
 
@@ -3690,6 +3691,8 @@
         const eficacia = String(item['Análise da Eficácia'] || '');
         const eficaciaClass = eficacia.toLowerCase().includes('eficaz') ? 'eficacia-eficaz' :
                              eficacia.toLowerCase().includes('não') || eficacia.toLowerCase().includes('ineficaz') ? 'eficacia-nao-eficaz' : 'status-indefinido';
+
+        const justificacaoEstrategica = String(item['Justificação Estratégica (ISO 9001:2026)'] || '-');
         
         // Formata datas robustamente
         const dataRegisto = formatDate(item['Data de Registo'] || '-');
@@ -3707,6 +3710,7 @@
           <td class="px-2 py-2"><span class="${statusClass} px-2 py-1 rounded text-[8px] font-bold uppercase">${escapeHtml(status)}</span></td>
           <td class="px-2 py-2"><span class="${eficaciaClass} px-2 py-1 rounded text-[8px] font-bold uppercase">${escapeHtml(eficacia || '-')}</span></td>
           <td class="px-2 py-2 text-[10px] text-slate-500 max-w-xs" id="obs-${idx}"></td>
+          <td class="px-2 py-2 text-[10px] text-slate-500 max-w-xs" title="${escapeHtml(justificacaoEstrategica)}">${escapeHtml(justificacaoEstrategica)}</td>
         </tr>`;
       }).join('');
       
