@@ -306,6 +306,7 @@
         const SHEET_ID = '1LlHnHALhkqZ-MJrKap6r6ncgRpQKSO4C1nhLFlQspaM';
         const SHEET_NAME = 'BD Aspetos';
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+        // Cada número da coluna Q ("Ações PDCA") é o # de uma ação do PAC (folha "Plano de Intervenção")
         const PLANO_ACAO_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVI_POGHFRI4tJ5jRUKGxaRa-2TUHcocLSkO_6dvq3iX_GDP86OzTsr_floXlvHI8o/exec';
 
         let appData = [];
@@ -470,18 +471,14 @@
 
             // Criar um div com link para cada número
             const divs = numerosUnicos.map(num => {
-                const codigoCompleto = planoAcaoData.find(item => {
-                    const codigo = String(item['#'] || '').trim();
-                    const numPart = codigo.replace(/[^0-9]/g, '');
-                    return numPart === num;
-                });
+                const acaoPac = findPacAcao(num);
 
                 let conteudo;
-                if (codigoCompleto) {
-                    const codigo = String(codigoCompleto['#'] || '').trim();
-                    conteudo = `<span class="acao-link text-emerald-600 hover:text-emerald-700 font-bold underline cursor-pointer" data-acao-codigo="${codigo}">${num}</span>`;
+                if (acaoPac) {
+                    const titulo = String(acaoPac['Ação a ser Realizada'] || '').replace(/"/g, '&quot;');
+                    conteudo = `<span class="acao-link text-emerald-600 hover:text-emerald-700 font-bold underline cursor-pointer" data-acao-codigo="${num}" title="${titulo}">${num}</span>`;
                 } else {
-                    conteudo = `<span class="text-slate-600">${num}</span>`;
+                    conteudo = `<span class="text-slate-400" title="Ação ${num} não encontrada no PAC">${num}</span>`;
                 }
                 
                 return `<div class="mb-2 pb-2 border-b border-emerald-100 last:border-b-0 last:pb-0 text-[11px]">${conteudo}</div>`;
@@ -525,6 +522,11 @@
             }
         });
 
+        function findPacAcao(num) {
+            const wanted = String(num).replace(/[^0-9]/g, '');
+            return planoAcaoData.find(item => String(item['#'] ?? '').replace(/[^0-9]/g, '') === wanted);
+        }
+
         function fetchPlanoAcao() {
             const callbackName = `cb_plano_acao_${Date.now()}`;
             window[callbackName] = (data) => {
@@ -545,10 +547,10 @@
         }
 
         function openAcaoModal(codigoAcao) {
-            const acao = planoAcaoData.find(item => String(item['#'] || '').trim() === String(codigoAcao).trim());
+            const acao = findPacAcao(codigoAcao);
             if (!acao) return;
 
-            document.getElementById('acaoModalCodigo').innerText = acao['#'] || '-';
+            document.getElementById('acaoModalCodigo').innerText = `PAC #${acao['#']}`;
             document.getElementById('acaoModalAcao').innerText = acao['Ação a ser Realizada'] || '-';
             document.getElementById('acaoModalProcesso').innerText = acao['Processo'] || '-';
             document.getElementById('acaoModalOrigem').innerText = acao['Origem da Ação'] || '-';
