@@ -6413,7 +6413,7 @@
       console.log('\n🔍 INICIANDO DIAGNÓSTICO DO CSV ESTRATÉGICOS...\n');
       try {
         const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=473376692`;
         
         const response = await fetch(csvUrl);
         const csv = await response.text();
@@ -6743,7 +6743,7 @@
         // URL do Google Sheets em formato CSV
         // Separador "BD" (ID col A, ano col B, Real col 14)
         const sheetId = '1xxzAfZaPA1MB5_AgLVevR_I6Hyc8yfMoD0_9EvJ3oHU';
-        const gidBd = '0';
+        const gidBd = '473376692'; // separador "BD" (gid=0 não existe e devolvia dados desatualizados)
         const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gidBd}`;
         
         console.log('📥 Fetching Estratégicos CSV from:', csvUrl);
