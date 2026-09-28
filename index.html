@@ -1893,7 +1893,7 @@
               Voltar
             </button>
             <h1 class="text-3xl font-black tracking-tight">CALENDÁRIO DE REUNIÕES</h1>
-            <p class="text-blue-200 text-sm mt-2">Plano Anual 2026 - Clique nos círculos para editar</p>
+            <p class="text-blue-200 text-sm mt-2">Plano Anual - dados da folha REUNIÕES - Clique nos círculos para editar</p>
           </div>
           <a href="https://docs.google.com/spreadsheets/d/1_awdBC4HJRQ5geBhQ0DNYQMKmAhNsRMah4mLxRr_OJ0/edit?usp=sharing" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-900 rounded-lg font-bold hover:bg-blue-50 transition-colors shadow-md">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21H3a1 1 0 01-1-1V6a1 1 0 011-1h9m0 0a1 1 0 011-1h2a1 1 0 011 1m0 0V6a1 1 0 011-1h9a1 1 0 011 1v12a1 1 0 01-1 1h-9m0 0a1 1 0 010-2m0 2a1 1 0 010-2m0 2v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1"></path></svg>
@@ -2083,7 +2083,7 @@
                 Gestão e planeamento de reuniões estratégicas, operacionais e de revisão
               </p>
               <p class="text-xs text-blue-600 font-semibold">
-                17 reuniões planeadas
+                <span class="plan-meeting-count">--</span> reuniões planeadas
               </p>
             </div>
             <div class="flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-3 transition-all mt-4">
@@ -2159,7 +2159,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
             <p class="text-sm text-blue-600 font-bold uppercase mb-2">Reuniões Planeadas</p>
-            <p class="text-4xl font-black text-blue-900">17</p>
+            <p class="text-4xl font-black text-blue-900 plan-meeting-count">--</p>
             <p class="text-xs text-blue-700 mt-2">Distribuídas ao longo do ano</p>
           </div>
           <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
@@ -2776,26 +2776,8 @@
     };
     let currentDocTypeFilters = new Set(); // Filtros de tipo de documento
     
-    // Dados das reuniões 2026
-    const meetingsData = [
-      { id: 1, title: "1) Steering Commitee", responsible: "TV", schedule: { 2: 'done', 10: 'done', 12: 'planned' } },
-      { id: 2, title: "A) Reunião Revisão de Gestão - A situação de ações provenientes de análises críticas anteriores pela direção;", responsible: "MF", schedule: { 2: 'done', 10: 'done' } },
-      { id: 3, title: "a1) PAC's - resultados de monitoramento e medição (eficácia);", responsible: "MF", schedule: {} },
-      { id: 4, title: "a2) A eficácia de ações tomadas para abordar riscos e oportunidades;", responsible: "MF", schedule: {} },
-      { id: 5, title: "B) Reunião Revisão de Gestão - Mudanças em questões externas e internas que sejam pertinentes para o sistema de gestão da qualidade;", responsible: "MF", schedule: { 2: 'done', 10: 'done', 12: 'planned' } },
-      { id: 6, title: "b1) Oportunidades para melhoria;", responsible: "MF", schedule: {} },
-      { id: 7, title: "b2) A suficiência de recursos;", responsible: "MF", schedule: {} },
-      { id: 8, title: "2) Satisfação do cliente e retroalimentação de partes interessadas pertinentes;", responsible: "MF", schedule: { 2: 'done', 10: 'done' } },
-      { id: 9, title: "3) Extensão na qual os objetivos da qualidade foram alcançados - KPI's;", responsible: "MF", schedule: { 2: 'done', 10: 'done' } },
-      { id: 10, title: "4) Auditoria de Acompanhamento - desempenho de processo e conformidade de produtos e serviços;", responsible: "MF", schedule: { 10: 'done' } },
-      { id: 11, title: "5) RNC's - não conformidades e ações corretivas;", responsible: "MF", schedule: { 1: 'done', 12: 'planned' } },
-      { id: 12, title: "6) Auditoria interna SGQA - resultados de auditoria;", responsible: "MF", schedule: { 9: 'done', 10: 'done' } },
-      { id: 13, title: "7) Avaliação desempenho de fornecedores externos - FastFer;", responsible: "MF", schedule: {} },
-      { id: 14, title: "8) KOM Abertura - Histórico RNC's últimos 2 anos;", responsible: "MF", schedule: { 12: 'planned' } },
-      { id: 15, title: "9) Auditoria de Produto", responsible: "MF", schedule: {} },
-      { id: 16, title: "7) Auditoria externa SGQA - 1ª Fase", responsible: "MF", schedule: { 10: 'done' } },
-      { id: 17, title: "9) Auditoria externa SGQA - 2ª Fase", responsible: "MF", schedule: { 10: 'done' } },
-    ];
+    // Reuniões do separador REUNIÕES (mesmo Apps Script que PLAN_AUDITORIAS)
+    let meetingsData = [];
 
     // Auditorias da folha PLAN_AUDITORIAS (tabela + calendário visual)
     let planAudits = [];
@@ -3206,6 +3188,7 @@
       } else if(view === 'meetings') {
         document.getElementById('view-planning-meetings').classList.remove('hidden');
         renderMeetingsTable();
+        fetchMeetings();
       } else if(view === 'audits') {
         document.getElementById('view-planning-audits').classList.remove('hidden');
         renderAuditsTable();
@@ -3222,23 +3205,59 @@
 
     function renderMeetingsTable() {
       const tbody = document.getElementById('meetingsTableBody');
-      let html = '';
+      if (!tbody) return;
 
+      if (!meetingsData.length) {
+        tbody.innerHTML = '<tr><td colspan="14" class="p-8 text-center text-slate-400 font-bold uppercase text-[10px]">Sem reuniões (ou a carregar...)</td></tr>';
+        return;
+      }
+
+      let html = '';
       meetingsData.forEach(meeting => {
         html += '<tr class="border-b border-slate-200 hover:bg-blue-50/50 transition-colors">';
-        html += `<td class="p-4 font-semibold text-slate-700 sticky left-0 bg-inherit">${meeting.title}</td>`;
-        html += `<td class="p-3 text-center font-bold text-slate-600">${meeting.responsible}</td>`;
+        html += `<td class="p-4 font-semibold text-slate-700 sticky left-0 bg-inherit">${escapeHtml(meeting.title)}</td>`;
+        html += `<td class="p-3 text-center font-bold text-slate-600">${escapeHtml(meeting.responsible)}</td>`;
 
         for (let m = 1; m <= 12; m++) {
           const status = meeting.schedule[m] || null;
-          const emoji = getStatusEmoji(status);
-          html += `<td class="p-2 text-center cursor-pointer hover:bg-slate-100 transition-colors text-2xl" onclick="toggleMeetingStatus(${meeting.id}, ${m})" style="border: none;">${emoji}</td>`;
+          // Texto que não corresponde a nenhum estado conhecido é mostrado tal como está na folha
+          const content = status === 'other'
+            ? `<span class="text-xs font-semibold text-slate-600">${escapeHtml(meeting.raw[m])}</span>`
+            : getStatusEmoji(status);
+          html += `<td class="p-2 text-center cursor-pointer hover:bg-slate-100 transition-colors text-2xl" onclick="toggleMeetingStatus(${meeting.row}, ${m})" style="border: none;">${content}</td>`;
         }
 
         html += '</tr>';
       });
 
       tbody.innerHTML = html;
+    }
+
+    // GET (JSONP) do separador REUNIÕES
+    function fetchMeetings() {
+      if (!PLAN_AUDIT_APPS_SCRIPT_URL) return Promise.resolve();
+      return new Promise(resolve => {
+        const callbackName = `cb_meetings_${Date.now()}`;
+        const script = document.createElement('script');
+        const cleanup = () => { script.remove(); delete window[callbackName]; resolve(); };
+        window[callbackName] = (res) => {
+          if (res && res.ok) {
+            meetingsData = res.rows || [];
+          } else {
+            console.error('Erro REUNIÕES:', res && res.error);
+          }
+          document.querySelectorAll('.plan-meeting-count').forEach(el => { el.textContent = meetingsData.length; });
+          const view = document.getElementById('view-planning-meetings');
+          if (view && !view.classList.contains('hidden')) renderMeetingsTable();
+          cleanup();
+        };
+        script.src = `${PLAN_AUDIT_APPS_SCRIPT_URL}?sheet=${encodeURIComponent('REUNIÕES')}&callback=${callbackName}&t=${Date.now()}`;
+        script.onerror = () => {
+          console.error('Erro a carregar REUNIÕES (script).');
+          cleanup();
+        };
+        document.body.appendChild(script);
+      });
     }
 
     function renderAuditsTable() {
@@ -3309,41 +3328,40 @@
       return '⭕';
     }
 
-    function toggleMeetingStatus(meetingId, monthNum) {
-      const meeting = meetingsData.find(m => m.id === meetingId);
+    async function toggleMeetingStatus(row, monthNum) {
+      const meeting = meetingsData.find(m => m.row === row);
       if (!meeting) return;
 
       const current = meeting.schedule[monthNum];
       let next;
 
-      if (!current) next = 'planned';
+      if (!current || current === 'other') next = 'planned';
       else if (current === 'planned') next = 'done';
       else if (current === 'done') next = 'failed';
       else next = null;
 
+      // Atualiza já no ecrã e grava no Sheet
       if (next) {
         meeting.schedule[monthNum] = next;
       } else {
         delete meeting.schedule[monthNum];
       }
-
-      saveMeetingsData();
       renderMeetingsTable();
-    }
 
-    function saveMeetingsData() {
-      localStorage.setItem('meetingsData', JSON.stringify(meetingsData));
-    }
-
-    function loadMeetingsData() {
-      const saved = localStorage.getItem('meetingsData');
-      if (saved) {
-        const savedData = JSON.parse(saved);
-        meetingsData.forEach((meeting, idx) => {
-          if (savedData[idx]) {
-            meeting.schedule = savedData[idx].schedule;
-          }
-        });
+      try {
+        const formData = new FormData();
+        formData.append('action', 'meetingStatus');
+        formData.append('row', meeting.row);
+        formData.append('title', meeting.title);
+        formData.append('month', monthNum);
+        formData.append('status', next || '');
+        const response = await fetch(PLAN_AUDIT_APPS_SCRIPT_URL, { method: 'POST', body: formData });
+        const result = await response.json();
+        if (!result.ok) throw new Error(result.error || 'Erro desconhecido');
+      } catch (error) {
+        console.error('Erro ao guardar REUNIÕES:', error);
+        window.alert(`Erro ao guardar no Sheet: ${error.message}`);
+        fetchMeetings();
       }
     }
 
@@ -9305,7 +9323,7 @@
 
     window.onload = () => {
       toggleNewDocButton('docs');
-      loadMeetingsData();
+      fetchMeetings();
       fetchPlanAuditorias();
       fetchFromSheet();
       fetchSwot();

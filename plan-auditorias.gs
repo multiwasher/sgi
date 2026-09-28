@@ -19,6 +19,10 @@
  *   localAuditoria, dataRealizada (yyyy-mm-dd), gestor, observacoes, id
  *
  * Primeira utilização: correr seedPlanAuditorias() no editor (só escreve se a folha estiver vazia).
+ *
+ * Separador "REUNIÕES" (Calendário de Reuniões), no mesmo deploy:
+ * GET  ?sheet=REUNIÕES&callback=...                                  -> { ok, rows: [{ row, title, responsible, schedule, raw }] }
+ * POST (FormData) action=meetingStatus, row, title, month (1-12), status (done|planned|failed|vazio)
  */
 
 const PLAN_AUDIT_SPREADSHEET_ID = "1_awdBC4HJRQ5geBhQ0DNYQMKmAhNsRMah4mLxRr_OJ0";
@@ -46,6 +50,9 @@ const PLAN_AUDIT_DATE_FIELDS = ["dataPlaneada", "dataRealizada"];
 // =========
 function doGet(e) {
   try {
+    if (isMeetingsRequest_(e)) {
+      return output_({ ok: true, rows: readMeetings_(getMeetingsSheet_()).rows }, e);
+    }
     const sheet = getPlanAuditSheet_();
     const cols = ensurePlanAuditHeaders_(sheet);
     return output_({ ok: true, rows: readPlanAuditRows_(sheet, cols) }, e);
@@ -61,6 +68,10 @@ function doPost(e) {
     const p = (e && e.parameter) || {};
     const action = String(p.action || "").trim();
     const data = p.data ? JSON.parse(p.data) : {};
+
+    if (action === "meetingStatus") {
+      return output_(setMeetingStatus_(p), e);
+    }
 
     const sheet = getPlanAuditSheet_();
     const cols = ensurePlanAuditHeaders_(sheet);
@@ -237,6 +248,103 @@ function output_(data, e) {
   return ContentService
     .createTextOutput(`${callback}(${JSON.stringify(data)})`)
     .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+// =========
+// REUNIÕES (Calendário de Reuniões)
+// Cabeçalho: Tipo de Reunião | Responsável | Jan | Fev | ... | Dez  (colunas procuradas pelo nome)
+// Cada célula de mês tem o estado: realizado / planeado / não realizado / vazio.
+// =========
+const MEETINGS_SHEET_NAME = "REUNIÕES";
+const MEETING_MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+const MEETING_STATUS_DEFAULT = { done: "🟢", planned: "🔵", failed: "🔴" };
+
+function isMeetingsRequest_(e) {
+  const sheet = e && e.parameter && e.parameter.sheet;
+  return !!sheet && normHeader_(sheet) === normHeader_(MEETINGS_SHEET_NAME);
+}
+
+function getMeetingsSheet_() {
+  const ss = SpreadsheetApp.openById(PLAN_AUDIT_SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(MEETINGS_SHEET_NAME);
+  if (!sheet) throw new Error(`Separador "${MEETINGS_SHEET_NAME}" não encontrado.`);
+  return sheet;
+}
+
+function meetingCols_(sheet) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].map(h => normHeader_(h));
+  const find = (name) => headers.indexOf(normHeader_(name)) + 1;
+  const cols = { tipo: find("Tipo de Reunião"), responsavel: find("Responsável"), months: MEETING_MONTHS.map(find) };
+  const missing = [];
+  if (!cols.tipo) missing.push("Tipo de Reunião");
+  if (!cols.responsavel) missing.push("Responsável");
+  cols.months.forEach((c, i) => { if (!c) missing.push(MEETING_MONTHS[i]); });
+  if (missing.length) throw new Error(`Colunas em falta no cabeçalho de ${MEETINGS_SHEET_NAME}: ${missing.join(", ")}`);
+  return cols;
+}
+
+// Aceita emojis (🟢🔵🔴), ✓/✔/✅/❌ e palavras (Realizado, Planeado, Não realizado...)
+function parseMeetingStatus_(v) {
+  const s = String(v || "").trim();
+  if (!s) return null;
+  if (/🟢|✅|✔|✓/.test(s)) return "done";
+  if (/🔵/.test(s)) return "planned";
+  if (/🔴|❌|✖/.test(s)) return "failed";
+  const n = normHeader_(s);
+  if (/^(nao realizad|n\.?r\.?$|falhad|cancelad)/.test(n)) return "failed";
+  if (/^(realizad|feito|feita|concluid|done|ok$)/.test(n)) return "done";
+  if (/^(planead|agendad|previst|p$)/.test(n)) return "planned";
+  return "other";
+}
+
+/**
+ * Lê as reuniões. Devolve também "symbols": o texto que a folha já usa para cada estado,
+ * para que ao gravar se mantenha a mesma convenção (em vez de impor emojis).
+ */
+function readMeetings_(sheet) {
+  const cols = meetingCols_(sheet);
+  const lastRow = sheet.getLastRow();
+  const symbols = {};
+  const rows = [];
+  if (lastRow < 2) return { cols, rows, symbols };
+
+  const display = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getDisplayValues();
+  display.forEach((r, i) => {
+    const title = String(r[cols.tipo - 1] || "").trim();
+    if (!title) return;
+    const schedule = {};
+    const raw = {};
+    cols.months.forEach((c, m) => {
+      const text = String(r[c - 1] || "").trim();
+      const status = parseMeetingStatus_(text);
+      if (!status) return;
+      schedule[m + 1] = status;
+      if (status === "other") raw[m + 1] = text;
+      else if (!symbols[status]) symbols[status] = text;
+    });
+    rows.push({ row: i + 2, title, responsible: String(r[cols.responsavel - 1] || "").trim(), schedule, raw });
+  });
+  return { cols, rows, symbols };
+}
+
+/** POST action=meetingStatus, row, title, month (1-12), status (done|planned|failed|vazio) */
+function setMeetingStatus_(p) {
+  const month = Number(p.month);
+  const status = String(p.status || "").trim();
+  if (!(month >= 1 && month <= 12)) throw new Error("Mês inválido.");
+  if (status && !MEETING_STATUS_DEFAULT[status]) throw new Error(`Estado inválido: "${status}"`);
+
+  const sheet = getMeetingsSheet_();
+  const { cols, rows, symbols } = readMeetings_(sheet);
+
+  // Confirma a linha pelo título (a folha pode ter sido reordenada entretanto)
+  const title = String(p.title || "").trim();
+  let target = rows.find(r => r.row === Number(p.row) && r.title === title) || rows.find(r => r.title === title);
+  if (!target) throw new Error(`Reunião "${title}" não encontrada.`);
+
+  const value = status ? (symbols[status] || MEETING_STATUS_DEFAULT[status]) : "";
+  sheet.getRange(target.row, cols.months[month - 1]).setValue(value);
+  return { ok: true, action: "meetingStatus", row: target.row, month, status, value };
 }
 
 // =========
