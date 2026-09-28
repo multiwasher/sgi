@@ -157,14 +157,21 @@ function ensurePlanAuditHeaders_(sheet) {
 function readPlanAuditRows_(sheet, cols) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
-  const values = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
-  const tz = Session.getScriptTimeZone();
+  const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+  const values = range.getValues();
+  // O Horário é lido tal como aparece na folha: uma hora guardada como tempo vem em getValues()
+  // como uma data de 30/12/1899, e converter essa data com fusos horários desloca a hora.
+  const display = range.getDisplayValues();
+  const tz = sheet.getParent().getSpreadsheetTimeZone();
 
   return values
-    .map(r => {
+    .map((r, i) => {
       const obj = {};
       PLAN_AUDIT_FIELDS.forEach(([field]) => {
-        obj[field] = fromSheetValue_(field, r[cols[field] - 1], tz);
+        const c = cols[field] - 1;
+        obj[field] = field === "horario"
+          ? normHorario_(display[i][c])
+          : fromSheetValue_(field, r[c], tz);
       });
       return obj;
     })
@@ -186,11 +193,15 @@ function findPlanAuditRow_(sheet, cols, id) {
 // =========
 function fromSheetValue_(field, v, tz) {
   if (v === null || v === undefined || v === "") return "";
-  if (v instanceof Date) {
-    if (field === "horario") return Utilities.formatDate(v, tz, "HH:mm");
-    return Utilities.formatDate(v, tz, "yyyy-MM-dd");
-  }
+  if (v instanceof Date) return Utilities.formatDate(v, tz, "yyyy-MM-dd");
   return String(v).trim().replace(/\s+/g, " ");
+}
+
+// "10:30:00" / "10h30" / "9.00" -> "10:30" / "9:00"; outros textos ficam como estão
+function normHorario_(v) {
+  const s = String(v || "").trim();
+  const m = s.match(/^(\d{1,2})\s*[:hH.]\s*(\d{2})(?::\d{2})?$/);
+  return m ? `${Number(m[1])}:${m[2]}` : s;
 }
 
 function toSheetValue_(field, v) {

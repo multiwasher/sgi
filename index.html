@@ -3213,8 +3213,8 @@
       } else if(view === 'calendar') {
         if(calendarView) {
           calendarView.classList.remove('hidden');
-          renderizarCalendario();
-          renderizarListaIntro();
+          planCalendarAutoMonth = true;
+          renderPlanAuditViews();
           fetchPlanAuditorias();
         }
       }
@@ -3268,9 +3268,12 @@
         html += `<td class="p-3 font-semibold text-slate-800">${escapeHtml(audit.processo)}</td>`;
         html += `<td class="p-3 text-sm text-slate-600">${escapeHtml(audit.auditor)}</td>`;
         html += `<td class="p-3 text-sm text-slate-600">${escapeHtml(audit.localAuditoria)}</td>`;
-        html += `<td class="p-3"><input type="date" value="${escapeHtml(audit.dataRealizada)}" class="px-2 py-1 border border-slate-300 rounded text-sm w-full focus:border-amber-500 focus:ring-1 focus:ring-amber-200 outline-none" onchange="updateAuditDate('${id}', this.value)"></td>`;
+        const realizada = planDateInputValue(audit.dataRealizada);
+        html += realizada
+          ? `<td class="p-3"><input type="date" value="${realizada}" class="${AUDIT_DATE_INPUT_CLASS}" onchange="updateAuditDate('${id}', this.value)"></td>`
+          : `<td class="p-3"><button type="button" class="w-full text-left px-2 py-1 text-slate-400 hover:bg-slate-100 rounded" title="Definir Data Realizada" onclick="editAuditRealizada(this, '${id}')">-</button></td>`;
         html += `<td class="p-3 text-sm font-semibold text-slate-700">${escapeHtml(audit.gestor)}</td>`;
-        html += `<td class="p-3">${audit.observacoes ? `<span class="text-xs px-2 py-1 rounded-full font-bold ${isExternal ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}">${escapeHtml(audit.observacoes)}</span>` : ''}</td>`;
+        html += `<td class="p-3 text-sm text-slate-600">${escapeHtml(audit.observacoes)}</td>`;
         html += `<td class="p-3 text-center whitespace-nowrap">
           <button class="btn btn-ghost btn-sm" title="Editar" onclick="editarIntro('${id}')">✎</button>
           <button class="btn btn-danger-ghost btn-sm" title="Remover" onclick="removerIntro('${id}')">🗑</button>
@@ -3279,6 +3282,20 @@
       });
 
       tbody.innerHTML = html;
+    }
+
+    const AUDIT_DATE_INPUT_CLASS = 'px-2 py-1 border border-slate-300 rounded text-sm w-full focus:border-amber-500 focus:ring-1 focus:ring-amber-200 outline-none';
+
+    // Sem Data Realizada a célula mostra "-"; ao clicar passa a seletor de data
+    function editAuditRealizada(btn, auditId) {
+      const input = document.createElement('input');
+      input.type = 'date';
+      input.className = AUDIT_DATE_INPUT_CLASS;
+      input.onchange = () => { if (input.value) updateAuditDate(auditId, input.value); };
+      input.onblur = () => { if (!input.value) renderAuditsTable(); };
+      btn.replaceWith(input);
+      input.focus();
+      try { input.showPicker(); } catch (e) {}
     }
 
     function updateAuditDate(auditId, newDate) {
@@ -9633,14 +9650,37 @@
     // =========
 
     // Helpers do Plano de Auditorias
-    function parsePlanDate(iso) {
-      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
-      return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+    const PT_MONTHS_ABBR = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+    // Aceita yyyy-mm-dd, dd/mm/yyyy, dd-mm-yy e "14-abr.-26" / "14 de abril de 2026" (datas escritas à mão na folha)
+    function parsePlanDate(value) {
+      const s = normLoose(value);
+      if (!s) return null;
+      const fullYear = (y) => y.length === 2 ? 2000 + Number(y) : Number(y);
+
+      let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+
+      m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})$/.exec(s);
+      if (m) return new Date(fullYear(m[3]), Number(m[2]) - 1, Number(m[1]));
+
+      m = /^(\d{1,2})[\s\-\/.]*(?:de\s+)?([a-z]+)\.?[\s\-\/.]*(?:de\s+)?(\d{2}|\d{4})$/.exec(s);
+      if (m) {
+        const month = PT_MONTHS_ABBR.indexOf(m[2].slice(0, 3));
+        if (month !== -1) return new Date(fullYear(m[3]), month, Number(m[1]));
+      }
+      return null;
     }
 
-    function formatPlanDate(iso) {
-      const d = parsePlanDate(iso);
-      return d ? d.toLocaleDateString('pt-PT') : escapeHtml(iso);
+    function formatPlanDate(value) {
+      const d = parsePlanDate(value);
+      return d ? d.toLocaleDateString('pt-PT') : escapeHtml(value);
+    }
+
+    // Valor para <input type="date"> (yyyy-mm-dd) a partir de qualquer formato aceite
+    function planDateInputValue(value) {
+      const d = parsePlanDate(value);
+      return d ? toIsoDate(d) : '';
     }
 
     function toIsoDate(d) {
@@ -9660,9 +9700,23 @@
     function sortPlanAudits(list) {
       return [...list].sort((a, b) =>
         (planAuditMonthIndex(a) - planAuditMonthIndex(b)) ||
-        String(a.dataPlaneada || '9').localeCompare(String(b.dataPlaneada || '9')) ||
+        ((parsePlanDate(a.dataPlaneada) || Infinity) - (parsePlanDate(b.dataPlaneada) || Infinity) || 0) ||
         String(a.horario).localeCompare(String(b.horario), undefined, { numeric: true })
       );
+    }
+
+    // Ao abrir o calendário: se o mês atual não tiver auditorias com data, salta para a próxima (ou a última)
+    let planCalendarAutoMonth = false;
+
+    function jumpCalendarToAuditMonth() {
+      const dated = planAudits.map(a => parsePlanDate(a.dataPlaneada)).filter(Boolean).sort((a, b) => a - b);
+      if (!dated.length) return;
+      planCalendarAutoMonth = false;
+      if (dated.some(d => d.getMonth() === currentCalendarMonth && d.getFullYear() === currentCalendarYear)) return;
+      const startOfMonth = new Date(currentCalendarYear, currentCalendarMonth, 1);
+      const target = dated.find(d => d >= startOfMonth) || dated[dated.length - 1];
+      currentCalendarMonth = target.getMonth();
+      currentCalendarYear = target.getFullYear();
     }
 
     function renderPlanAuditViews() {
@@ -9673,6 +9727,7 @@
       if (auditsView && !auditsView.classList.contains('hidden')) renderAuditsTable();
       const calendarView = document.getElementById('view-planning-calendar');
       if (calendarView && !calendarView.classList.contains('hidden')) {
+        if (planCalendarAutoMonth) jumpCalendarToAuditMonth();
         renderizarCalendario();
         renderizarListaIntro();
       }
@@ -9783,7 +9838,7 @@
         // Mostrar indicadores de auditorias
         auditsForDay.forEach(audit => {
           const statusClass = audit.dataRealizada ? 'bg-green-500' : 'bg-amber-500';
-          html += `<div class="text-xs p-1 rounded mb-1 text-white truncate ${statusClass}" title="${escapeHtml(audit.processo)}">${escapeHtml(audit.horario)} ${escapeHtml(audit.processo)}</div>`;
+          html += `<div class="text-xs p-1 rounded mb-1 text-white truncate ${statusClass} hover:opacity-80" title="Editar: ${escapeHtml(audit.processo)}" onclick="event.stopPropagation(); editarIntro('${escapeHtml(audit.id)}')">${escapeHtml(audit.horario)} ${escapeHtml(audit.processo)}</div>`;
         });
         
         html += '</div>';
@@ -9927,11 +9982,14 @@
       const modal = document.getElementById('planModalAuditoria');
       if(!modal) return;
 
-      const defaults = { local: 'SOMENGIL', observacoes: 'Auditoria Interna' };
+      const defaults = { local: 'SOMENGIL' };
       const values = audit || defaults;
       document.getElementById('planAuditId').value = audit ? audit.id : '';
       Object.entries(PLAN_AUDIT_FORM_FIELDS).forEach(([field, elId]) => {
         document.getElementById(elId).value = values[field] || '';
+      });
+      ['dataPlaneada', 'dataRealizada'].forEach(field => {
+        document.getElementById(PLAN_AUDIT_FORM_FIELDS[field]).value = planDateInputValue(values[field]);
       });
       // Horário guardado como "9:00" -> o input time precisa de "09:00"
       const horario = document.getElementById('planAuditHorario');
