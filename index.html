@@ -4299,6 +4299,26 @@
       valores.origem.add('Auditoria Externa - APCER');
       valores.origem.add('AUDITORIA EXTERNA - AMBIGLOBAL');
 
+      // Remover duplicados que diferem apenas em maiúsculas/acentos/espaços
+      // (ex.: "AUDITORIA INTERNA" / "Auditoria Interna" / "Auditoria interna").
+      // Mantém a variante mais frequente nos dados como etiqueta.
+      const dedupeLabels = (set, field, keys) => {
+        const counts = {};
+        pdcaData.forEach(item => {
+          const v = String(getAny(item, keys) || '').trim();
+          if (v) counts[v] = (counts[v] || 0) + 1;
+        });
+        const byKey = new Map();
+        set.forEach(val => {
+          const key = normalizeText(val);
+          const current = byKey.get(key);
+          if (!current || (counts[val] || 0) > (counts[current] || 0)) byKey.set(key, val);
+        });
+        valores[field] = new Set(byKey.values());
+      };
+      dedupeLabels(valores.origem, 'origem', ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']);
+      dedupeLabels(valores.processo, 'processo', ['Processo', 'processo', 'PROCESSO']);
+
       // Criar botões para ANO
       const anoContainer = document.getElementById('pdca-ano-filters');
       if (anoContainer) {
@@ -4313,7 +4333,7 @@
       // Criar botões para ORIGEM
       const origemContainer = document.getElementById('pdca-origem-filters');
       if (origemContainer) {
-        const origemSorted = Array.from(valores.origem).sort();
+        const origemSorted = Array.from(valores.origem).sort((a, b) => normalizeText(a).localeCompare(normalizeText(b)));
         origemContainer.innerHTML = origemSorted.map(val => `
           <button onclick="setPdcaFilter('origem', '${escapeHtml(val)}')"
                   id="filter-pdca-origem-${escapeHtml(val).replace(/\s+/g, '_')}"
@@ -4324,7 +4344,7 @@
       // Criar botões para PROCESSO
       const processoContainer = document.getElementById('pdca-processo-filters');
       if (processoContainer) {
-        const processoSorted = Array.from(valores.processo).sort();
+        const processoSorted = Array.from(valores.processo).sort((a, b) => normalizeText(a).localeCompare(normalizeText(b)));
         processoContainer.innerHTML = processoSorted.map(val => `
           <button onclick="setPdcaFilter('processo', '${escapeHtml(val)}')"
                   id="filter-pdca-processo-${escapeHtml(val).replace(/\s+/g, '_')}"
@@ -4433,7 +4453,7 @@
     }
 
     function normalizeText(text) {
-      return String(text || '').toLowerCase().trim().replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u').replace(/ç/g, 'c');
+      return String(text || '').toLowerCase().trim().replace(/\s+/g, ' ').replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e').replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o').replace(/[ùúûü]/g, 'u').replace(/ç/g, 'c');
     }
 
     function applyPdcaFilters() {
