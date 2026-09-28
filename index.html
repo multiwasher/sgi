@@ -628,6 +628,7 @@
       background: #fee2e2;
       border-color: #dc2626;
     }
+    .pdca-insight-dd > summary::-webkit-details-marker { display: none; }
   </style>
 </head>
 
@@ -2198,6 +2199,36 @@
             </svg>
             <h3 class="text-sm font-black text-emerald-900 uppercase tracking-widest">Insights da Auditoria</h3>
           </div>
+
+          <div class="flex items-center gap-2 flex-wrap text-[10px] font-bold uppercase text-slate-500">
+            <span class="whitespace-nowrap">Comparar anos:</span>
+            <select id="pdcaInsightAnoAtual" onchange="setPdcaInsightAno('atual', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20"></select>
+            <span class="normal-case">vs</span>
+            <select id="pdcaInsightAnoPrevio" onchange="setPdcaInsightAno('previo', this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20"></select>
+            <button onclick="resetPdcaInsightAnos()" class="text-[10px] font-black text-slate-400 hover:text-slate-700 px-2 py-1" title="Voltar aos anos por defeito">↺</button>
+            <span class="whitespace-nowrap ml-2">Tipo de auditoria:</span>
+            <details id="pdcaInsight-tipo-dd" class="pdca-insight-dd relative normal-case">
+              <summary class="list-none cursor-pointer select-none bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 flex items-center gap-1 max-w-[220px]">
+                <span id="pdcaInsight-tipo-label" class="truncate">TODOS</span>
+                <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </summary>
+              <div class="absolute z-30 mt-1 min-w-[220px] max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg p-2 space-y-0.5">
+                <button type="button" onclick="clearPdcaInsightFiltro('tipo')" class="w-full text-left px-2 py-1 rounded text-[10px] font-black text-slate-500 hover:bg-slate-50 uppercase">TODOS</button>
+                <div id="pdcaInsight-tipo-list"></div>
+              </div>
+            </details>
+            <span class="whitespace-nowrap ml-2">Processo:</span>
+            <details id="pdcaInsight-processo-dd" class="pdca-insight-dd relative normal-case">
+              <summary class="list-none cursor-pointer select-none bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 flex items-center gap-1 max-w-[220px]">
+                <span id="pdcaInsight-processo-label" class="truncate">TODOS</span>
+                <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </summary>
+              <div class="absolute z-30 mt-1 min-w-[220px] max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg p-2 space-y-0.5">
+                <button type="button" onclick="clearPdcaInsightFiltro('processo')" class="w-full text-left px-2 py-1 rounded text-[10px] font-black text-slate-500 hover:bg-slate-50 uppercase">TODOS</button>
+                <div id="pdcaInsight-processo-list"></div>
+              </div>
+            </details>
+          </div>
           
           <div id="pdcaInsightsContent" class="space-y-6">
             <!-- Conteúdo dinâmico será preenchido aqui -->
@@ -3441,6 +3472,7 @@
 
         pdcaData = Array.isArray(data) ? data : (data?.data || []);
         buildPdcaFilters();
+        refreshPdcaInsights();
         renderPdca(pdcaData);
         hideLoading();
         delete window[callbackName];
@@ -3486,6 +3518,7 @@
         
         // Reconstruir tabela com dados atualizados e filtros preservados
         buildPdcaFilters();
+        refreshPdcaInsights();
         applyPdcaFilters();
         hideLoading();
         delete window[callbackName];
@@ -4345,6 +4378,8 @@
       const processoContainer = document.getElementById('pdca-processo-filters');
       if (processoContainer) {
         const processoSorted = Array.from(valores.processo).sort((a, b) => normalizeText(a).localeCompare(normalizeText(b)));
+        pdcaInsightOpcoes.processo = processoSorted;
+        renderPdcaInsightDropdowns();
         processoContainer.innerHTML = processoSorted.map(val => `
           <button onclick="setPdcaFilter('processo', '${escapeHtml(val)}')"
                   id="filter-pdca-processo-${escapeHtml(val).replace(/\s+/g, '_')}"
@@ -4457,6 +4492,14 @@
     }
 
     function applyPdcaFilters() {
+      const filtered = getPdcaFilteredData();
+      updatePdcaFilterButtonStates();
+      updatePdcaAuditMenu(filtered);
+      renderPdca(filtered);
+    }
+
+    // Aplica todos os filtros PDCA ativos da barra de filtros
+    function getPdcaFilteredData() {
       let filtered = [...pdcaData];
 
       // Filtro por ANO (cumulativo)
@@ -4530,9 +4573,87 @@
         });
       }
 
-      updatePdcaFilterButtonStates();
-      updatePdcaAuditMenu(filtered);
-      renderPdca(filtered);
+      return filtered;
+    }
+
+    // Anos escolhidos manualmente para a comparação dos Insights (null = automático)
+    let pdcaInsightAnos = { atual: null, previo: null };
+
+    function setPdcaInsightAno(qual, valor) {
+      pdcaInsightAnos[qual] = valor || '';
+      generatePdcaAuditInsights();
+    }
+
+    function resetPdcaInsightAnos() {
+      pdcaInsightAnos = { atual: null, previo: null };
+      generatePdcaAuditInsights();
+    }
+
+    // Filtros próprios dos Insights da Auditoria (seleção múltipla; vazio = TODOS).
+    // São independentes da barra de filtros PDCA.
+    const pdcaInsightOpcoes = {
+      tipo: ['AUDITORIA INTERNA', 'AUDITORIA EXTERNA - APCER'],
+      processo: []
+    };
+    const pdcaInsightFiltros = { tipo: [], processo: [] };
+
+    function renderPdcaInsightDropdowns() {
+      ['tipo', 'processo'].forEach(cat => {
+        const list = document.getElementById(`pdcaInsight-${cat}-list`);
+        const label = document.getElementById(`pdcaInsight-${cat}-label`);
+        const selecionados = pdcaInsightFiltros[cat];
+        if (list) {
+          list.innerHTML = pdcaInsightOpcoes[cat].map((val, i) => `
+            <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-50 cursor-pointer text-xs text-slate-700">
+              <input type="checkbox" class="accent-emerald-600" ${selecionados.includes(val) ? 'checked' : ''}
+                     onchange="togglePdcaInsightFiltro('${cat}', ${i})">
+              <span>${escapeHtml(val)}</span>
+            </label>`).join('');
+        }
+        if (label) {
+          label.textContent = selecionados.length === 0 ? 'TODOS'
+            : selecionados.length <= 2 ? selecionados.join(', ')
+            : `${selecionados.length} selecionados`;
+          label.title = selecionados.join(', ');
+        }
+      });
+    }
+
+    function togglePdcaInsightFiltro(cat, index) {
+      const val = pdcaInsightOpcoes[cat][index];
+      const lista = pdcaInsightFiltros[cat];
+      const pos = lista.indexOf(val);
+      if (pos > -1) lista.splice(pos, 1); else lista.push(val);
+      renderPdcaInsightDropdowns();
+      generatePdcaAuditInsights();
+    }
+
+    function clearPdcaInsightFiltro(cat) {
+      pdcaInsightFiltros[cat] = [];
+      renderPdcaInsightDropdowns();
+      generatePdcaAuditInsights();
+    }
+
+    // Fechar os dropdowns dos Insights ao clicar fora
+    document.addEventListener('click', (e) => {
+      document.querySelectorAll('details.pdca-insight-dd[open]').forEach(dd => {
+        if (!dd.contains(e.target)) dd.removeAttribute('open');
+      });
+    });
+
+    // Dados dos Insights: todo o PDCA filtrado apenas por tipo de auditoria e processo
+    function getPdcaInsightData() {
+      const tipos = (pdcaInsightFiltros.tipo.length ? pdcaInsightFiltros.tipo : pdcaInsightOpcoes.tipo).map(normalizeText);
+      const processos = pdcaInsightFiltros.processo.map(normalizeText);
+      return pdcaData.filter(item => {
+        const origem = normalizeText(getAny(item, ['Origem da Ação', 'origem da acao', 'ORIGEM DA AÇÃO']) || '');
+        if (!tipos.includes(origem)) return false;
+        if (processos.length > 0) {
+          const processo = normalizeText(getAny(item, ['Processo', 'processo', 'PROCESSO']) || '');
+          if (!processos.includes(processo)) return false;
+        }
+        return true;
+      });
     }
 
     function updatePdcaAuditMenu(filteredData) {
@@ -4550,32 +4671,61 @@
       const isAuditFilter = hasAuditSearch || hasAuditFilter;
       
       const auditMenu = document.getElementById('pdcaAuditMenu');
-      const auditInsights = document.getElementById('pdcaAuditInsights');
       
+      // Os Insights da Auditoria estão sempre visíveis e não dependem destes filtros
+      // (ver refreshPdcaInsights); aqui só se controla o menu de auditoria.
       if (isAuditFilter && filteredData.length > 0) {
-        // Mostrar menu e insights
         auditMenu.classList.remove('hidden');
-        auditInsights.classList.remove('hidden');
-        
-        // Calcular insights
-        generatePdcaAuditInsights(filteredData, origemSearch);
       } else {
-        // Ocultar menu e insights
         auditMenu.classList.add('hidden');
-        auditInsights.classList.add('hidden');
       }
     }
 
-    function generatePdcaAuditInsights(data, auditType) {
+    // Mostra e recalcula os Insights da Auditoria sempre que os dados PDCA são (re)carregados.
+    // Só os filtros do próprio bloco (anos, tipo de auditoria, processo) alteram o que mostram.
+    function refreshPdcaInsights() {
+      const auditInsights = document.getElementById('pdcaAuditInsights');
+      if (!pdcaData || pdcaData.length === 0) {
+        auditInsights.classList.add('hidden');
+        return;
+      }
+      auditInsights.classList.remove('hidden');
+      generatePdcaAuditInsights();
+    }
+
+    function generatePdcaAuditInsights() {
       const insightsContent = document.getElementById('pdcaInsightsContent');
-      
+      const getAnoItem = (item) => String(getAny(item, ['Ano', 'ano', 'ANO']) || new Date().getFullYear()).trim();
+
+      // Os Insights não dependem da barra de filtros PDCA (nem do filtro Ano):
+      // usam apenas os seus filtros de tipo de auditoria, processo e anos a comparar.
+      const dataComparacao = getPdcaInsightData();
+      // Anos disponíveis para comparação: de 2023 até ao ano corrente
+      const anosDisponiveis = [];
+      for (let a = new Date().getFullYear(); a >= 2023; a--) anosDisponiveis.push(String(a));
+
+      // Anos por defeito: ano corrente vs ano anterior
+      const defAtual = anosDisponiveis[0] || '';
+      const defPrevio = anosDisponiveis[1] || '';
+      const valido = (a) => a === '' || anosDisponiveis.includes(a);
+      const anoSelAtual = pdcaInsightAnos.atual !== null && valido(pdcaInsightAnos.atual) && pdcaInsightAnos.atual !== '' ? pdcaInsightAnos.atual : defAtual;
+      const anoSelPrevio = pdcaInsightAnos.previo !== null && valido(pdcaInsightAnos.previo) ? pdcaInsightAnos.previo : defPrevio;
+
+      const selAtual = document.getElementById('pdcaInsightAnoAtual');
+      const selPrevio = document.getElementById('pdcaInsightAnoPrevio');
+      if (selAtual && selPrevio) {
+        selAtual.innerHTML = anosDisponiveis.map(a => `<option value="${escapeHtml(a)}"${a === anoSelAtual ? ' selected' : ''}>${escapeHtml(a)}</option>`).join('');
+        selPrevio.innerHTML = `<option value=""${anoSelPrevio === '' ? ' selected' : ''}>— sem comparação</option>` +
+          anosDisponiveis.filter(a => a !== anoSelAtual).map(a => `<option value="${escapeHtml(a)}"${a === anoSelPrevio ? ' selected' : ''}>${escapeHtml(a)}</option>`).join('');
+      }
+
       // Separar dados por tipo de processo
-      const dataAmbiental = data.filter(item => {
+      const dataAmbiental = dataComparacao.filter(item => {
         const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
         return processo.trim().toUpperCase() === 'AMBIENTAL';
       });
       
-      const dataOutros = data.filter(item => {
+      const dataOutros = dataComparacao.filter(item => {
         const processo = getAny(item, ['Processo', 'processo', 'PROCESSO']) || '';
         return processo.trim().toUpperCase() !== 'AMBIENTAL';
       });
@@ -4609,20 +4759,21 @@
         // Agrupar dados por ano
         const porAno = {};
         dataSet.forEach(item => {
-          const ano = getAny(item, ['Ano', 'ano', 'ANO']) || String(new Date().getFullYear());
+          const ano = getAnoItem(item);
           if (!porAno[ano]) porAno[ano] = [];
           porAno[ano].push(item);
         });
         
-        const anos = Object.keys(porAno).sort().reverse(); // Ordenar em decrescente (anos mais recentes primeiro)
-        const anoAtual = anos[0];
-        const anoPrevio = anos[1];
+        // Anos escolhidos nos seletores "Comparar anos"
+        const anoAtual = anoSelAtual;
+        const anoPrevio = anoSelPrevio && anoSelPrevio !== anoSelAtual ? anoSelPrevio : '';
+        const anos = [anoAtual, anoPrevio].filter(Boolean);
         
         const metricas = {};
         const tendencias = {};
         
         anos.forEach(ano => {
-          metricas[ano] = calcularMetricas(porAno[ano]);
+          metricas[ano] = calcularMetricas(porAno[ano] || []);
         });
         
         // Calcular tendências
@@ -4674,19 +4825,20 @@
       const ambientalTend = calcularTendencias(dataAmbiental, 'AMBIENTAL');
       const outrosTend = calcularTendencias(dataOutros, 'OUTROS');
 
-      const metricasAmbiental = ambientalTend.metricas[ambientalTend.anoAtual] || calcularMetricas(dataAmbiental);
-      const metricasOutros = outrosTend.metricas[outrosTend.anoAtual] || calcularMetricas(dataOutros);
+      const metricasAmbiental = ambientalTend.metricas[ambientalTend.anoAtual] || calcularMetricas([]);
+      const metricasOutros = outrosTend.metricas[outrosTend.anoAtual] || calcularMetricas([]);
 
       // Renderiza o selo com o intervalo de anos comparado (ex: "2026 vs 2025")
       const renderYearBadge = (tend) => {
-        if (!tend.anoAtual || !tend.anoPrevio) return '';
+        if (!tend.anoAtual) return '';
+        if (!tend.anoPrevio) return `<span class="text-[9px] font-bold text-slate-500 normal-case tracking-normal bg-white px-2 py-0.5 rounded-full border border-slate-200">Ano: ${tend.anoAtual}</span>`;
         return `<span class="text-[9px] font-bold text-slate-500 normal-case tracking-normal bg-white px-2 py-0.5 rounded-full border border-slate-200">Tendência: ${tend.anoAtual} vs ${tend.anoPrevio}</span>`;
       };
 
       // Renderiza a variação (seta + valor) de uma métrica, ou "—" quando não há ano anterior para comparar
       const renderTendenciaChip = (tend, chave, sufixo = '') => {
         const t = tend.tendencias[chave];
-        if (!t) return `<span class="text-[8px] text-slate-400">— sem ano anterior</span>`;
+        if (!t) return `<span class="text-[8px] text-slate-400">— sem comparação</span>`;
         return `<span class="text-sm ${getTendenciaColor(t, chave)}">${renderTendenciaIcone(t)}</span><span class="text-[8px] text-slate-500">${t.valor > 0 ? '+' : ''}${t.valor}${sufixo}</span>`;
       };
 
@@ -4694,7 +4846,7 @@
       let html = '';
 
       // Seção AMBIENTAL
-      if (metricasAmbiental.total > 0) {
+      if (metricasAmbiental.total > 0 || (ambientalTend.anoPrevio && ambientalTend.metricas[ambientalTend.anoPrevio].total > 0)) {
         html += `
           <div>
             <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2 flex-wrap">
@@ -4741,7 +4893,7 @@
       }
 
       // Seção OUTROS PROCESSOS
-      if (metricasOutros.total > 0) {
+      if (metricasOutros.total > 0 || (outrosTend.anoPrevio && outrosTend.metricas[outrosTend.anoPrevio].total > 0)) {
         html += `
           <div>
             <h4 class="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2 flex-wrap">
@@ -4789,7 +4941,9 @@
 
       insightsContent.innerHTML = html;
 
-      renderPdcaProcessoChart(data);
+      // "Detalhe por Processo": mesmos dados dos Insights, limitados aos anos comparados
+      const anosGrafico = [anoSelAtual, anoSelPrevio].filter(Boolean);
+      renderPdcaProcessoChart(dataComparacao.filter(item => anosGrafico.includes(getAnoItem(item))));
     }
 
     // Gráfico "Detalhe por Processo" dos Insights da Auditoria PDCA.
