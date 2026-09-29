@@ -5927,7 +5927,7 @@
             <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(origem)}</td>
             <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(processos)}</td>
             <td class="px-6 py-4 text-center text-sm font-bold text-slate-700">${escapeHtml(codigo)}</td>
-            <td class="px-6 py-4 text-center text-sm font-black ${paDisplay !== '-' ? 'text-emerald-600' : 'text-slate-400'}">${escapeHtml(paDisplay)}</td>
+            <td class="px-6 py-4 text-center text-sm font-black ${paDisplay !== '-' ? 'text-emerald-600' : 'text-slate-400'}">${renderPaLinks(paDisplay)}</td>
             <td class="px-6 py-4 text-sm text-slate-700">${escapeHtml(proveniencia)}</td>
             <td class="px-6 py-4 text-sm text-slate-700">
               ${observacoes && String(observacoes).trim() 
@@ -5939,6 +5939,95 @@
           </tr>
         `;
       }).join('');
+    }
+
+    function renderPaLinks(paDisplay) {
+      const codes = String(paDisplay || '').split(/[;,]/).map(c => c.trim()).filter(Boolean);
+      if (codes.length === 0 || paDisplay === '-') return escapeHtml(paDisplay || '-');
+      return codes.map(c =>
+        `<button class="btn-ro-action-modal text-emerald-600 hover:text-emerald-700 hover:underline font-black transition-colors" data-acao="${escapeHtml(c)}">${escapeHtml(c)}</button>`
+      ).join('; ');
+    }
+
+    function findSwotAction(actionCode) {
+      // Procura em swotData a ação estratégica com o código indicado (ex: T1_1)
+      const target = normLoose(actionCode);
+      if (!target || !swotData) return null;
+
+      for (const item of swotData) {
+        const codigo = getAny(item, ['código','Código','ID','id','codigo']);
+        for (let i = 1; i <= 6; i++) {
+          let cod = getAny(item, [
+            `CÓDIGO_AÇÃO ${i}`, `CODIGO_ACAO ${i}`, `CÓDIGO AÇÃO ${i}`, `CODIGO ACAO ${i}`,
+            `CODIGO_AÇÃO ${i}`, `CÓDIGO_ACAO ${i}`
+          ]);
+          const acao = getAny(item, [`AÇÃO ${i}`, `ACAO ${i}`, `Ação ${i}`, `Acao ${i}`]);
+          if ((!cod || !String(cod).trim()) && acao && String(acao).trim() && codigo) {
+            cod = deriveActionCode(codigo, i);
+          }
+          if (cod && normLoose(cod) === target) {
+            return { item, index: i, cod: String(cod).trim(), acao };
+          }
+        }
+      }
+      return null;
+    }
+
+    function openRoActionModal(actionCode) {
+      const content = document.getElementById('roSwotModalContent');
+      const match = findSwotAction(actionCode);
+
+      if (!match) {
+        content.innerHTML = `
+          <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-[10px] font-black text-red-700 uppercase">Ação não encontrada na Análise SWOT:</p>
+            <p class="text-sm text-red-600">${escapeHtml(actionCode)}</p>
+          </div>
+        `;
+      } else {
+        const { item, index, cod, acao } = match;
+        const description = getAny(item, ['Descrição','Descricao','DESC','desc']);
+        const codigo = getAny(item, ['código','Código','ID','id','codigo']);
+        const swotRaw = getAny(item, ['SWOT','Swot']);
+        const ativo = isAtivoFromTomada(getTomadaAcao(item));
+        const emPlano = buildPlanoMap(item)[index] ?? '';
+        const catInfo = getSwotCategory(buildSwotBlob(item));
+        const tagClass = getSwotTagClass(catInfo.key);
+
+        content.innerHTML = `
+          <div class="glass-card p-5">
+            <div class="flex justify-between items-center mb-3">
+              <div class="swot-cat-badge ${tagClass}">
+                ${catInfo.icon}
+                <span>${escapeHtml(catInfo.key)}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-full text-[8px] font-black ${ativo ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'} uppercase">
+                  ${ativo ? 'Ativo' : 'Não ativo'}
+                </span>
+                <span class="text-[9px] font-bold text-slate-300 tracking-widest">#${escapeHtml(codigo)}</span>
+              </div>
+            </div>
+            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">SWOT - ${escapeHtml(swotRaw)}</p>
+            <h4 class="text-[13px] font-bold text-slate-800 leading-snug mb-3">${escapeHtml(description)}</h4>
+            <p class="pt-3 border-t border-slate-100 text-[10px] font-black text-emerald-600 uppercase tracking-widest">Plano Estratégico</p>
+            <div class="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <p class="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Ação ${index} (${escapeHtml(cod)})</p>
+                ${planoBadgeHtml(emPlano)}
+              </div>
+              ${acao && String(acao).trim()
+                ? `<p class="text-xs text-slate-600 font-medium leading-relaxed">${escapeHtml(acao)}</p>`
+                : `<p class="text-[10px] text-slate-400 italic">Sem descrição da ação.</p>`
+              }
+            </div>
+          </div>
+        `;
+      }
+
+      const modal = document.getElementById('roSwotModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
     function openRoSwotModalWithCode(codigo) {
@@ -9388,6 +9477,10 @@
         if (e.target.classList.contains('btn-ro-swot-modal')) {
           const codigo = e.target.getAttribute('data-codigo');
           if (codigo) openRoSwotModal(codigo);
+        }
+        if (e.target.classList.contains('btn-ro-action-modal')) {
+          const acao = e.target.getAttribute('data-acao');
+          if (acao) openRoActionModal(acao);
         }
       });
 
